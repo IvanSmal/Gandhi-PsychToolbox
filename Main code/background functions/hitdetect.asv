@@ -1,0 +1,18 @@
+function out=hitdetect(c,target, window)
+%% figure out how many pixels outside target for tolerance window
+% find center of target
+x=(c(1)+c(3))/2;
+y=(c(2)+c(4))/2;
+
+% check how far the cursor is from the centerpoint
+d=hypot((c-x),(c-y))
+
+if c(1)>=target(1) &&...
+        c(2) >= target(2) &&...
+        c(1)<target(3) &&...
+        c(2)< target(4)
+    out=1;
+else
+    out=0;
+end
+end

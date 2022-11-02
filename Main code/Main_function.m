@@ -33,10 +33,6 @@ end
 set(app.STOPButton,'Enable','on')
 app.FinalizeButton.Enable = 'off';
 
-if ~isfield(e,'trialnum')
-    e.trialnum=0;
-end
-    savestate(e)
 
 while ~app.STOPButton.Value
     e.trialnum=e.trialnum+1;
@@ -55,12 +51,17 @@ while ~app.STOPButton.Value
     w=diode(w,e,1); % incase diode was on at the end, turn it of for a frame
 
     e.intervals.iti.waitint %wait ITI
-    d.eyepos=read(dq,'all','OutputFormat','Matrix');
+    allDAQdata=read(dq,'all','OutputFormat','Matrix');
+    d.eyepos=allDAQdata(:,1:2);
     d.neural_data='placeholder';
+    d.eyesync=allDAQdata(:,end);
     e.trial(e.trialnum).data=d;
     stop(dq)
 end
 %% ending procedure
+
+savestate(e)
+
 set(app.STOPButton,'enable','off')
 
 set(app.STOPButton,'Value',0)

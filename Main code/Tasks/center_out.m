@@ -17,7 +17,7 @@ setd(d,'targets',T0,T1) % set targets into structure
 % set our intervals if randomized
 T0_reach=e.intervals.T0_reach;
 T0_hold=e.intervals.T0_hold;
-setd(d,'intervals',T0,T1) % set targets into structure
+setd(d,'intervals',T0_reach,T0_hold) % set intervals into structure
 
 xeye=1;
 yeye=1;

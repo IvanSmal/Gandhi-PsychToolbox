@@ -8,6 +8,9 @@ e.trialnum=0;
 % set subject name
 e.subject_name=get(app.SubjectNameEditField,'Value');
 
+% set recording directory
+e.dir=get(app.Dir,'Value');
+
 % Set your intervals
 addint(e,'T0_reach',5)
 addint(e,'T0_hold',3)

@@ -3,6 +3,7 @@ classdef data
         eyepos
         cursor
         neural_data
+        eyesync
     end
 
     methods

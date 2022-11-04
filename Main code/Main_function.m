@@ -4,7 +4,11 @@ addpath(genpath(fileparts(which('Main_function'))));                        % ad
 
 d=data;                                                                     %initialize the data structure with class 'data'
 %% set up daq. Modify the specifics in the setupDAQ function
-dq=setupDAQ;
+[dq, dqD]=setupDAQ;
+%% get cpu times in seconds to sync trellis to matlab
+time.matlab=cputime;
+time.trellis=xippmex('time')/30000/60;
+
 %% set all the PsychToolbox and daq parameters in setupPsychToolbox function
 if ~exist('w','var')                                                        %check whether the window is not already set up
     w=setupPsychToolbox;
@@ -38,6 +42,7 @@ while ~app.STOPButton.Value
     e.trialnum=e.trialnum+1;
     insToTxtbox(app,['trial number', num2str(e.trialnum)])
     start(dq, 'continuous') % start data collection
+    xippmex('trial', 'recording',[],[],[],e.trialnum) %start trellis
 
     r=1;
         if r==1
@@ -57,6 +62,7 @@ while ~app.STOPButton.Value
     d.eyesync=allDAQdata(:,end);
     e.trial(e.trialnum).data=d;
     stop(dq)
+    xippmex('trial', 'stopped')
 end
 %% ending procedure
 

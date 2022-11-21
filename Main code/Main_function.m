@@ -4,7 +4,7 @@ addpath(genpath(fileparts(which('Main_function'))));                        % ad
 
 d=data;                                                                     %initialize the data structure with class 'data'
 %% set up daq. Modify the specifics in the setupDAQ function
-[dq, dqD]=setupDAQ;
+setupDAQ(app);
 %% get cpu times in seconds to sync trellis to matlab
 time.matlab=cputime;
 time.trellis=xippmex('time')/30000/60;
@@ -22,11 +22,19 @@ else
     e=makeparams(app,w);                                                    %initialize a new experiment structure with class 'experiment'
 end
 
+
+%% TEST CODE PLEASE DELETE
+reward(app,e)
+for i=1:60
+    insToTxtbox(app,'waiting')
+    pause(1)
+end
 %% Calibrate eye voltage
 
-if get(app.RuncalibrationCheckBox,'Value')
-    [w.minEye, w.maxEye]=calibrate(w,dq);
-end
+% if get(app.RuncalibrationCheckBox,'Value')  %commented out to not
+% interfere with trellis for now
+%     [w.minEye, w.maxEye]=calibrate(w,dq);
+% end
 
 if ~exist('w','var') || ~isfield(w,'minEye')
     insToTxtbox(app,'calibration likely not complete. please calibrate eye position first')
@@ -41,7 +49,7 @@ app.FinalizeButton.Enable = 'off';
 while ~app.STOPButton.Value
     e.trialnum=e.trialnum+1;
     insToTxtbox(app,['trial number', num2str(e.trialnum)])
-    start(dq, 'continuous') % start data collection
+    % start(dq, 'continuous') % start data collection
     xippmex('trial', 'recording',[],[],[],e.trialnum) %start trellis
 
     r=1;
@@ -56,12 +64,12 @@ while ~app.STOPButton.Value
     w=diode(w,e,1); % incase diode was on at the end, turn it of for a frame
 
     e.intervals.iti.waitint %wait ITI
-    allDAQdata=read(dq,'all','OutputFormat','Matrix');
+%     allDAQdata=read(dq,'all','OutputFormat','Matrix');
     d.eyepos=allDAQdata(:,1:2);
     d.neural_data='placeholder';
     d.eyesync=allDAQdata(:,end);
     e.trial(e.trialnum).data=d;
-    stop(dq)
+%     stop(dq)
     xippmex('trial', 'stopped')
 end
 %% ending procedure

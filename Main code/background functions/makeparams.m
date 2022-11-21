@@ -17,6 +17,8 @@ addint(e,'T0_hold',3)
 
 addint(e,'iti',1)
 
+addint(e,'reward',2)
+
 % Set your targets
 center=[w.xCenter,w.yCenter];
 addtarg(e,'T0','position',center)

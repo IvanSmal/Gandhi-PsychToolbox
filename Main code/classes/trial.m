@@ -5,6 +5,7 @@ classdef trial < handle
         targets
         success
         intervals
+        PongState
     end
     
     methods

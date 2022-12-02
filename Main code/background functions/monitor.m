@@ -5,7 +5,7 @@ imageArray=Screen('GetImage', w.window_main,[],'frontBuffer');
 Screen('PutImage', w.window_monitor, imageArray, w.windowRect/4) % trying this incase this is faster than creating a texture first
 %% trying copyWindow command
 
-Screen('CopyWindow',w.window_main,w.window_monitor,)
+Screen('CopyWindow',w.window_main,w.window_monitor)
 %% draw eye
 
     Screen('DrawDots', w.window_monitor, [xeye/4 yeye/4], 10, w.white, [], 2);

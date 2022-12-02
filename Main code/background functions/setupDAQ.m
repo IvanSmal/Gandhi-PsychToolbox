@@ -1,6 +1,6 @@
-function [dq, dqD]=setupDAQ(app)
+function dq=setupDAQ(app)
 c=0;
-xippmex;
+dq = xippmex;
 while xippmex == 0
     insToTxtbox(app, 'could not connect to the DAQ. Retrying')
     pause(5)
@@ -17,5 +17,7 @@ while xippmex == 0
         return
     end
 end
+
+% initialize all the channels
 
 end

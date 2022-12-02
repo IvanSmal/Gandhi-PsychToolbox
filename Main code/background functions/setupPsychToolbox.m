@@ -1,4 +1,4 @@
-function w=setupPsychToolbox
+function internal=setupPsychToolbox
     Screen('Preference', 'SkipSyncTests', 2);
     Priority(2);
     
@@ -10,31 +10,26 @@ function w=setupPsychToolbox
     PsychDefaultSetup(2);
     
     % Get the screen numbers
-    w.screens = Screen('Screens');
-    
-    % Draw to the external screen if avaliable
-    w.screenNumber = max(w.screens);
+    internal.screens = Screen('Screens');
+
+    screenNum=max(internal.screens);
     
     % Define black and white
-    w.white = WhiteIndex(w.screenNumber);
-    w.black = BlackIndex(w.screenNumber);
+    internal.white = WhiteIndex(screenNum);
+    internal.black = BlackIndex(screenNum);
     
     % Open an on screen window
-    [w.window_main, w.windowRect] = PsychImaging('OpenWindow', w.screenNumber, w.black);
-
-    % Retreive the maximum priority number and set max priority
-    topPriorityLevel = MaxPriority(w.window_main);
-    Priority(topPriorityLevel); 
+    [internal.window_main, internal.windowRect] = PsychImaging('OpenWindow', screenNum, internal.black);
     
     % Get the size of the on screen window
-    [w.screenXpixels, w.screenYpixels] = Screen('WindowSize', w.window_main);
+    [internal.screenXpixels, internal.screenYpixels] = Screen('WindowSize', internal.window_main);
     
     %get size of the screen
-    [w.width, w.height]=Screen('DisplaySize',  w.screenNumber);
+    [internal.width, internal.height]=Screen('DisplaySize',  screenNum);
     
     % set up a monitoring window
-    w.window_monitor=PsychImaging('OpenWindow', 1, w.black,w.windowRect/4);
+    internal.window_monitor=PsychImaging('OpenWindow', 1, internal.black,internal.windowRect/4);
     
     % Get the centre coordinate of the window
-    [w.xCenter, w.yCenter] = RectCenter(w.windowRect);
+    [internal.xCenter, internal.yCenter] = RectCenter(internal.windowRect);
 end

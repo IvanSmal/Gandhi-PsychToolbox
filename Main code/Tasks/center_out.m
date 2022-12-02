@@ -1,4 +1,4 @@
-function [d,w]=center_out(e,w,dq)
+function [d,w]=center_out(e,w)
 %% center out
 d=trial; %initialte all data
 statecount=0; %reset statecount
@@ -29,7 +29,7 @@ w=diode(w,e,statecount);
 
 while GetSecs<(tp+T0_reach.getint)
     % get eye position
-    [xeye, yeye]=eyepos(w,dq,xeye,yeye);
+    [xeye, yeye]=eyepos(w,e,xeye,yeye);
     
     if ~hitdetect([xeye,yeye],T0.squarepos,T0.twindow)
 
@@ -38,6 +38,7 @@ while GetSecs<(tp+T0_reach.getint)
 
         % Flip to the screen
         Screen('Flip', w.window_main);
+        
         cont=0;
     else
         cont=1;
@@ -53,7 +54,7 @@ w=diode(w,e,statecount);
 
 while GetSecs<tp+T0_hold.getint
     % get eye position
-    [xeye, yeye]=eyepos(w,dq,xeye,yeye);
+    [xeye, yeye]=eyepos(w,e,xeye,yeye);
 
     if hitdetect([xeye,yeye],T0.squarepos,T0.twindow)
 
@@ -78,7 +79,7 @@ w=diode(w,e,statecount);
 
 while GetSecs<tp+T0_hold.getint
     % get eye position
-    [xeye, yeye]=eyepos(w,dq,xeye,yeye);
+    [xeye, yeye]=eyepos(w,e,xeye,yeye);
 
     if hitdetect([xeye,yeye],T1.squarepos,T1.twindow)
 
@@ -103,7 +104,7 @@ w=diode(w,e,statecount);
 
 while GetSecs<tp+T0_hold.getint
     % get eye position
-    [xeye, yeye]=eyepos(w,dq,xeye,yeye);
+    [xeye, yeye]=eyepos(w,e,xeye,yeye);
 
     if hitdetect([xeye,yeye],T1.squarepos,T1.twindow)
 

@@ -5,6 +5,7 @@ classdef experiment < handle
         subject_name = 'NAME'
         dir
         diodepos = [0,0,50,50]
+        chidx
         
         intervals
         targets % database of targets to use in tasks

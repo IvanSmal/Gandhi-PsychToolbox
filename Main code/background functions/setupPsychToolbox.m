@@ -32,4 +32,7 @@ function internal=setupPsychToolbox
     
     % Get the centre coordinate of the window
     [internal.xCenter, internal.yCenter] = RectCenter(internal.windowRect);
+
+    % make the first trial run
+    internal.runtrial=1;
 end

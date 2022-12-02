@@ -23,7 +23,7 @@ classdef experiment < handle
         end
 
         function out=gettarg(e,name)
-            e.targets.(name)=target(name);            
+            out=e.targets.(name).randpos;         
         end
 
         function addint(e,name,dur, prob)
@@ -32,6 +32,10 @@ classdef experiment < handle
             else
                 e.intervals.(name)=interval(name, dur, prob);  
             end
+        end
+
+        function out=getint(e,name)
+            out=e.intervals.(name).getint;         
         end
 
         function set(e,a,b)                                                 %general set function

@@ -32,7 +32,6 @@ else
     e=makeparams(app,internal);                                                    %initialize a new experiment structure with class 'experiment'
 end
 
-
 %% Calibrate eye voltage
 internal.eye=eye(app); % init eye
 
@@ -44,27 +43,31 @@ end
 set(app.STOPButton,'Enable','on')
 app.FinalizeButton.Enable = 'off';
 
-
 while ~app.STOPButton.Value
     internal.eye=eye(app); % check for calibration change
-    tstarttime=cputime;
+    internal.tstarttime=cputime;
     e.trialnum=e.trialnum+1;
     insToTxtbox(app,['trial number', num2str(e.trialnum)])
     if dq; xippmex('trial', 'recording'); end %start trellis
 
-    r=1;
+    r=1; % logic for if you want to mix trial types
+    while internal.runtrial==1
         if r==1
-            bareMinimum(e,internal)
+            [e,internal]=bareMinimum(e,internal);
         elseif r==2
             % another task
         elseif r==3
             % another task
         end
+        Screen2('Flip',internal)
+    end
+    
+    internal.runtrial=1; % activate next trial
 
     internal=diode(internal,e,1); % incase diode was on at the end, turn it of for a frame
 
     e.intervals.iti.waitint %wait ITI
-    ttime=(cputime-tstarttime)*1000;
+    ttime=(cputime-internal.tstarttime)*1000;
     if dq 
     allDAQdata=internal.eye.geteye(ttime);
     d.eyepos=allDAQdata;

@@ -91,14 +91,14 @@ classdef eye
                     obj.xgain+obj.xoffset;
                 yeye=xippmex('cont', chidx(2),1,'1ksps')*...
                     obj.ygain+obj.yoffset;
-                seteyepos(obj,xeye,yeye)
+                seteyepos(obj,xeye,yeye);
                 out=[xeye,yeye];
             else
                 xeye=xippmex('cont', chidx(1),t,'1ksps')*...
                     obj.xgain+obj.xoffset;
                 yeye=xippmex('cont', chidx(2),t,'1ksps')*...
                     obj.ygain+obj.yoffset;
-                seteyepos(obj,xeye,yeye)
+                seteyepos(obj,xeye,yeye);
                 out=[xeye;yeye];
             end
         end

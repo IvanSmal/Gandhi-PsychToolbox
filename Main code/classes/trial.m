@@ -5,6 +5,9 @@ classdef trial < handle
         targets
         success
         intervals
+        
+        reward = struct('reward',[],'tstart',[],'int',[]);
+
         PongState
     end
     

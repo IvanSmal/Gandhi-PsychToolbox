@@ -9,5 +9,5 @@ else
 end
 
 %% extra stuff on monitor screen here
-Screen('DrawDots', internal.window_monitor, internal.eye.geteye/4, 10 , [1,1,1])
+Screen('DrawDots', internal.window_monitor, internal.eye.geteye/4, 10 , [1,1,1]);
 end

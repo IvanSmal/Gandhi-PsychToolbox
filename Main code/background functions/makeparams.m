@@ -1,4 +1,4 @@
-function e=makeparams(app,w)
+function e=makeparams(inter)
 %% non task-specific info
 e=experiment; % initialize an object
 
@@ -6,10 +6,10 @@ e=experiment; % initialize an object
 e.trialnum=0;
 
 % set subject name
-e.subject_name=get(app.SubjectNameEditField,'Value');
+e.subject_name=get(inter.app.SubjectNameEditField,'Value');
 
 % set recording directory
-e.dir=get(app.Dir,'Value');
+e.dir=get(inter.app.Dir,'Value');
 
 % Set your intervals
 addint(e,'T0_reach',5)
@@ -20,7 +20,7 @@ addint(e,'iti',1)
 addint(e,'reward',2)
 
 % Set your targets
-center=[w.xCenter,w.yCenter];
+center=[inter.xCenter,inter.yCenter];
 addtarg(e,'T0','position',center)
 addtarg(e,'T1','position',[400 300; 200 100; 10 800])
 
@@ -40,7 +40,7 @@ e.tasks.gabor.freq=3/400;
 backgroundOffset = [0 0 0 0];
 
 % make a gabor texture
-e.tasks.gabor.GabTex = CreateProceduralGabor(w.window_main, e.tasks.gabor.size(1),...
+e.tasks.gabor.GabTex = CreateProceduralGabor(inter.window_main, e.tasks.gabor.size(1),...
     e.tasks.gabor.size(2), [],...
     backgroundOffset, 1, 1);    % make gabor texture
 end

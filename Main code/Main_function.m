@@ -1,4 +1,11 @@
 function [inter,e]=Main_function(app,inter,e)
+% internal assign
+if nargin>1
+    inter=internal;
+end
+
+inter.app=app;
+
 addpath(genpath(fileparts(which('Main_function'))));                        % add subfolders with all functions
 rmpath(what('DEBUG').path) % remove DEBUG code override
 xippath=genpath(fileparts(which('xippmex')));
@@ -7,7 +14,7 @@ d=data;                                                                     %ini
 %% DEBUG??
 debug=1;
 if debug
-    insToTxtbox(app, '!!!RUNNING IN DEBUG MODE!!! YOU MIGHT (WILL) LOSE YOUR XIPPMEX PATH')
+    inter.app.insToTxtbox('!!!RUNNING IN DEBUG MODE!!! YOU MIGHT (WILL) LOSE YOUR XIPPMEX PATH')
 
     rmpath(xippath)
     addpath(what('DEBUG').path)
@@ -15,13 +22,9 @@ end
 %% set up daq. Modify the specifics in the setupDAQ function
 dq = setupDAQ(app);
 
-%% get cpu times in seconds to sync trellis to matlab
-time.matlab=getsecs;
-time.trellis=xippmex('time')/30000/60;
 
 %% set all the PsychToolbox and daq parameters in setupPsychToolbox function
-% internal assign
-inter=internal;
+
 if ~exist('w','var')                                                        %check whether the window is not already set up
     inter=setupPsychToolbox(inter);
 end
@@ -31,14 +34,14 @@ ise = evalin( 'base', 'exist(''e'',''var'') == 1' );                        %che
 if ise
     e=evalin('base','e');                                           %if data from an interrupted session exists, continue working on it
 else
-    e=makeparams(app,inter);                                                    %initialize a new experiment structure with class 'experiment'
+    e=makeparams(inter);                                                    %initialize a new experiment structure with class 'experiment'
 end
 
 %% Calibrate eye voltage
 inter.eye=eyeinfo(app); % init eye
 
 if get(app.RuncalibrationCheckBox,'Value')  
-    inter.eye = eyeCalib(inter.eye,inter,app);
+    inter.eye = inter.eye.eyeCalib(inter);
 end
 
 %% call trial types
@@ -49,23 +52,22 @@ while ~app.STOPButton.Value
     % check for calibration change
     inter.trial.tstarttime=getsecs;
     inter.trial.trialnum=inter.trial.trialnum+1;
-    insToTxtbox(app,['trial number', num2str(inter.trial.trialnum)])
+    inter.app.insToTxtbox(['trial number', num2str(inter.trial.trialnum)])
     
     if dq; xippmex('trial', 'recording'); end %start trellis
  %% ******** trial in this loop ********   
     while inter.runtrial==1 && ~app.STOPButton.Value
         tic
-%         internal.eye=eye(app); 
         [e,inter]=bareMinimum(e,inter);
         
-        Screen2('Flip',inter);
+        Screen2('Flip',inter,[],[],1);
 
-%         if app.RewardButton.Value
-%             inter.reward(inter,e.getint('reward'))
-%             app.RewardButton.Value=0;
-%         end
+        if app.RewardButton.Value
+            inter.reward(e.getint('reward'))
+            app.RewardButton.Value=0;
+        end
 
-        inter.rewcheck(app);
+        inter.rewcheck;
         drawnow
         toc
     end
@@ -73,6 +75,7 @@ while ~app.STOPButton.Value
 
     while (inter.trial.tstoptime+e.intervals.iti.getint)>getsecs %% ITI
         Screen2('Flip',inter);
+        drawnow
     end
 %% post-trial
     

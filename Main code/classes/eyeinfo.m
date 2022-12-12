@@ -1,4 +1,4 @@
-classdef eye
+classdef eyeinfo
     % Sets the properties for the position of the eye, including xgain and
     % ygain. Running obj=Eye will start the calibration process
 
@@ -13,7 +13,7 @@ classdef eye
     end
 
     methods
-        function obj=eye(app)
+        function obj=eyeinfo(app)
             obj.xgain=app.xgain.Value;
             obj.ygain=app.ygain.Value;
             

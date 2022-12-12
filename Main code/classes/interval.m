@@ -14,18 +14,6 @@ classdef interval
             end
         end
 
-        function waitint(in, prob)
-            if nargin==1
-                if in.prob >= rand
-                    pause(in.duration)
-                end
-            else
-                if prob >= rand
-                    pause(in.duration)
-                end
-            end
-        end
-
         function out=getint(in, prob)
             if nargin==1
                 if in.prob >= rand

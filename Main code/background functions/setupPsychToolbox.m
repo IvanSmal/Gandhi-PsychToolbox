@@ -1,6 +1,6 @@
 function in=setupPsychToolbox(in)
     Screen('Preference', 'SkipSyncTests', 2);
-    Priority(2);
+%     Priority(2);
     
     % Clear the workspace and the screen
     sca;
@@ -37,6 +37,4 @@ function in=setupPsychToolbox(in)
     % make the first trial run
     in.runtrial=1;
 
-    %reward initial state off
-    in.rewon=0;
 end

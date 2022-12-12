@@ -7,8 +7,9 @@ function [e,internal]=bareMinimum(e,internal)
     Screen2('FillRect', internal,...
         T1.color , T1.squarepos);
 
-    if cputime>...
-            (e.getint('T0_reach')+internal.tstarttime)
+    if getsecs>...
+            (e.getint('T0_reach')+internal.trial.tstarttime)
         internal.runtrial=0;
+        internal.reward(0.1);
     end
 end

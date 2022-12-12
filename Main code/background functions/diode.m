@@ -1,4 +1,4 @@
-function internal=diode(internal,e,statecount)
+function diode(internal,e,statecount)
 if rem(statecount,2)
     d_col=[1;1;1];
 else

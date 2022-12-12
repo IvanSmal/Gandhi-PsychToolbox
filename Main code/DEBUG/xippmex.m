@@ -7,6 +7,7 @@ if nargin == 0
     out =1;
 elseif strcmp(varargin{1},'digout')
     out=varargin{3};
+    disp(out)
 elseif strcmp(varargin{1},'elec')
     out=1:1500;
 else

@@ -1,5 +1,9 @@
 classdef trial < handle
     properties
+        tstarttime
+        tstoptime = 0;
+        trialnum = 0;
+
         state
         data=data
         targets

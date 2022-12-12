@@ -16,12 +16,12 @@ end
 dq = setupDAQ(app);
 
 %% get cpu times in seconds to sync trellis to matlab
-time.matlab=cputime;
+time.matlab=getsecs;
 time.trellis=xippmex('time')/30000/60;
 
 %% set all the PsychToolbox and daq parameters in setupPsychToolbox function
 % internal assign
-inter=inter;
+inter=internal;
 if ~exist('w','var')                                                        %check whether the window is not already set up
     inter=setupPsychToolbox(inter);
 end
@@ -35,7 +35,7 @@ else
 end
 
 %% Calibrate eye voltage
-inter.eye=eye(app); % init eye
+inter.eye=eyeinfo(app); % init eye
 
 if get(app.RuncalibrationCheckBox,'Value')  
     inter.eye = eyeCalib(inter.eye,inter,app);
@@ -47,37 +47,48 @@ app.FinalizeButton.Enable = 'off';
 
 while ~app.STOPButton.Value
     % check for calibration change
-    inter.tstarttime=cputime;
-    e.trialnum=e.trialnum+1;
-    insToTxtbox(app,['trial number', num2str(e.trialnum)])
-    if dq; xippmex('trial', 'recording'); end %start trellis
-
+    inter.trial.tstarttime=getsecs;
+    inter.trial.trialnum=inter.trial.trialnum+1;
+    insToTxtbox(app,['trial number', num2str(inter.trial.trialnum)])
     
-    while inter.runtrial==1
+    if dq; xippmex('trial', 'recording'); end %start trellis
+ %% ******** trial in this loop ********   
+    while inter.runtrial==1 && ~app.STOPButton.Value
+        tic
 %         internal.eye=eye(app); 
         [e,inter]=bareMinimum(e,inter);
         
         Screen2('Flip',inter);
 
-        if app.RewardButton.Value==1
-            reward(inter,e.getint('reward'))
-            app.RewardButton.Value=0;
-        end
+%         if app.RewardButton.Value
+%             inter.reward(inter,e.getint('reward'))
+%             app.RewardButton.Value=0;
+%         end
+
+        inter.rewcheck(app);
+        drawnow
+        toc
     end
+    inter.trial.tstoptime=getsecs;
+
+    while (inter.trial.tstoptime+e.intervals.iti.getint)>getsecs %% ITI
+        Screen2('Flip',inter);
+    end
+%% post-trial
     
     inter.runtrial=1; % activate next trial
 
-    inter=diode(inter,e,1); % incase diode was on at the end, turn it of for a frame
+    diode(inter,e,1); % incase diode was on at the end, turn it of for a frame
 
-    e.intervals.iti.waitint %wait ITI
+    e.intervals.iti.getint
 
-    ttime=(cputime-inter.tstarttime)*1000;
+    ttime=(getsecs-inter.trial.tstarttime)*1000;
     if dq 
         allDAQdata=inter.eye.geteye(ttime);
         d.eyepos=allDAQdata;
         d.neural_data='placeholder';
         d.eyesync=allDAQdata(:,end);
-        e.trial(e.trialnum).data=d;
+        e.trial(inter.trial.trialnum).data=d;
         xippmex('trial', 'stopped'); 
     end 
 end

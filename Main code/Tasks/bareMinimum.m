@@ -10,6 +10,6 @@ function [e,internal]=bareMinimum(e,internal)
     if getsecs>...
             (e.getint('T0_reach')+internal.trial.tstarttime)
         internal.runtrial=0;
-        internal.reward(0.1);
+%         internal.reward(0.2);
     end
 end

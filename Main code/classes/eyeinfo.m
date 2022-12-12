@@ -21,19 +21,20 @@ classdef eyeinfo
             obj.yoffset=app.yoffset.Value;
         end
 
-        function obj = eyeCalib(obj,w,app,tp)
+        function obj = eyeCalib(obj,inter,tp)
+            app=inter.app;
             chidx=xippmex('elec','analog');
-            if nargin >3
+            if nargin >2
                 TargPos=tp;
-            elseif nargin == 3
+            elseif nargin == 2
                 TargPos=[0 0 20 20;
-                    w.screenXpixels/2-10 0 w.screenXpixels/2+10 20;
-                    w.screenXpixels-20 0 w.screenXpixels 20;
-                    w.screenXpixels-20 w.screenYpixels/2-10 w.screenXpixels w.screenYpixels/2+10;
-                    w.screenXpixels-20 w.screenYpixels-20 w.screenXpixels w.screenYpixels;
-                    w.screenXpixels/2-10 w.screenYpixels-20 w.screenXpixels/2+10 w.screenYpixels;
-                    0 w.screenYpixels-20 20 w.screenYpixels;
-                    0 w.screenYpixels/2-10 20 w.screenYpixels/2+10];
+                    inter.screenXpixels/2-10 0 inter.screenXpixels/2+10 20;
+                    inter.screenXpixels-20 0 inter.screenXpixels 20;
+                    inter.screenXpixels-20 inter.screenYpixels/2-10 inter.screenXpixels inter.screenYpixels/2+10;
+                    inter.screenXpixels-20 inter.screenYpixels-20 inter.screenXpixels inter.screenYpixels;
+                    inter.screenXpixels/2-10 inter.screenYpixels-20 inter.screenXpixels/2+10 inter.screenYpixels;
+                    0 inter.screenYpixels-20 20 inter.screenYpixels;
+                    0 inter.screenYpixels/2-10 20 inter.screenYpixels/2+10];
             else
                 TargPos=[0 0 20 20;
                     100 100 120 120;
@@ -41,8 +42,8 @@ classdef eyeinfo
             end
 
             for i=1:size(TargPos,1)
-                Screen('FillRect', w.window_main, [1 1 1], TargPos(i,:));
-                Screen('Flip', w.window_main);
+                Screen('FillRect', inter.window_main, [1 1 1], TargPos(i,:));
+                Screen('Flip', inter.window_main);
                 KbWait([], 2);
  
                 xpos(i)=xippmex('cont', chidx(1),1,'1ksps');

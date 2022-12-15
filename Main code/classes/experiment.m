@@ -1,10 +1,8 @@
 classdef experiment < handle
     
     properties
-        trialnum = 1 %the only value that should iterate outside 'trial' property
         subject_name = 'NAME'
         dir
-        diodepos = [0,0,50,50]
         chidx
         
         intervals

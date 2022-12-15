@@ -16,12 +16,12 @@ classdef trial < handle
     end
     
     methods
-        function setstate(tr, name, time, count)
-            tr.state.(name).time=time;
+        function setstate(obj, name, time, count)
+            obj.state.(name).time=time;
             if nargin == 4
-                tr.state.(name).count=count;
+                obj.state.(name).count=count;
             else
-                tr.state.(name).count=length(tr.state);
+                obj.state.(name).count=length(obj.state);
             end
         end
 

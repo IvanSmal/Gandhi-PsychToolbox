@@ -1,6 +1,6 @@
-function [inter,e]=Main_function(app,inter,e)
+function [inter,e]=Main_function(app,varargin)
 % internal assign
-if nargin>1
+if nargin<2
     inter=internal;
 end
 
@@ -57,7 +57,6 @@ while ~app.STOPButton.Value
     if dq; xippmex('trial', 'recording'); end %start trellis
  %% ******** trial in this loop ********   
     while inter.runtrial==1 && ~app.STOPButton.Value
-        tic
         [e,inter]=bareMinimum(e,inter);
         
         Screen2('Flip',inter,[],[],1);
@@ -69,7 +68,6 @@ while ~app.STOPButton.Value
 
         inter.rewcheck;
         drawnow
-        toc
     end
     inter.trial.tstoptime=getsecs;
 
@@ -80,12 +78,14 @@ while ~app.STOPButton.Value
 %% post-trial
     
     inter.runtrial=1; % activate next trial
-
-    diode(inter,e,1); % incase diode was on at the end, turn it of for a frame
-
-    e.intervals.iti.getint
+    
+    if inter.diode_on==1 % incase diode was on at the end, turn it off
+        inter.diodeflip
+        Screen2('Flip',inter);
+    end 
 
     ttime=(getsecs-inter.trial.tstarttime)*1000;
+    e.trial(inter.trial.trialnum)=inter.trial;
     if dq 
         allDAQdata=inter.eye.geteye(ttime);
         d.eyepos=allDAQdata;
@@ -97,7 +97,7 @@ while ~app.STOPButton.Value
 end
 %% ending procedure
 
-savestate(e)
+app.savestate(e,inter)
 
 set(app.STOPButton,'enable','off')
 

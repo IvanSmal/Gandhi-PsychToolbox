@@ -2,9 +2,6 @@ function e=makeparams(inter)
 %% non task-specific info
 e=experiment; % initialize an object
 
-% rester trialnum
-e.trialnum=0;
-
 % set subject name
 e.subject_name=get(inter.app.SubjectNameEditField,'Value');
 

@@ -57,6 +57,7 @@ while ~app.STOPButton.Value
     if dq; xippmex('trial', 'recording'); end %start trellis
  %% ******** trial in this loop ********   
     while inter.runtrial==1 && ~app.STOPButton.Value
+        
         [e,inter]=bareMinimum(e,inter);
         
         Screen2('Flip',inter,[],[],1);
@@ -97,7 +98,7 @@ while ~app.STOPButton.Value
 end
 %% ending procedure
 
-app.savestate(e,inter)
+app.savestate(inter,e)
 
 set(app.STOPButton,'enable','off')
 

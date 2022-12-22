@@ -9,12 +9,10 @@ classdef trial < handle
         targets
         success
         intervals
-        
-        reward = struct('reward',[],'tstart',[],'int',[]);
 
         PongState
     end
-    
+
     methods
         function setstate(obj, name, time, count)
             obj.state.(name).time=time;
@@ -25,10 +23,21 @@ classdef trial < handle
             end
         end
 
-        function setd(d,prop,varargin)
-            for i=3:nargin
-                d.(prop).(inputname(i))=varargin{i-2};
+        function obj = insert(obj,field,varargin)
+            for i = 1:nargin-2
+                if isempty(inputname(i+2))
+                    name=[class(varargin{i}),num2str(varargin{i})];
+                else
+                    name=inputname(i+2);
+                end
+                if length(obj)==1
+                    obj.(field).(name)=varargin{i};
+                else
+                    obj(end).(field).(name)=varargin{i};
+                end
             end
         end
+
+
     end
 end

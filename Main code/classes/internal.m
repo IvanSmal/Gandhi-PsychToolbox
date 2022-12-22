@@ -15,7 +15,10 @@ classdef internal < dynamicprops
         height
         xCenter
         yCenter
+
         runtrial
+        trialstarted = 0
+
         eye % maybe move to "experiment"
         rew = struct('rewon',0);
         trial = trial;
@@ -78,6 +81,10 @@ classdef internal < dynamicprops
 
         end
 
+        function out = checkstate(obj,state)
+            out = strcmp(state, obj.activestatename);
+        end
+
         function diodeflip(obj)
             if ~obj.diode_on
                 d_col=[1;1;1];
@@ -89,8 +96,8 @@ classdef internal < dynamicprops
             Screen2('FillRect', obj, d_col, obj.diode_pos);
         end
 
-        function out = checkint(obj, int)
-            out = obj.activestatetime + int;
+        function out = checkint(obj, state, int)           
+            out = strcmp(state, obj.activestatename) && (getsecs < obj.activestatetime + int);
         end
     end
 end

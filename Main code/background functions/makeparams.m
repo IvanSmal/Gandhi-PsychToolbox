@@ -1,43 +1,23 @@
 function e=makeparams(inter)
 %% non task-specific info
-e=experiment; % initialize an object
-
-% set subject name
-e.subject_name=get(inter.app.SubjectNameEditField,'Value');
-
-% set recording directory
-e.dir=get(inter.app.Dir,'Value');
+e=experiment; % initialize the object
+e.subject_name = inter.app.SubjectNameEditField.Value;
+e.dir = inter.app.Dir.Value;
 
 % Set your intervals
-addint(e,'T0_reach',5)
-addint(e,'T0_hold',3)
+addint(e,'T0_reach',1)
+addint(e,'T0_hold',2)
+addint(e,'T1_reach',1)
+addint(e,'T1_hold',2)
 
-addint(e,'iti',1)
+addint(e,'iti',2)
 
-addint(e,'reward',2)
+addint(e,'reward',0.2)
 
-% Set your targets
+% Set your targets. if doing target logic inside the trial, don't forget to
+% add a targ object into your trial structure
 center=[inter.xCenter,inter.yCenter];
-addtarg(e,'T0','position',center)
-addtarg(e,'T1','position',[400 300; 200 100; 10 800])
+addtarg(e,'T0','position',center, 'color', [0 1 0])
+addtarg(e,'T1','position',[40 30; 20 10; 10 80])
 
-%% center-out parameters
-e.tasks.imageTrials.brightess=[];
-
-%% gabor parameters
-% gabor size and stuff
-e.tasks.gabor.size=[400 400];
-e.tasks.gabor.orientation = [0 45 90 135 180 225 270 315];
-e.tasks.gabor.contrast = 0.8;
-e.tasks.gabor.aspectRatio = 1.0;
-e.tasks.gabor.phase = 10;
-e.tasks.gabor.sigma = 400/5;
-e.tasks.gabor.freq=3/400;
-
-backgroundOffset = [0 0 0 0];
-
-% make a gabor texture
-e.tasks.gabor.GabTex = CreateProceduralGabor(inter.window_main, e.tasks.gabor.size(1),...
-    e.tasks.gabor.size(2), [],...
-    backgroundOffset, 1, 1);    % make gabor texture
 end

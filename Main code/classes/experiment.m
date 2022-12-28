@@ -1,7 +1,7 @@
 classdef experiment < handle
     
     properties
-        subject_name = 'NAME'
+        subject_name
         dir
         chidx
         
@@ -16,8 +16,8 @@ classdef experiment < handle
 
     methods 
         function addtarg(e,name,varargin)
-            outcells=varargin;
-            e.targets.(name)=target(name,outcells);            
+            outcells={'name', name, varargin{:}};
+            e.targets.(name)=target(outcells{:});            
         end
 
         function out=gettarg(e,name)

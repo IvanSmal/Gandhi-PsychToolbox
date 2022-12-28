@@ -15,7 +15,10 @@ classdef internal < dynamicprops
         height
         xCenter
         yCenter
+
         runtrial
+        trialstarted = 0
+
         eye % maybe move to "experiment"
         rew = struct('rewon',0);
         trial = trial;
@@ -25,6 +28,7 @@ classdef internal < dynamicprops
 
         diode_pos = [0,0,50,50]
         diode_on = 0;
+        diode_color= [1,1,1];
     end
 
     methods
@@ -64,9 +68,7 @@ classdef internal < dynamicprops
             if nargin < 3
                 count=length(obj.trial.state);
             end
-            if obj.trial.state.(name).count~=count
-                diodeflip(obj)
-            end
+
             obj.trial.state.(name).time=getsecs;
 
             obj.trial.state.(name).count=count;
@@ -76,21 +78,27 @@ classdef internal < dynamicprops
                 obj.activestatename = name;
             end
 
+            obj.diodeflip
+
+        end
+
+        function out = checkstate(obj,state)
+            out = strcmp(state, obj.activestatename);
         end
 
         function diodeflip(obj)
             if ~obj.diode_on
-                d_col=[1;1;1];
+                obj.diode_color=[1;1;1];
                 obj.diode_on = 1;
             else
-                d_col=[0;0;0];
+                obj.diode_color=[0;0;0];
                 obj.diode_on = 0;
             end
-            Screen2('FillRect', obj, d_col, obj.diode_pos);
+%             Screen2('FillRect', obj, d_col, obj.diode_pos);
         end
 
-        function out = checkint(obj, int)
-            out = obj.activestatetime + int;
+        function out = checkint(obj, state, int)           
+            out = strcmp(state, obj.activestatename) && (getsecs < obj.activestatetime + int);
         end
     end
 end

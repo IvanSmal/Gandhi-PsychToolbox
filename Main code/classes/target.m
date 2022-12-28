@@ -1,6 +1,6 @@
 classdef target < handle
     properties
-        name='T_example'
+        name
         size = [0 0 50 50]
         position = [0 0; 10 10; 20 20]
         twindow = 100;
@@ -11,14 +11,12 @@ classdef target < handle
         texture
     end
     methods
-        function t=target(name,varargin)
+        function t=target(varargin)
             if nargin ==0
                 t.name='T_example';
-            elseif nargin ==1
-                t.name=name;
             else
-                for i=1:2:length(varargin{:})
-                    t.(varargin{:}{i})=varargin{:}{i+1};
+                for i=1:2:length(varargin)
+                    t.(varargin{i})=varargin{i+1};
                 end
             end
         end

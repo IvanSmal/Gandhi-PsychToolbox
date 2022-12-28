@@ -57,10 +57,10 @@ while ~app.STOPButton.Value
     if dq; xippmex('trial', 'recording'); end %start trellis
  %% ******** trial in this loop ********   
     while inter.runtrial==1 && ~app.STOPButton.Value
+        tic
+        [e,inter]=sound_task(e,inter);
         
-        [e,inter]=bareMinimum(e,inter);
-        
-        Screen2('Flip',inter,[],[],1);
+        Screen2('Flip',inter,[],[],2);
 
         if app.RewardButton.Value
             inter.reward(e.getint('reward'))
@@ -69,6 +69,7 @@ while ~app.STOPButton.Value
 
         inter.rewcheck;
         drawnow
+        toc
     end
     inter.trial.tstoptime=getsecs;
 
@@ -82,7 +83,7 @@ while ~app.STOPButton.Value
     
     if inter.diode_on==1 % incase diode was on at the end, turn it off
         inter.diodeflip
-        Screen2('Flip',inter);
+        Screen2('Flip',inter,[],[],2);
     end 
 
     ttime=(getsecs-inter.trial.tstarttime)*1000;

@@ -10,7 +10,7 @@ classdef trial < handle
         success
         intervals
 
-        PongState
+        UserDefined =[]
     end
 
     methods

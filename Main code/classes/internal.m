@@ -22,6 +22,7 @@ classdef internal < dynamicprops
         eye % maybe move to "experiment"
         rew = struct('rewon',0);
         trial = trial;
+        trialnumpersistent=0;
 
         activestatetime=[]
         activestatename = 'null';

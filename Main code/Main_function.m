@@ -51,14 +51,15 @@ app.FinalizeButton.Enable = 'off';
 while ~app.STOPButton.Value
     % check for calibration change
     inter.trial.tstarttime=getsecs;
-    inter.trial.trialnum=inter.trial.trialnum+1;
+    inter.trialnumpersistent = inter.trialnumpersistent+1;
+    inter.trial.trialnum=inter.trialnumpersistent;
     inter.app.insToTxtbox(['trial number', num2str(inter.trial.trialnum)])
     
     if dq; xippmex('trial', 'recording'); end %start trellis
  %% ******** trial in this loop ********   
     while inter.runtrial==1 && ~app.STOPButton.Value
         tic
-        [e,inter]=sound_task(e,inter);
+        [e,inter]=bareMinimum(e,inter);
         
         Screen2('Flip',inter,[],[],2);
 
@@ -85,17 +86,20 @@ while ~app.STOPButton.Value
         inter.diodeflip
         Screen2('Flip',inter,[],[],2);
     end 
+    inter.trial.tstoptime=getsecs;
 
-    ttime=(getsecs-inter.trial.tstarttime)*1000;
+    ttime=(inter.trial.tstoptime-inter.trial.tstarttime)*1000;
+
+    d.eyepos=inter.eye.geteye(ttime);
+    d.neural_data='placeholder';
+    d.eyesync=xippmex('cont',10241,ttime,'1ksps');
+    inter.trial.data=d;
+
     e.trial(inter.trial.trialnum)=inter.trial;
-    if dq 
-        allDAQdata=inter.eye.geteye(ttime);
-        d.eyepos=allDAQdata;
-        d.neural_data='placeholder';
-        d.eyesync=allDAQdata(:,end);
-        e.trial(inter.trial.trialnum).data=d;
-        xippmex('trial', 'stopped'); 
-    end 
+    disp(inter.trial.trialnum)
+    xippmex('trial', 'stopped'); 
+
+    inter.trial=trial; 
 end
 %% ending procedure
 

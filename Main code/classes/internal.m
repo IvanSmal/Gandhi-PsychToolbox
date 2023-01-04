@@ -27,7 +27,7 @@ classdef internal < dynamicprops
         activestatetime=[]
         activestatename = 'null';
 
-        diode_pos = [0,0,50,50]
+        diode_pos = [];
         diode_on = 0;
         diode_color= [1,1,1];
     end

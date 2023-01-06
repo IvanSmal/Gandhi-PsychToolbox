@@ -4,7 +4,8 @@ classdef internal < dynamicprops
 
     properties
         app
-
+        
+        % screen properties
         screens
         window_main
         window_monitor
@@ -15,21 +16,26 @@ classdef internal < dynamicprops
         height
         xCenter
         yCenter
-
+        
+        %trial metadata properties (can these be combined?)
+        trial = trial;
         runtrial
         trialstarted = 0
-
-        eye % maybe move to "experiment"
-        rew = struct('rewon',0);
-        trial = trial;
         trialnumpersistent=0;
 
-        activestatetime=[]
-        activestatename = 'null';
-
-        diode_pos = [0,0,50,50]
+        %diode properties
+        diode_pos = [];
         diode_on = 0;
         diode_color= [1,1,1];
+        
+        % foe eye movement detection
+        eye % maybe move to "experiment"
+
+        rew = struct('rewon',0);
+        
+        % For statechanges and diode flips
+        activestatetime=[]
+        activestatename = 'null';
     end
 
     methods

@@ -22,11 +22,11 @@ end
 %% set up daq. Modify the specifics in the setupDAQ function
 dq = setupDAQ(app);
 
-
 %% set all the PsychToolbox and daq parameters in setupPsychToolbox function
 
 if ~exist('w','var')                                                        %check whether the window is not already set up
     inter=setupPsychToolbox(inter);
+    inter.diode_pos=[0,inter.screenYpixels-50,50,inter.screenYpixels];
 end
 %% make parameters if none are in workspace
 ise = evalin( 'base', 'exist(''e'',''var'') == 1' );                        %check if data is in workspace
@@ -86,7 +86,6 @@ while ~app.STOPButton.Value
         inter.diodeflip
         Screen2('Flip',inter,[],[],2);
     end 
-    inter.trial.tstoptime=getsecs;
 
     ttime=(inter.trial.tstoptime-inter.trial.tstarttime)*1000;
 

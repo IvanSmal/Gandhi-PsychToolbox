@@ -3,8 +3,7 @@ classdef experiment < handle
     properties
         subject_name
         dir
-        chidx
-        
+                
         intervals
         targets % database of targets to use in tasks
         windows % database of windows to use in tasks

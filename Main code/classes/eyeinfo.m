@@ -56,17 +56,17 @@ classdef eyeinfo
             xvals=polyfit(xpos,xtarg,1);
             yvals=polyfit(ypos,ytarg,1);
 
-            obj.xgain=xvals(1);
-            app.xgain.Value=xvals(1);
+            obj.xgain=round(xvals(1),2);
+            app.xgain.Value=obj.xgain;
 
-            obj.ygain=yvals(1);
-            app.ygain.Value=yvals(1);
+            obj.ygain=round(yvals(1));
+            app.ygain.Value=obj.ygain;
             
-            obj.xoffset=xvals(2);
-            app.xoffset.Value=xvals(2);
+            obj.xoffset=round(xvals(2));
+            app.xoffset.Value=obj.xoffset;
 
-            obj.yoffset=yvals(2);
-            app.yoffset.Value=yvals(2);
+            obj.yoffset=round(yvals(2));
+            app.yoffset.Value=obj.yoffset;
         end
 
         function obj = set(obj,prop,val)

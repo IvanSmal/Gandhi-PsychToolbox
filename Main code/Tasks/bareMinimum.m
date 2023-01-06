@@ -13,10 +13,12 @@ if ~in.trialstarted
     T0_hold=e.getint('T0_hold');
     T1_reach=e.getint('T1_reach');
     T1_hold=e.getint('T0_hold');
+    TestString=num2str(T0_reach);
 
     % PUT EVERYTHING INTO OUTGOING TRIAL DATA
-    e.trial.insert('targets',T0,T1);
-    e.trial.insert('intervals',T0_reach,T0_hold,T1_reach,T1_hold);
+    in.trial.insert('targets',T0,T1);
+    in.trial.insert('intervals',T0_reach,T0_hold,T1_reach,T1_hold);
+    in.trial.insert('UserDefined',TestString);
 
     % start the trial and label the first state
     in.trialstarted = 1;

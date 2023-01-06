@@ -86,7 +86,6 @@ while ~app.STOPButton.Value
         inter.diodeflip
         Screen2('Flip',inter,[],[],2);
     end 
-    inter.trial.tstoptime=getsecs;
 
     ttime=(inter.trial.tstoptime-inter.trial.tstarttime)*1000;
 

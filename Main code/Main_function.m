@@ -1,16 +1,36 @@
 function [inter,e]=Main_function(app,varargin)
-% internal assign
-if nargin<2
-    inter=internal;
-end
-
-inter.app=app;
-
+%% initialize filepaths for xippmex and debug mode etc
 addpath(genpath(fileparts(which('Main_function'))));                        % add subfolders with all functions
 rmpath(what('DEBUG').path) % remove DEBUG code override
 xippath=genpath(fileparts(which('xippmex')));
 
-d=data;                                                                     %initialize the data structure with class 'data'
+%% set all the parameters up
+
+if nargin==1
+    inter=internal;
+    inter.app=app; %stick app in there so less stuff to path
+    inter=setupPsychToolbox(inter);
+    inter.diode_pos=[0,inter.screenYpixels-50,50,inter.screenYpixels];
+    e=makeparams(inter);   
+elseif nargin == 2
+    if isa(varargin{1},'experiment')
+        e=varargin{1};
+        e.trial=trial; %clear old data
+        inter=internal;
+        inter.app=app; %stick app in there so less stuff to path
+        inter=setupPsychToolbox(inter);
+        inter.diode_pos=[0,inter.screenYpixels-50,50,inter.screenYpixels];
+    else
+        inter=varargin{1};
+        inter.app=app;
+        e=makeparams(inter); 
+    end
+elseif nargin ==3
+    inter=varargin{1};
+    inter.app=app;
+    e=varargin{2};
+end
+
 %% DEBUG??
 debug=1;
 if debug
@@ -21,21 +41,6 @@ if debug
 end
 %% set up daq. Modify the specifics in the setupDAQ function
 dq = setupDAQ(app);
-
-%% set all the PsychToolbox and daq parameters in setupPsychToolbox function
-
-if ~exist('w','var')                                                        %check whether the window is not already set up
-    inter=setupPsychToolbox(inter);
-    inter.diode_pos=[0,inter.screenYpixels-50,50,inter.screenYpixels];
-end
-%% make parameters if none are in workspace
-ise = evalin( 'base', 'exist(''e'',''var'') == 1' );                        %check if data is in workspace
-
-if ise
-    e=evalin('base','e');                                           %if data from an interrupted session exists, continue working on it
-else
-    e=makeparams(inter);                                                    %initialize a new experiment structure with class 'experiment'
-end
 
 %% Calibrate eye voltage
 inter.eye=eyeinfo(app); % init eye
@@ -88,19 +93,21 @@ while ~app.STOPButton.Value
     end 
 
     ttime=(inter.trial.tstoptime-inter.trial.tstarttime)*1000;
-
+    d=data;   %initialize empty data
     d.eyepos=inter.eye.geteye(ttime);
     d.neural_data='placeholder';
     d.eyesync=xippmex('cont',10241,ttime,'1ksps');
     inter.trial.data=d;
 
     e.trial(inter.trial.trialnum)=inter.trial;
-    disp(inter.trial.trialnum)
     xippmex('trial', 'stopped'); 
 
     inter.trial=trial; 
 end
 %% ending procedure
+inter.app=[];
+
+e.System_Properties=inter;
 
 app.savestate(inter,e)
 

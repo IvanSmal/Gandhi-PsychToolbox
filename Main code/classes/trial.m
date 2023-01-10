@@ -1,5 +1,7 @@
 classdef trial < handle
     properties
+        ttype
+
         tstarttime
         tstoptime = 0;
         trialnum = 0;

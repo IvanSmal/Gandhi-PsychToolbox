@@ -19,9 +19,10 @@ classdef internal < dynamicprops
         
         %trial metadata properties (can these be combined?)
         trial = trial;
-        runtrial
+        runtrial 
         trialstarted = 0
         trialnumpersistent=0;
+        tlogic
 
         %diode properties
         diode_pos = [];

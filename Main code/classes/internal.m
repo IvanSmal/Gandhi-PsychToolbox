@@ -5,7 +5,7 @@ classdef internal < dynamicprops
     properties
         app
         
-        % screen properties
+        % screen properties (do these need to be saved?)
         screens
         window_main
         window_monitor

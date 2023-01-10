@@ -1,4 +1,4 @@
-classdef target < handle
+classdef target% < handle
     properties
         name
         size = [0 0 50 50]

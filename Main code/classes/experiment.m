@@ -3,6 +3,8 @@ classdef experiment < handle
     properties
         subject_name
         dir
+
+        System_Properties internal
                 
         intervals
         targets % database of targets to use in tasks

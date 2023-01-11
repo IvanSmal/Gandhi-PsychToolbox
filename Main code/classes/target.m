@@ -7,7 +7,7 @@ classdef target% < handle
         color = [1 0 0]
         shape = 'square'
         speed = 0
-        direction 
+        direction
         texture
     end
     methods
@@ -40,30 +40,57 @@ classdef target% < handle
         function out=squarepos(t, idx)
             hwidth=t.size(3)-t.size(1);
             hheight=t.size(4)-t.size(2);
-            if nargin ==1 
-                out=[t.position(1)-hwidth,...
-                    t.position(2)-hheight,...
-                    t.position(1)+hwidth,...
-                    t.position(2)+hheight];
-            else
-                out=[t.position(idx,1)-hwidth,...
-                    t.position(idx,2)-hheight,...
-                    t.position(idx,1)+hwidth,...
-                    t.position(idx,2)+hheight];
+            if t.speed==0
+                if nargin ==1
+                    out=[t.position(1)-hwidth,...
+                        t.position(2)-hheight,...
+                        t.position(1)+hwidth,...
+                        t.position(2)+hheight];
+                else
+                    out=[t.position(idx,1)-hwidth,...
+                        t.position(idx,2)-hheight,...
+                        t.position(idx,1)+hwidth,...
+                        t.position(idx,2)+hheight];
+                end
             end
+
         end
 
         function out=targpos(t, idx)
-            if nargin ==1 
+            if nargin ==1
                 out=t.position;
             else
                 out=t.position(idx,:);
             end
         end
 
-        function out=randpos(t)
-            idx=randi(size(t.position,1));
-            out=t.position(idx,:);
+        function out=randpos(t,varargin)
+            if t.speed==0
+                if nargin ==1
+                    idx=randi(size(t.position,1));
+                    out=t.position(idx,:);
+                elseif strcmp(varargin{1},'square')
+                    hwidth=t.size(3)-t.size(1);
+                    hheight=t.size(4)-t.size(2);
+                    idx=randi(size(t.position,1));
+                    out=[t.position(idx,1)-hwidth,...
+                        t.position(idx,2)-hheight,...
+                        t.position(idx,1)+hwidth,...
+                        t.position(idx,2)+hheight];
+                end
+            else
+                if nargin==2
+                    idx=randi(size(t.position,1));
+                    out=t.position(idx,:);
+                elseif strcmp(varargin{1},'square')
+                    hwidth=t.size(3)-t.size(1);
+                    hheight=t.size(4)-t.size(2);
+                    idx=randi(size(t.position,1));
+                    out=[t.position(idx,1)-hwidth,...
+                        t.position(idx,2)-hheight,...
+                        t.position(idx,1)+hwidth,...
+                        t.position(idx,2)+hheight];
+                end
+            end
         end
     end
-end

@@ -19,5 +19,6 @@ addint(e,'reward',0.2)
 center=[inter.xCenter,inter.yCenter];
 addtarg(e,'T0','position',center, 'color', [0 1 0])
 addtarg(e,'T1','position',[40 30; 20 10; 10 80])
+addtarg(e,'T0_moving','position',center,'speed',5,'direction',90)
 
 end

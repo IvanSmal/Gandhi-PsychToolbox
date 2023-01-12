@@ -2,6 +2,7 @@ function Screen2(a,internal,varargin)
 if internal.diode_on
     Screen('FillRect', internal.window_main, internal.diode_color, internal.diode_pos);
 end
+
 if nargin==2
     Screen(a, internal.window_main);
     Screen(a, internal.window_monitor);

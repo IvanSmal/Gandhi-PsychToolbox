@@ -37,6 +37,9 @@ classdef internal < dynamicprops
         % For statechanges and diode flips
         activestatetime=[]
         activestatename = 'null';
+
+        % trialtypes logic table
+        ttypeslogic
     end
 
     methods

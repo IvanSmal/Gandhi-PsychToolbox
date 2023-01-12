@@ -1,8 +1,9 @@
-function [e,in]=bareMinimum(e,in)
-persistent T0 T1 T0_reach T0_hold T1_reach T1_hold
+function [e,in]=bareMinimum_moving(e,in)
+persistent T0 T1 T0_reach T0_hold T1_reach T1_hold counter
 % set the trial parameters once per trial. this makes sure you dont set
 % them every screen flip
 if ~in.trialstarted
+    counter = 0;
 
     T0=e.targets.T0; % grab T0
     T1=e.targets.T1; %grab T1
@@ -24,12 +25,12 @@ if ~in.trialstarted
     in.trialstarted = 1;
     in.setstate('T0_reach');
 end
-
+counter=counter+1;
 %%
 %check for a condition to start the first active 'state' of the tiral
 if in.checkint('T0_reach',T0_reach)
     % Draw the rect to the screen
-    Screen2('FillRect', in, T0.color , T0.squarepos);
+    Screen2('FillRect', in, T0.color , T0.squarepos+counter*10);
 elseif in.checkstate('T0_reach') %set conditions for continuing
 
     in.setstate('T0_hold');
@@ -59,7 +60,7 @@ elseif in.checkstate('T1_hold') %set conditions for ending
     in.setstate('stop')
     in.trialstarted = 0;
     in.runtrial = 0;
-    clear T0 T1 T0_reach T0_hold T1_reach T1_hold
+    clear T0 T1 T0_reach T0_hold T1_reach T1_hold counter
 end
 
 end

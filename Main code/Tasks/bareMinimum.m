@@ -3,7 +3,7 @@ persistent T0 T1 T0_reach T0_hold T1_reach T1_hold
 % set the trial parameters once per trial. this makes sure you dont set
 % them every screen flip
 if ~in.trialstarted
-    
+
     T0=e.targets.T0; % grab T0
     T1=e.targets.T1; %grab T1
     T1.position=T1.randpos+T0.position;    

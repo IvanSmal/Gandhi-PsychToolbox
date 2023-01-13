@@ -16,6 +16,7 @@ classdef internal < dynamicprops
         height
         xCenter
         yCenter
+        flipnow = 1
         
         %trial metadata properties (can these be combined?)
         trial = trial;

@@ -21,12 +21,11 @@ classdef eyeinfo
             obj.yoffset=app.yoffset.Value;
         end
 
-        function obj = eyeCalib(obj,inter,tp)
-            app=inter.app;
+        function obj = eyeCalib(obj,inter,app,tp)
             chidx=xippmex('elec','analog');
-            if nargin >2
+            if nargin >3
                 TargPos=tp;
-            elseif nargin == 2
+            elseif nargin == 3
                 TargPos=[0 0 20 20;
                     inter.screenXpixels/2-10 0 inter.screenXpixels/2+10 20;
                     inter.screenXpixels-20 0 inter.screenXpixels 20;

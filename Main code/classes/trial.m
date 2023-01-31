@@ -12,9 +12,9 @@ classdef trial < handle
         success
         intervals
 
-        eyeparams=struct()
-
         UserDefined =[]
+
+        System_Properties
     end
 
     methods

@@ -7,7 +7,7 @@ classdef target% < handle
         color = [1 0 0]
         shape = 'square'
         speed = 0
-        direction
+        direction = 90;
         texture
     end
     methods
@@ -37,23 +37,44 @@ classdef target% < handle
             end
         end
 
-        function out=squarepos(t, idx)
+        function out=squarepos(t,mh, varargin)
             hwidth=t.size(3)-t.size(1);
             hheight=t.size(4)-t.size(2);
             if t.speed==0
-                if nargin ==1
-                    out=[t.position(1)-hwidth,...
-                        t.position(2)-hheight,...
-                        t.position(1)+hwidth,...
-                        t.position(2)+hheight];
+
+                out=[t.position(1)-hwidth,...
+                    t.position(2)-hheight,...
+                    t.position(1)+hwidth,...
+                    t.position(2)+hheight];
+
+            else
+                if nargin == 2
+                    curstate=mh.activestatename;
+                    tim=getsecs-mh.trial.state.(curstate).time;
+                    mh.targettime=mh.trial.state.(curstate).time;
                 else
-                    out=[t.position(idx,1)-hwidth,...
-                        t.position(idx,2)-hheight,...
-                        t.position(idx,1)+hwidth,...
-                        t.position(idx,2)+hheight];
+%                     try 
+%                         curstate = mh.trial.state.(varargin{:}).time;
+%                         tim=getsecs-mh.trial.state.(curstate).time;
+%                     catch
+                        tim=getsecs-mh.targettime;
+%                     end
                 end
+
+                xyadd=[t.speed*cosd(t.direction), t.speed*sind(t.direction)];
+                tempx=t.position(1)+xyadd(1)*tim;
+                tempy=t.position(2)+xyadd(2)*tim;
+
+                out=[tempx-hwidth,...
+                    tempy-hheight,...
+                    tempx+hwidth,...
+                    tempy+hheight];
             end
 
+        end
+
+        function out=getcolor(t,mh,varargin)
+            out=t.color(varargin{:});
         end
 
         function out=targpos(t, idx)
@@ -79,7 +100,7 @@ classdef target% < handle
                         t.position(idx,2)+hheight];
                 end
             else
-                if nargin==2
+                if nargin==1
                     idx=randi(size(t.position,1));
                     out=t.position(idx,:);
                 elseif strcmp(varargin{1},'square')
@@ -93,5 +114,6 @@ classdef target% < handle
                 end
             end
         end
+
     end
 end

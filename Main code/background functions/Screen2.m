@@ -13,4 +13,6 @@ end
 
 %% extra stuff on monitor screen here
 Screen('DrawDots', in.window_monitor, in.eye.geteye/4, 10 , [1,1,1]);
+Screen('TextSize', in.window_monitor,9);
+Screen('DrawText', in.window_monitor, in.activestatename, 5, 5 , [1,1,1]);
 end

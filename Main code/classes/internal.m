@@ -1,10 +1,13 @@
-classdef internal < dynamicprops
+classdef internal < handle
     %INTERNAL Summary of this class goes here
     %   Detailed explanation goes here
 
     properties
-        app
-        
+        %% trial properties to pick from. This is user-defined parameters  
+        intervals
+        targets % database of targets to use in tasks
+
+
         % screen properties (do these need to be saved?)
         screens
         window_main
@@ -16,7 +19,8 @@ classdef internal < dynamicprops
         height
         xCenter
         yCenter
-        flipnow = 1
+        movie
+        tex
         
         %trial metadata properties (can these be combined?)
         trial = trial;
@@ -38,6 +42,7 @@ classdef internal < dynamicprops
         % For statechanges and diode flips
         activestatetime=[]
         activestatename = 'null';
+        targettime
 
         % trialtypes logic table
         ttypeslogic
@@ -110,8 +115,57 @@ classdef internal < dynamicprops
         end
 
         function out = checkint(obj, state, int)           
-            out = strcmp(state, obj.activestatename) && (getsecs < obj.activestatetime + int);
+            out = strcmp(state, obj.activestatename) && (getsecs < obj.activestatetime + obj.trialint(int));            
         end
+
+        %% methods from old "experiment" structure
+        function addtarg(e,name,varargin)
+            outcells={'name', name, varargin{:}};
+            e.targets.(name)=target(outcells{:});            
+        end
+
+        function out=gettarg(e,name)
+            out=e.targets.(name).randpos;         
+        end
+
+        function addint(e,name,dur, prob)
+            if nargin ==3
+                e.intervals.(name)=interval(name, dur);
+            else
+                e.intervals.(name)=interval(name, dur, prob);  
+            end
+        end
+
+        function out=getint(e,name)
+            out=e.intervals.(name).getint;         
+        end
+
+        function out=trialint(e,name)
+            out=e.trial.intervals.(name);         
+        end
+        
+        function out=trialtarg(obj,name,arg,varargin)
+            out=obj.trial.targets.(name).(arg)(obj,varargin{:});         
+        end
+
+        function set(e,a,b)                                                 %general set function
+            for i=length(e)
+                e(i).(a)=b;
+            end
+        end
+
+        function adddata(e,d)                                               %dump data in
+            e.trial(e.trialnum).data=d;
+        end
+
+        function targinfo(e)
+            flds=fields(e.targets);
+            for i=1:length(flds)
+                disp(e.targets.(flds{i}).name)
+                disp(e.targets.(flds{i}).position)
+            end
+        end
+
     end
 end
 

@@ -3,6 +3,7 @@ classdef interval
         name = 'example';
         duration = 200;
         prob = 1;
+        sound = 0;
     end
     methods
         function int = interval(name,dur,prob)

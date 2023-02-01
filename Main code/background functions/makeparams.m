@@ -16,7 +16,10 @@ mh.addint('reward',0.2)
 center=[mh.xCenter,mh.yCenter];
 mh.addtarg('T0','position',center, 'color', [0 1 0])
 mh.addtarg('T1','position',[100 50; -50 -100; 10 80])
-mh.addtarg('T0_moving','position',center,'speed',100,'direction',90, 'color', [0 1 0])
-mh.addtarg('T1_moving','position',center,'speed',200,'direction',180, 'color', [1 1 0])
+mh.addtarg('T0_moving','position',center,'speed',100,'direction',[90;0;180;270], 'color', [0 1 0])
+mh.addtarg('T1_moving',...
+    'position',center,...
+    'custompath_x', '(x)+(sin(t)*200)',...
+    'custompath_y', '(y)+(sin(t)*10)')
 
 end

@@ -124,10 +124,6 @@ classdef internal < handle
             e.targets.(name)=target(outcells{:});            
         end
 
-        function out=gettarg(e,name)
-            out=e.targets.(name).randpos;         
-        end
-
         function addint(e,name,dur, prob)
             if nargin ==3
                 e.intervals.(name)=interval(name, dur);
@@ -165,7 +161,19 @@ classdef internal < handle
                 disp(e.targets.(flds{i}).position)
             end
         end
-
+        
+        function out=gettarg(obj,targname)
+            temptarg=obj.targets.(targname);
+            tempprops=properties(temptarg);
+            for i=1:numel(tempprops)
+                numvals=size(temptarg.(tempprops{i}),1);
+                if numvals>0
+                    randidx=randi(numvals);
+                    temptarg.(tempprops{i})=temptarg.(tempprops{i})(randidx,:);
+                end
+            end
+            out=temptarg;
+        end
     end
 end
 

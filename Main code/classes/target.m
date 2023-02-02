@@ -1,8 +1,9 @@
 classdef target% < handle
     properties
         name
-        size = [0 0 50 50]
+        size = [0 0 5 5]
         position = [0 0; 10 10; 20 20]
+        final_position
         twindow = 100;
         color = [1 0 0]
         shape = 'square'
@@ -22,7 +23,7 @@ classdef target% < handle
                 end
             end
         end
-        
+
         function addpos(t,pos)
             t.position=[t.position; pos];
         end
@@ -33,6 +34,7 @@ classdef target% < handle
             if targ.speed==0 && isempty(targ.custompath_x)
 
                 temppos=targ.position;
+                targ.final_position=temppos;
 
             else
                 if nargin == 2
@@ -40,7 +42,7 @@ classdef target% < handle
                     tim=getsecs-mh.trial.state.(curstate).time;
                     mh.targettime=mh.trial.state.(curstate).time;
                 else
-                    try 
+                    try
                         curstate = mh.trial.state.(varargin{:}).time;
                         tim=getsecs-mh.trial.state.(curstate).time;
                     catch
@@ -54,70 +56,43 @@ classdef target% < handle
                     tempy=targ.position(2)+xyadd(2)*tim;
 
                     temppos=[tempx tempy];
+                    targ.final_position=temppos;
                 else
-                    disp('here')
                     xf=@(t,x) eval(targ.custompath_x);
                     yf=@(t,y) eval(targ.custompath_y);
-                    
+
                     tempx=xf(tim,targ.position(1));
                     tempy=yf(tim,targ.position(2));
 
                     temppos=[tempx tempy];
+                    targ.final_position=temppos;
                 end
             end
-            
-            if matches(targ.shape,'square',IgnoreCase=true)
-                out=squarepos(temppos);
+
+            if matches(targ.shape,'square',IgnoreCase=true) ||...
+                    matches(targ.shape,'circle',IgnoreCase=true)
+                out=targ.squarepos(temppos);
             end
         end
 
         function out=squarepos(targ,temppos)
             hwidth=targ.size(3)-targ.size(1);
             hheight=targ.size(4)-targ.size(2);
-            if targ.speed==0 && isempty(targ.custompath_x)
-
-                out=[targ.position(1)-hwidth,...
-                    targ.position(2)-hheight,...
-                    targ.position(1)+hwidth,...
-                    targ.position(2)+hheight];
-
-            else
-                if nargin == 2
-                    curstate=mh.activestatename;
-                    tim=getsecs-mh.trial.state.(curstate).time;
-                    mh.targettime=mh.trial.state.(curstate).time;
-                else
-                    try 
-                        curstate = mh.trial.state.(varargin{:}).time;
-                        tim=getsecs-mh.trial.state.(curstate).time;
-                    catch
-                        tim=getsecs-mh.targettime;
-                    end
-                end
-
-                if isempty(targ.custompath_x)
-                    xyadd=[targ.speed*cosd(targ.direction), targ.speed*sind(targ.direction)];
-                    tempx=targ.position(1)+xyadd(1)*tim;
-                    tempy=targ.position(2)+xyadd(2)*tim;
-                else
-                    disp('here')
-                    xf=@(t,x) eval(targ.custompath_x);
-                    yf=@(t,y) eval(targ.custompath_y);
-                    
-                    tempx=xf(tim,targ.position(1));
-                    tempy=yf(tim,targ.position(2));
-                end
 
 
-                out=[tempx-hwidth,...
-                    tempy-hheight,...
-                    tempx+hwidth,...
-                    tempy+hheight];
-            end
+            out=[temppos(1)-hwidth,...
+                temppos(2)-hheight,...
+                temppos(1)+hwidth,...
+                temppos(2)+hheight];
         end
 
         function out=getcolor(t,mh,varargin)
             out=t.color(varargin{:});
+        end
+
+        function out=gettexture(t,mh,varargin)
+%                 out=Screen('MakeTexture', mh.window_main, t.texture);
+            out=t.texture;
         end
 
         function out=targpos(t, idx)

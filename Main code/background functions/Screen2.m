@@ -8,9 +8,7 @@ if nargin==2
     Screen(a, in.window_monitor);
 else
     Screen(a, in.window_main,varargin{:});
-
     Screen(a, in.window_monitor,varargin{1},varargin{2}/4,varargin{3:end});
-
 end
 
 %% extra stuff on monitor screen here

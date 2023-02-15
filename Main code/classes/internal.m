@@ -19,6 +19,8 @@ classdef internal < handle
         height
         xCenter
         yCenter
+        texture_main
+        texture_monitor
         movie
         tex
         
@@ -118,6 +120,18 @@ classdef internal < handle
             out = strcmp(state, obj.activestatename) && (getsecs < obj.activestatetime + obj.trialint(int));            
         end
 
+        function out=checkeye(obj,targ)
+            howfareye=obj.trialtarg(targ,'getpos','center')-obj.eye.geteye;
+            hypoteye=hypot(howfareye(1),howfareye(2));
+            out=obj.trial.targets.(targ).window>hypoteye;
+        end
+        
+        function stoptrial(obj,success)
+            obj.setstate('stop')
+            obj.trialstarted = 0;
+            obj.runtrial = 0;
+            obj.trial.success=success;
+        end
         %% methods from old "experiment" structure
         function addtarg(e,name,varargin)
             outcells={'name', name, varargin{:}};
@@ -153,15 +167,7 @@ classdef internal < handle
         function adddata(e,d)                                               %dump data in
             e.trial(e.trialnum).data=d;
         end
-
-        function targinfo(e)
-            flds=fields(e.targets);
-            for i=1:length(flds)
-                disp(e.targets.(flds{i}).name)
-                disp(e.targets.(flds{i}).position)
-            end
-        end
-        
+      
         function out=gettarg(obj,targname)
             temptarg=obj.targets.(targname);
             tempprops=properties(temptarg);
@@ -171,6 +177,10 @@ classdef internal < handle
                     randidx=randi(numvals);
                     temptarg.(tempprops{i})=temptarg.(tempprops{i})(randidx,:);
                 end
+            end
+            if ~isempty(temptarg.image)
+                Screen('Close')
+                temptarg.texture=Screen('MakeTexture', obj.window_main,temptarg.image{1});
             end
             out=temptarg;
         end

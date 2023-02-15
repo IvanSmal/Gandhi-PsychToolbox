@@ -1,16 +1,17 @@
-classdef target% < handle
+classdef target
     properties
         name
         size = [0 0 5 5]
         position = [0 0; 10 10; 20 20]
         final_position
-        twindow = 100;
+        window = 200;
         color = [1 0 0]
         shape = 'square'
         speed = 0
         direction = 90;
         custompath_x
         custompath_y
+        image
         texture
     end
     methods
@@ -29,6 +30,8 @@ classdef target% < handle
         end
 
         function out = getpos(targ,mh, varargin)
+            center='no';
+
             hwidth=targ.size(3)-targ.size(1);
             hheight=targ.size(4)-targ.size(2);
             if targ.speed==0 && isempty(targ.custompath_x)
@@ -45,8 +48,10 @@ classdef target% < handle
                     try
                         curstate = mh.trial.state.(varargin{:}).time;
                         tim=getsecs-mh.trial.state.(curstate).time;
+                        center=varargin(1);
                     catch
                         tim=getsecs-mh.targettime;
+                        center=varargin(1);
                     end
                 end
 
@@ -68,10 +73,14 @@ classdef target% < handle
                     targ.final_position=temppos;
                 end
             end
-
-            if matches(targ.shape,'square',IgnoreCase=true) ||...
-                    matches(targ.shape,'circle',IgnoreCase=true)
-                out=targ.squarepos(temppos);
+            
+            if matches(center,'center',IgnoreCase=true)
+                out=temppos;
+            else
+                if matches(targ.shape,'square',IgnoreCase=true) ||...
+                        matches(targ.shape,'circle',IgnoreCase=true)
+                    out=targ.squarepos(temppos);
+                end
             end
         end
 
@@ -91,7 +100,6 @@ classdef target% < handle
         end
 
         function out=gettexture(t,mh,varargin)
-%                 out=Screen('MakeTexture', mh.window_main, t.texture);
             out=t.texture;
         end
 

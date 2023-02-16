@@ -132,6 +132,10 @@ classdef internal < handle
             obj.runtrial = 0;
             obj.trial.success=success;
         end
+
+        function getmovie(obj, moviepath,varargin)
+            obj.movie=Screen('OpenMovie',obj.window_main,moviepath,varargin{:});
+        end
         %% methods from old "experiment" structure
         function addtarg(e,name,varargin)
             outcells={'name', name, varargin{:}};

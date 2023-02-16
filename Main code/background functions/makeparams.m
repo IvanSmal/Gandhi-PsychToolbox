@@ -12,6 +12,10 @@ image1={imread("assets\Texture1.jpg")};
 imsizetemp=size(image1{1});
 squareImSize=[0 0 imsizetemp(2)/4 imsizetemp(1)/4];
 
+%get a movie if you like
+moviepath=fullfile(pwd, 'assets', 'movie.mp4');
+mh.getmovie(moviepath)
+
 % Set your targets. if doing target logic inside the trial, don't forget to
 % add a targ object into your trial structure
 center=[mh.xCenter,mh.yCenter];
@@ -36,6 +40,5 @@ mh.addtarg('T1_moving',...
     'position',center,...
     'custompath_x', '(x)+(sin(t)*500)',...
     'custompath_y', '(y)+(cos(t)*500)');
-
 
 end

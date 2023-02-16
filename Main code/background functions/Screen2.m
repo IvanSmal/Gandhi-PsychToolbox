@@ -4,8 +4,10 @@ if in.diode_on
 end
 
 if nargin==2
-    Screen(a, in.window_main);
-    Screen(a, in.window_monitor);
+        Screen(a, in.window_main);
+    try
+        Screen(a, in.window_monitor);
+    end
 else
     Screen(a, in.window_main,varargin{:});
     try

@@ -2,6 +2,7 @@ function [mh]=movieTask(mh)
 % set the trial parameters once per trial. this makes sure you dont set
 % them every screen flip
 if ~mh.trialstarted
+    %git test
 
     T1=mh.gettarg('T1_moving'); %grab T1
 

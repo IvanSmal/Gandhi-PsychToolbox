@@ -3,15 +3,7 @@ classdef experiment < handle
     properties
         subject_name
         dir
-
-        System_Properties internal
-                
-        intervals
-        targets % database of targets to use in tasks
-        windows % database of windows to use in tasks
-
-        tasks=struct % shared properties for individual trial types (tasks)
-
+        
         trial=trial % individual trial info e.g. which targets were actually used. this is the one that will actually iterate
     end
 

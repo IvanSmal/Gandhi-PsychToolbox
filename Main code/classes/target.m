@@ -1,13 +1,17 @@
-classdef target% < handle
+classdef target
     properties
         name
-        size = [0 0 50 50]
+        size = [0 0 5 5]
         position = [0 0; 10 10; 20 20]
-        twindow = 100;
+        final_position
+        window = 200;
         color = [1 0 0]
         shape = 'square'
         speed = 0
-        direction
+        direction = 90;
+        custompath_x
+        custompath_y
+        image
         texture
     end
     methods
@@ -20,40 +24,83 @@ classdef target% < handle
                 end
             end
         end
+
         function addpos(t,pos)
             t.position=[t.position; pos];
         end
 
-        function rempos(t,pos)
-            if length(pos)==1
-                t.position(pos,:)=[];
+        function out = getpos(targ,mh, varargin)
+            center='no';
+
+            hwidth=targ.size(3)-targ.size(1);
+            hheight=targ.size(4)-targ.size(2);
+            if targ.speed==0 && isempty(targ.custompath_x)
+
+                temppos=targ.position;
+                targ.final_position=temppos;
+
             else
-                [~,idx]=ismember(pos,t.position,'rows');
-                if idx==0
-                    error('target position does not exist')
+                if nargin == 2
+                    curstate=mh.activestatename;
+                    tim=getsecs-mh.trial.state.(curstate).time;
+                    mh.targettime=mh.trial.state.(curstate).time;
                 else
-                    t.position(idx,:)=[];
+                    try
+                        curstate = mh.trial.state.(varargin{:}).time;
+                        tim=getsecs-mh.trial.state.(curstate).time;
+                        center=varargin(1);
+                    catch
+                        tim=getsecs-mh.targettime;
+                        center=varargin(1);
+                    end
+                end
+
+                if isempty(targ.custompath_x)
+                    xyadd=[targ.speed*cosd(targ.direction), targ.speed*sind(targ.direction)];
+                    tempx=targ.position(1)+xyadd(1)*tim;
+                    tempy=targ.position(2)+xyadd(2)*tim;
+
+                    temppos=[tempx tempy];
+                    targ.final_position=temppos;
+                else
+                    xf=@(t,x) eval(targ.custompath_x);
+                    yf=@(t,y) eval(targ.custompath_y);
+
+                    tempx=xf(tim,targ.position(1));
+                    tempy=yf(tim,targ.position(2));
+
+                    temppos=[tempx tempy];
+                    targ.final_position=temppos;
+                end
+            end
+            
+            if matches(center,'center',IgnoreCase=true)
+                out=temppos;
+            else
+                if matches(targ.shape,'square',IgnoreCase=true) ||...
+                        matches(targ.shape,'circle',IgnoreCase=true)
+                    out=targ.squarepos(temppos);
                 end
             end
         end
 
-        function out=squarepos(t, idx)
-            hwidth=t.size(3)-t.size(1);
-            hheight=t.size(4)-t.size(2);
-            if t.speed==0
-                if nargin ==1
-                    out=[t.position(1)-hwidth,...
-                        t.position(2)-hheight,...
-                        t.position(1)+hwidth,...
-                        t.position(2)+hheight];
-                else
-                    out=[t.position(idx,1)-hwidth,...
-                        t.position(idx,2)-hheight,...
-                        t.position(idx,1)+hwidth,...
-                        t.position(idx,2)+hheight];
-                end
-            end
+        function out=squarepos(targ,temppos)
+            hwidth=targ.size(3)-targ.size(1);
+            hheight=targ.size(4)-targ.size(2);
 
+
+            out=[temppos(1)-hwidth,...
+                temppos(2)-hheight,...
+                temppos(1)+hwidth,...
+                temppos(2)+hheight];
+        end
+
+        function out=getcolor(t,mh,varargin)
+            out=t.color(varargin{:});
+        end
+
+        function out=gettexture(t,mh,varargin)
+            out=t.texture;
         end
 
         function out=targpos(t, idx)
@@ -79,7 +126,7 @@ classdef target% < handle
                         t.position(idx,2)+hheight];
                 end
             else
-                if nargin==2
+                if nargin==1
                     idx=randi(size(t.position,1));
                     out=t.position(idx,:);
                 elseif strcmp(varargin{1},'square')
@@ -92,6 +139,10 @@ classdef target% < handle
                         t.position(idx,2)+hheight];
                 end
             end
+        end
+
+        function out=randir(t, varargin)
+            out=t.direction(randi(length(t.direction)));
         end
     end
 end

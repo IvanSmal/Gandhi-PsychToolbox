@@ -21,12 +21,11 @@ classdef eyeinfo
             obj.yoffset=app.yoffset.Value;
         end
 
-        function obj = eyeCalib(obj,inter,tp)
-            app=inter.app;
+        function obj = eyeCalib(obj,inter,app,tp)
             chidx=xippmex('elec','analog');
-            if nargin >2
+            if nargin >3
                 TargPos=tp;
-            elseif nargin == 2
+            elseif nargin == 3
                 TargPos=[0 0 20 20;
                     inter.screenXpixels/2-10 0 inter.screenXpixels/2+10 20;
                     inter.screenXpixels-20 0 inter.screenXpixels 20;
@@ -46,8 +45,8 @@ classdef eyeinfo
                 Screen('Flip', inter.window_main);
                 KbWait([], 2);
  
-                xpos(i)=xippmex('cont', chidx(1),1,'1ksps');
-                ypos(i)=xippmex('cont', chidx(2),1,'1ksps');
+                xpos(i)=xippmex('cont', chidx(3),1,'1ksps'); %set which eye channels are here
+                ypos(i)=xippmex('cont', chidx(4),1,'1ksps');
             end
 
             xtarg=mean(TargPos(:,[1,3]),2);
@@ -88,16 +87,16 @@ classdef eyeinfo
         function out = geteye(obj,t)
             chidx=xippmex('elec','analog');
             if nargin == 1
-                xeye=xippmex('cont', chidx(1),1,'1ksps')*...
+                xeye=xippmex('cont', chidx(3),1,'1ksps')*...
                     obj.xgain+obj.xoffset;
-                yeye=xippmex('cont', chidx(2),1,'1ksps')*...
+                yeye=xippmex('cont', chidx(4),1,'1ksps')*...
                     obj.ygain+obj.yoffset;
                 seteyepos(obj,xeye,yeye);
                 out=[xeye,yeye];
             else
-                xeye=xippmex('cont', chidx(1),t,'1ksps')*...
+                xeye=xippmex('cont', chidx(3),t,'1ksps')*...
                     obj.xgain+obj.xoffset;
-                yeye=xippmex('cont', chidx(2),t,'1ksps')*...
+                yeye=xippmex('cont', chidx(4),t,'1ksps')*...
                     obj.ygain+obj.yoffset;
                 seteyepos(obj,xeye,yeye);
                 out=[xeye;yeye];

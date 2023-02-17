@@ -2,7 +2,8 @@ function [mh]=movieTask(mh)
 % set the trial parameters once per trial. this makes sure you dont set
 % them every screen flip
 if ~mh.trialstarted
-    %git test
+    moviepath=fullfile(pwd, 'assets', 'movie.mp4');
+    mh.movie=Screen2('OpenMovie',mh.window_main,moviepath);
 
     T1=mh.gettarg('T1_moving'); %grab T1
 
@@ -16,7 +17,7 @@ if ~mh.trialstarted
     mh.trialstarted = 1;
     mh.setstate('T0_reach');
 
-    Screen2('PlayMovie',mh,1)
+    Screen2('PlayMovie',mh.movie,1)
 end
 
 %%

@@ -13,6 +13,7 @@ classdef internal < handle
         window_main
         window_monitor
         windowRect
+        monitor_rect
         screenXpixels
         screenYpixels
         width
@@ -185,6 +186,7 @@ classdef internal < handle
             if ~isempty(temptarg.image)
                 Screen('Close')
                 temptarg.texture=Screen('MakeTexture', obj.window_main,temptarg.image{1});
+                Screen('MakeTexture', obj.window_monitor,temptarg.image{1});
             end
             out=temptarg;
         end

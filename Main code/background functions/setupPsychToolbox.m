@@ -29,7 +29,7 @@ function in=setupPsychToolbox(in)
 %%
     
     % set up a monitoring window
-    in.window_monitor=PsychImaging('OpenWindow', 1, black,in.windowRect/4);
+    [in.window_monitor, in.monitor_rect]=PsychImaging('OpenWindow', 1, black,in.windowRect/4+100, [],[],[],[],[],kPsychGUIWindow);
     
     % Get the centre coordinate of the window
     [in.xCenter, in.yCenter] = RectCenter(in.windowRect);

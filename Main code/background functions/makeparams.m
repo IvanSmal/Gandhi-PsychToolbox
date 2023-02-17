@@ -13,8 +13,8 @@ imsizetemp=size(image1{1});
 squareImSize=[0 0 imsizetemp(2)/4 imsizetemp(1)/4];
 
 %get a movie if you like
-moviepath=fullfile(pwd, 'assets', 'movie.mp4');
-mh.getmovie(moviepath)
+% moviepath=fullfile(pwd, 'assets', 'movie.mp4');
+% mh.getmovie(moviepath)
 
 % Set your targets. if doing target logic inside the trial, don't forget to
 % add a targ object into your trial structure

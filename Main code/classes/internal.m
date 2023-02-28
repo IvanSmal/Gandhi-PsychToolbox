@@ -63,7 +63,7 @@ classdef internal < handle
             rewcheck(obj)
         end
 
-        function obj = rewcheck(obj)
+        function obj = rewcheck(obj,app)
             if obj.rew.rewon==1 &&...
                     getsecs<obj.rew.rewstart+obj.rew.int &&...
                     obj.rew.started==0
@@ -76,7 +76,7 @@ classdef internal < handle
                     getsecs>obj.rew.rewstart+obj.rew.int
 
                 xippmex('digout',4,0);
-                obj.app.insToTxtbox(['reward t: ' num2str(getsecs-obj.rew.rewstart)])
+                app.insToTxtbox(['reward t: ' num2str(getsecs-obj.rew.rewstart)])
                 obj.rew.rewon=0;
             end
         end
@@ -122,7 +122,8 @@ classdef internal < handle
         end
 
         function out=checkeye(obj,targ)
-            howfareye=obj.trialtarg(targ,'getpos','center')-obj.eye.geteye;
+            targpos=obj.trialtarg(targ,'getpos','center');
+            howfareye=targpos-obj.eye.geteye;
             hypoteye=hypot(howfareye(1),howfareye(2));
             out=obj.trial.targets.(targ).window>hypoteye;
         end

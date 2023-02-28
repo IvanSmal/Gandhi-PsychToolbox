@@ -1,6 +1,8 @@
-function in=setupPsychToolbox(in)
+function [in,er]=setupPsychToolbox(in)
+    er=0;
+    
     Screen('Preference', 'SkipSyncTests', 2);
-%     Priority(2);
+    Priority(2);
     
     % Clear the workspace and the screen
     sca;
@@ -11,8 +13,14 @@ function in=setupPsychToolbox(in)
     
     % Get the screen numbers
     in.screens = Screen('Screens');
-
-    screenNum=max(in.screens);
+    
+    if in.screens < 2
+        errordlg('Only found 1 screen')
+        er=1;
+        return
+    else
+        screenNum=max(in.screens);
+    end
     
     % Define black and white
     black = BlackIndex(screenNum);

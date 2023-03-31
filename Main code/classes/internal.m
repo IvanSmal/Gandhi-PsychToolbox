@@ -13,6 +13,7 @@ classdef internal < handle
         window_main
         window_monitor
         windowRect
+        monitor_rect
         screenXpixels
         screenYpixels
         width
@@ -38,6 +39,7 @@ classdef internal < handle
         
         % foe eye movement detection
         eye % maybe move to "experiment"
+        targhistory=zeros(4,10);
 
         rew = struct('rewon',0);
         
@@ -57,25 +59,19 @@ classdef internal < handle
                 obj.rew.rewstart=getsecs;
                 obj.rew.rewon=1;
                 obj.rew.int=int;
-                obj.rew.started=0;
             end
-            rewcheck(obj)
         end
 
-        function obj = rewcheck(obj)
+        function obj = rewcheck(obj,app)
             if obj.rew.rewon==1 &&...
-                    getsecs<obj.rew.rewstart+obj.rew.int &&...
-                    obj.rew.started==0
+                    getsecs<obj.rew.rewstart+obj.rew.int
 
-                xippmex('digout',4,1);
-                obj.rew.started=1;
-                beep
+                xippmex('digout',[3,4],[1,1]);
 
             elseif obj.rew.rewon==1 &&...
                     getsecs>obj.rew.rewstart+obj.rew.int
-
-                xippmex('digout',4,0);
-                obj.app.insToTxtbox(['reward t: ' num2str(getsecs-obj.rew.rewstart)])
+                xippmex('digout',[3,4],[0,0]);
+                app.insToTxtbox(['reward t: ' num2str(getsecs-obj.rew.rewstart)]);
                 obj.rew.rewon=0;
             end
         end
@@ -121,7 +117,8 @@ classdef internal < handle
         end
 
         function out=checkeye(obj,targ)
-            howfareye=obj.trialtarg(targ,'getpos','center')-obj.eye.geteye;
+            targpos=obj.trialtarg(targ,'getpos','center');
+            howfareye=targpos-obj.eye.geteye;
             hypoteye=hypot(howfareye(1),howfareye(2));
             out=obj.trial.targets.(targ).window>hypoteye;
         end
@@ -185,6 +182,7 @@ classdef internal < handle
             if ~isempty(temptarg.image)
                 Screen('Close')
                 temptarg.texture=Screen('MakeTexture', obj.window_main,temptarg.image{1});
+                Screen('MakeTexture', obj.window_monitor,temptarg.image{1});
             end
             out=temptarg;
         end

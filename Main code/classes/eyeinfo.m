@@ -1,4 +1,4 @@
-classdef eyeinfo
+classdef eyeinfo < handle
     % Sets the properties for the position of the eye, including xgain and
     % ygain. Running obj=Eye will start the calibration process
 
@@ -21,19 +21,26 @@ classdef eyeinfo
             obj.yoffset=app.yoffset.Value;
         end
 
-        function obj = eyeCalib(obj,inter,app,tp)
+        function obj = eyeCalib(obj,mh,app,tp)
             chidx=xippmex('elec','analog');
             if nargin >3
                 TargPos=tp;
             elseif nargin == 3
-                TargPos=[0 0 20 20;
-                    inter.screenXpixels/2-10 0 inter.screenXpixels/2+10 20;
-                    inter.screenXpixels-20 0 inter.screenXpixels 20;
-                    inter.screenXpixels-20 inter.screenYpixels/2-10 inter.screenXpixels inter.screenYpixels/2+10;
-                    inter.screenXpixels-20 inter.screenYpixels-20 inter.screenXpixels inter.screenYpixels;
-                    inter.screenXpixels/2-10 inter.screenYpixels-20 inter.screenXpixels/2+10 inter.screenYpixels;
-                    0 inter.screenYpixels-20 20 inter.screenYpixels;
-                    0 inter.screenYpixels/2-10 20 inter.screenYpixels/2+10];
+                TPmatrix=[0 0 20 20;
+                    mh.screenXpixels/2-10 0 mh.screenXpixels/2+10 20;
+                    mh.screenXpixels-20 0 mh.screenXpixels 20;
+                    mh.screenXpixels-20 mh.screenYpixels/2-10 mh.screenXpixels mh.screenYpixels/2+10;
+                    mh.screenXpixels-20 mh.screenYpixels-20 mh.screenXpixels mh.screenYpixels;
+                    mh.screenXpixels/2-10 mh.screenYpixels-20 mh.screenXpixels/2+10 mh.screenYpixels;
+                    0 mh.screenYpixels-20 20 mh.screenYpixels;
+                    0 mh.screenYpixels/2-10 20 mh.screenYpixels/2+10];
+
+                TPmatrix=TPmatrix/1.2;
+                TPshift=150;
+                TPmatrix=TPmatrix+TPshift;
+                TPmatrix=round(TPmatrix);
+                
+                TargPos=TPmatrix;
             else
                 TargPos=[0 0 20 20;
                     100 100 120 120;
@@ -41,8 +48,8 @@ classdef eyeinfo
             end
 
             for i=1:size(TargPos,1)
-                Screen('FillRect', inter.window_main, [1 1 1], TargPos(i,:));
-                Screen('Flip', inter.window_main);
+                Screen2('FillRect', mh, [1 1 1], TargPos(i,:));
+                Screen2('Flip', mh,[],[],2);
                 KbWait([], 2);
  
                 xpos(i)=xippmex('cont', chidx(3),1,'1ksps'); %set which eye channels are here
@@ -66,6 +73,7 @@ classdef eyeinfo
 
             obj.yoffset=round(yvals(2));
             app.yoffset.Value=obj.yoffset;
+            return %idk why this is needed
         end
 
         function obj = set(obj,prop,val)
@@ -98,7 +106,7 @@ classdef eyeinfo
                     obj.xgain+obj.xoffset;
                 yeye=xippmex('cont', chidx(4),t,'1ksps')*...
                     obj.ygain+obj.yoffset;
-                seteyepos(obj,xeye,yeye);
+                seteyepos(obj,xeye(end),yeye(end));
                 out=[xeye;yeye];
             end
         end

@@ -30,7 +30,6 @@ classdef target
         end
 
         function out = getpos(targ,mh, varargin)
-            center='no';
 
             hwidth=targ.size(3)-targ.size(1);
             hheight=targ.size(4)-targ.size(2);
@@ -40,15 +39,15 @@ classdef target
                 targ.final_position=temppos;
 
             else
-                if nargin == 2
+                if ~any(matches(varargin(:),'continue',IgnoreCase=true))
                     curstate=mh.activestatename;
                     tim=getsecs-mh.trial.state.(curstate).time;
                     mh.targettime=mh.trial.state.(curstate).time;
-                else
+                elseif any(matches(varargin(:),'continue',IgnoreCase=true))
                     try
                         curstate = mh.trial.state.(varargin{:}).time;
                         tim=getsecs-mh.trial.state.(curstate).time;
-                        center=varargin(1);
+                        
                     catch
                         tim=getsecs-mh.targettime;
                         center=varargin(1);
@@ -74,7 +73,7 @@ classdef target
                 end
             end
             
-            if matches(center,'center',IgnoreCase=true)
+            if any(matches(varargin(:),'center',IgnoreCase=true))
                 out=temppos;
             else
                 if matches(targ.shape,'square',IgnoreCase=true) ||...

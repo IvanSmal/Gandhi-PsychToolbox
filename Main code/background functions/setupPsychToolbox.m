@@ -1,6 +1,8 @@
-function in=setupPsychToolbox(in)
+function [in,er]=setupPsychToolbox(in)
+    er=0;
+    
     Screen('Preference', 'SkipSyncTests', 2);
-%     Priority(2);
+    Priority(2);
     
     % Clear the workspace and the screen
     sca;
@@ -11,8 +13,14 @@ function in=setupPsychToolbox(in)
     
     % Get the screen numbers
     in.screens = Screen('Screens');
-
-    screenNum=max(in.screens);
+    
+    if in.screens < 2
+        errordlg('Only found 1 screen')
+        er=1;
+        return
+    else
+        screenNum=max(in.screens);
+    end
     
     % Define black and white
     black = BlackIndex(screenNum);
@@ -29,7 +37,7 @@ function in=setupPsychToolbox(in)
 %%
     
     % set up a monitoring window
-    in.window_monitor=PsychImaging('OpenWindow', 1, black,in.windowRect/4);
+    [in.window_monitor, in.monitor_rect]=PsychImaging('OpenWindow', 1, black,in.windowRect/4+100, [],[],[],[],[],kPsychGUIWindow);
     
     % Get the centre coordinate of the window
     [in.xCenter, in.yCenter] = RectCenter(in.windowRect);

@@ -1,11 +1,11 @@
 function mh=makeparams(mh)
 % Set your intervals
-mh.addint('T0_reach',3)
-mh.addint('T0_hold',2)
+mh.addint('T0_reach',1)
+mh.addint('T0_hold',0.2)
 mh.addint('T1_reach',5)
 mh.addint('T1_hold',2)
-mh.addint('iti',2)
-mh.addint('reward',0.2)
+mh.addint('iti',0.5)
+mh.addint('reward',0.4)
 
 % get a picture if you like
 image1={imread("assets\Texture1.jpg")};
@@ -18,14 +18,17 @@ squareImSize=[0 0 imsizetemp(2)/4 imsizetemp(1)/4];
 
 % Set your targets. if doing target logic inside the trial, don't forget to
 % add a targ object into your trial structure
+
+
+theta=(0:45:315)';
+r=repmat(10,length(theta),1);
+
 center=[mh.xCenter,mh.yCenter];
 mh.addtarg('T0',...
-    'position',deg2pix([0,10;90,10;180,10;270,10],'pol'),...
+    'position',deg2pix([theta r;0 0],'pol'),...
+    'size',deg2pix([0.5 0.5],'size'),...
     'color', [0 1 0],...
     'shape','circle')
-
-theta=[0:45:360]';
-r=repmat(5,length(theta),1);
 
 mh.addtarg('T1',...
     'position',deg2pix([theta,r],'polar'),...

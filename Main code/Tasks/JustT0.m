@@ -30,35 +30,13 @@ if mh.checkstate('T0_reach')
     end
 end
 %%
-if mh.checkstate('T0_hold') && mh.checkeye('T0')
-    if mh.checkint('T0_hold','T0_hold')
+if mh.checkstate('T0_hold')
+    if mh.checkint('T0_hold','T0_hold') && mh.checkeye('T0')
         Screen2('FillOval', mh, mh.trialtarg('T0','getcolor'),mh.trialtarg('T0','getpos','continue'));
-    elseif mh.checkstate('T0_hold') && ~mh.checkeye('T0')
+    elseif ~mh.checkeye('T0')
         mh.stoptrial(0)
     else %set conditions for continuing
         mh.stoptrial(1)
-        mh.reward
-    end
-end
-%%
-if mh.checkstate('T1_reach')
-    if mh.checkint('T1_reach','T1_reach')
-
-        Screen2('FillRect', mh, mh.trialtarg('T1','getcolor') , mh.trialtarg('T1','getpos'));
-
-    else %set conditions for continuing
-        mh.setstate('T1_hold')
-    end
-end
-
-%%
-if mh.checkstate('T1_hold')
-    if mh.checkint('T1_hold','T1_hold')
-
-        Screen2('FillRect', mh, mh.trialtarg('T1','getcolor') , mh.trialtarg('T1','getpos','T1_reach'));
-
-    else %set conditions for ending
-        mh.stoptrial(1);
         mh.reward(mh.getint('reward'));
     end
 end

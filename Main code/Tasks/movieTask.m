@@ -2,7 +2,7 @@ function [mh]=movieTask(mh)
 % set the trial parameters once per trial. this makes sure you dont set
 % them every screen flip
 if ~mh.trialstarted
-    moviepath=fullfile(pwd, 'assets', 'movie2.mp4');
+    moviepath=fullfile(pwd, 'assets', 'movie.mp4');
     mh.movie=Screen2('OpenMovie',mh.window_main,moviepath);
 
     T1=mh.gettarg('T1_moving'); %grab T1

@@ -12,9 +12,11 @@ elseif strcmp(varargin{1},'elec')
     out=1:1500;
 elseif strcmp(varargin{1},'cont')
     if varargin{2}==3
-        [out,~]=GetMouse;
+        [temp,~]=GetMouse;
+        out=repmat(temp,1,varargin{3});
     elseif varargin{2}==4
-        [~,out]=GetMouse;
+        [~,temp]=GetMouse;
+        out=repmat(temp,1,varargin{3});
     else
         out=1:1500;
     end

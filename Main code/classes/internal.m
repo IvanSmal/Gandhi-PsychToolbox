@@ -39,6 +39,7 @@ classdef internal < handle
         
         % foe eye movement detection
         eye % maybe move to "experiment"
+        targhistory=zeros(4,10);
 
         rew = struct('rewon',0);
         
@@ -58,25 +59,19 @@ classdef internal < handle
                 obj.rew.rewstart=getsecs;
                 obj.rew.rewon=1;
                 obj.rew.int=int;
-                obj.rew.started=0;
             end
-            rewcheck(obj)
         end
 
         function obj = rewcheck(obj,app)
             if obj.rew.rewon==1 &&...
-                    getsecs<obj.rew.rewstart+obj.rew.int &&...
-                    obj.rew.started==0
+                    getsecs<obj.rew.rewstart+obj.rew.int
 
-                xippmex('digout',4,1);
-                obj.rew.started=1;
-                beep
+                xippmex('digout',[3,4],[1,1]);
 
             elseif obj.rew.rewon==1 &&...
                     getsecs>obj.rew.rewstart+obj.rew.int
-
-                xippmex('digout',4,0);
-                app.insToTxtbox(['reward t: ' num2str(getsecs-obj.rew.rewstart)])
+                xippmex('digout',[3,4],[0,0]);
+                app.insToTxtbox(['reward t: ' num2str(getsecs-obj.rew.rewstart)]);
                 obj.rew.rewon=0;
             end
         end

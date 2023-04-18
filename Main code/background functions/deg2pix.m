@@ -2,7 +2,7 @@ function out = deg2pix(in,type)
 %DEG2PIX Summary of this function goes here
 %  Detailed explanation goes here
 if ~exist('type','var')
-    type='cart';
+    type='pol';
 end
 
 % get ini params
@@ -43,7 +43,6 @@ for i=1:size(in,1)
         out(i,2)=0;
         out(i,3)=floor(((tand(desiredXY(1))*distanceFromScreen)/PixelSize(1)));
         out(i,4)=floor(((tand(desiredXY(2))*distanceFromScreen)/PixelSize(2)));
-    end
 end
 end
 

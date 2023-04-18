@@ -2,8 +2,9 @@ classdef target
     properties
         name
         size = [0 0 5 5]
-        position = [0 0; 10 10; 20 20]
+        position = [0 0]
         final_position
+        degreestype='polar'
         window = 200;
         color = [1 0 0]
         shape = 'square'
@@ -73,12 +74,14 @@ classdef target
                 end
             end
             
+            pixpos=deg2pix(temppos,targ.degreestype);
+
             if any(matches(varargin(:),'center',IgnoreCase=true))
-                out=temppos;
+                out=pixpos;
             else
                 if matches(targ.shape,'square',IgnoreCase=true) ||...
                         matches(targ.shape,'circle',IgnoreCase=true)
-                    out=targ.squarepos(temppos);
+                    out=targ.squarepos(pixpos);
                 end
             end
         end
@@ -110,7 +113,7 @@ classdef target
             end
         end
 
-        function out=randpos(t,varargin)
+        function out=randpos(t,varargin) % i don't think i use this function
             if t.speed==0
                 if nargin ==1
                     idx=randi(size(t.position,1));

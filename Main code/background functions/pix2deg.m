@@ -2,7 +2,7 @@ function out = pix2deg(in,type)
 %DEG2PIX Summary of this function goes here
 %   Detailed explanation goes here
 if ~exist('type','var')
-    type='cart';
+    type='pol';
 end
 
 %% get ini params

@@ -8,7 +8,7 @@ mh.addint('iti',0.5)
 mh.addint('reward',0.4)
 
 % get a picture if you like
-image1={imread("assets\Texture1.jpg")};
+image1={imread("assets/Texture1.jpg")};
 imsizetemp=size(image1{1});
 squareImSize=[0 0 imsizetemp(2)/4 imsizetemp(1)/4];
 

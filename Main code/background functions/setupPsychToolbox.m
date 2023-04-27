@@ -14,7 +14,7 @@ function [in,er]=setupPsychToolbox(in)
     % Get the screen numbers
     in.screens = Screen('Screens');
     
-    if in.screens < 2
+    if max(in.screens) == 0
         errordlg('Only found 1 screen')
         er=1;
         return
@@ -37,7 +37,7 @@ function [in,er]=setupPsychToolbox(in)
 %%
     
     % set up a monitoring window
-    [in.window_monitor, in.monitor_rect]=PsychImaging('OpenWindow', 1, black,in.windowRect/4+100, [],[],[],[],[],kPsychGUIWindow);
+    [in.window_monitor, in.monitor_rect]=PsychImaging('OpenWindow', 0, black,in.windowRect/4+100, [],[],[],[],[],kPsychGUIWindow);
     
     % Get the centre coordinate of the window
     [in.xCenter, in.yCenter] = RectCenter(in.windowRect);

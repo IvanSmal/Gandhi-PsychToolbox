@@ -50,6 +50,9 @@ classdef internal < handle
 
         % trialtypes logic table
         ttypeslogic
+
+        %collision stuff
+        coltimer=0
     end
 
     methods
@@ -135,6 +138,7 @@ classdef internal < handle
         end
 
         function out=targcollisioncheck(obj,t1,t2)
+            if obj.coltimer==0 || obj.coltimer==100
             t1pos=obj.trialtarg(t1,'getpos');
             t2pos=obj.trialtarg(t2,'getpos');
             
@@ -146,7 +150,19 @@ classdef internal < handle
 
             if any(ismember(t1x,t2x)) && any(ismember(t1y,t2y))
                 out=1;
+                obj.coltimer=obj.coltimer+1;
             else
+                out=0;
+                if obj.coltimer==100
+                    obj.coltimer=0;
+                end
+            end
+
+            elseif obj.coltimer==100
+                obj.coltimer=0;
+                out=0;
+            else
+                obj.coltimer=obj.coltimer+1;
                 out=0;
             end
         end

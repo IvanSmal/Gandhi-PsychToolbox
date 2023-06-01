@@ -3,8 +3,8 @@ function [mh]=bareMinimum_Moving_targets(mh)
 % them every screen flip
 if ~mh.trialstarted
 
-    T0=mh.gettarg('T0_moving'); % grab T0
-    T1=mh.gettarg('T1_moving'); %grab T1
+    T0=mh.gettarg('ball'); % grab T0
+    T1=mh.gettarg('paddle'); %grab T1
 
     % set the intervals for the trial
     T0_reach=mh.getint('T0_reach');

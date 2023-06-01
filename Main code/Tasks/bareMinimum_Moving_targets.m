@@ -29,7 +29,7 @@ end
 %check for a condition to start the first active 'state' of the tiral
 if mh.checkstate('T0_reach')
     if mh.checkint('T0_reach','T0_reach')  && ~mh.checkeye('T0')
-        Screen2('DrawTexture', mh, mh.trialtarg('T0','gettexture') ,[], mh.trialtarg('T0','getpos'));  % Draw the texture to the screen
+        Screen2('DrawTexture', mh, mh.!gi('T0','gettexture') ,[], mh.trialtarg('T0','getpos'));  % Draw the texture to the screen
     elseif ~mh.checkeye('T0')
         mh.stoptrial(0)
     else

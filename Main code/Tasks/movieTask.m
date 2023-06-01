@@ -3,7 +3,7 @@ function [mh]=movieTask(mh)
 % them every screen flip
 if ~mh.trialstarted
     moviepath=fullfile(pwd, 'assets', 'movie.mp4');
-    mh.movie=Screen2('OpenMovie',mh.window_main,moviepath);
+    mh.movie=Screen2('OpenMovie',mh,moviepath);
 
     T1=mh.gettarg('T1_moving'); %grab T1
 
@@ -24,7 +24,7 @@ end
 %check for a condition to start the first active 'state' of the tiral
 if mh.checkstate('T0_reach')
     if mh.checkint('T0_reach','T0_reach') %&& ~mh.checkeye('T0')
-        tex = Screen2('GetMovieImage', mh.window_main, mh.movie);
+        tex = Screen2('GetMovieImage', mh, mh.movie);
         Screen2('DrawTexture', mh, tex,[],mh.windowRect)
         Screen2('FillRect', mh, mh.trialtarg('T1','getcolor') , mh.trialtarg('T1','getpos'));
     else

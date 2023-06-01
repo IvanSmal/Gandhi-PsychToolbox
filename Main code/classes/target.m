@@ -3,7 +3,7 @@ classdef target
         name
         size = [0 0 5 5]
         position = [0 0]
-        final_position
+        final_position 
         degreestype='polar'
         window = 200;
         color = [1 0 0]
@@ -37,8 +37,8 @@ classdef target
             if targ.speed==0 && isempty(targ.custompath_x)
 
                 temppos=targ.position;
-                targ.final_position=temppos;
-
+                mh.trial.targets.(targ.name).final_position=temppos;
+                
             else
                 if ~any(matches(varargin(:),'continue',IgnoreCase=true))
                     curstate=mh.activestatename;
@@ -47,8 +47,7 @@ classdef target
                 elseif any(matches(varargin(:),'continue',IgnoreCase=true))
                     try
                         curstate = mh.trial.state.(varargin{:}).time;
-                        tim=getsecs-mh.trial.state.(curstate).time;
-                        
+                        tim=getsecs-mh.trial.state.(curstate).time;                        
                     catch
                         tim=getsecs-mh.targettime;
                         center=varargin(1);
@@ -61,16 +60,16 @@ classdef target
                     tempy=targ.position(2)+xyadd(2)*tim;
 
                     temppos=[tempx tempy];
-                    targ.final_position=temppos;
+                    mh.trial.targets.(targ.name).final_position=temppos;
                 else
-                    xf=@(t,x) eval(targ.custompath_x);
-                    yf=@(t,y) eval(targ.custompath_y);
+                    xf=@(mh,t,x) eval(targ.custompath_x);
+                    yf=@(mh,t,y) eval(targ.custompath_y);
 
-                    tempx=xf(tim,targ.position(1));
-                    tempy=yf(tim,targ.position(2));
+                    tempx=xf(mh,tim,targ.position(1));
+                    tempy=yf(mh,tim,targ.position(2));
 
                     temppos=[tempx tempy];
-                    targ.final_position=temppos;
+                    mh.trial.targets.(targ.name).final_position=temppos;
                 end
             end
             

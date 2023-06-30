@@ -101,7 +101,7 @@ classdef target
         end
 
         function out=gettexture(t,mh,varargin)
-            out=t.texture;
+            out=strcat('gr.target.',t.name,'.texture');
         end
 
         function out=targpos(t, idx)

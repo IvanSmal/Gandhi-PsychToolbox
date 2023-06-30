@@ -1,4 +1,4 @@
-function out=Screen2(a,mh,varargin)
+function out=Screen2_backup(a,mh,varargin)
 
 if nargin>1
     checkint2=inputname(2);

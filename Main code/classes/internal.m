@@ -85,7 +85,7 @@ classdef internal < handle
 
         
         function varargout = Screen(mh,varargin)
-            if mh.graphicssent==1 || matches(varargin{1},'Flip','IgnoreCase',true)
+            if ~matches(varargin{1},'clearbuffer','IgnoreCase',true)
                 str=string();
                 for i=1:length(varargin)
                     namecount=1;
@@ -101,16 +101,16 @@ classdef internal < handle
                         varval=strcat('''',string(inputname(namecount)),'''');
                         namecount=namecount+1;                        
                     end
-                    str=strcat(str, 'args{',num2str(i), '}=', varval, ';');
+                    str=strcat(str, 'args_udp{',num2str(i), '}=', varval, ';');
                 end
                 if matches(varargin{1},'DrawTexture')
                     varval=replace(varargin{3},'.texture','.monitortexture');
-                    str=strcat(str, 'additionalinfo{1}=', varval, ';');
+                    str=strcat(str, 'additionalinfo_udp{1}=', varval, ';');
                 end
 
                 if nargout>0
                     for i=1:nargout
-                        str=strcat(str, 'outs{',num2str(i), '}=', '''a',num2str(i), ''';');
+                        str=strcat(str, 'outs_udp{',num2str(i), '}=', '''a',num2str(i), ''';');
                     end
                 end
 
@@ -124,7 +124,8 @@ classdef internal < handle
                         varargout{i}=eval(['a' num2str(i)]);
                     end
                 end
-                flush(mh.graphicsport)
+            else
+                writeline(mh.graphicsport,'executegr.functionsbuffer=[];','0.0.0.0',2021)
             end
         end
 
@@ -138,12 +139,12 @@ classdef internal < handle
 
         function obj = rewcheck(obj,app)
             if obj.rew.rewon==1 &&...
-                    getsecs<obj.rew.rewstart+obj.rew.int
+                    getsecs<obj.rew.rewstart+obj.rew.int.duration
 
                 xippmex('digout',[3,4],[1,1]);
 
             elseif obj.rew.rewon==1 &&...
-                    getsecs>obj.rew.rewstart+obj.rew.int
+                    getsecs>obj.rew.rewstart+obj.rew.int.duration
                 xippmex('digout',[3,4],[0,0]);
                 app.insToTxtbox(['reward t: ' num2str(getsecs-obj.rew.rewstart)]);
                 obj.rew.rewon=0;
@@ -186,7 +187,7 @@ classdef internal < handle
             end
             % mh.Screen('FillRect', mh, mh.diode_color, mh.diode_pos);
             mh.evalgraphics(['gr.diode_color=' mat2str(mh.diode_color) ';'])
-            mh.WaitForGraphics;
+            % mh.WaitForGraphics;
         end
 
         function out = checkint(mh, state, int)
@@ -200,11 +201,17 @@ classdef internal < handle
             out=obj.trial.targets.(targ).window>hypoteye;
         end
 
-        function stoptrial(obj,success)
-            obj.setstate('stop')
-            obj.trialstarted = 0;
-            obj.runtrial = 0;
-            obj.trial.success=success;
+        function starttrial(mh)
+            mh.trialstarted = 1; 
+            mh.evalgraphics('gr.trialstarted=1');
+        end
+
+        function stoptrial(mh,success)
+            mh.setstate('stop')
+            mh.trialstarted = 0;            
+            mh.runtrial = 0;
+            mh.trial.success=success;
+            mh.evalgraphics('gr.trialstarted=0');
         end
 
         function getmovie(obj, moviepath,varargin)

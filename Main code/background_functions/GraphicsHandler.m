@@ -1,4 +1,10 @@
 function GraphicsHandler
+debug=0;
+if ~debug
+    rmpath('/home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/DEBUG') % remove DEBUG code override
+end
+addpath('/opt/Trellis/Tools/xippmex');
+xippmex
 %% set up udp port
 graphicsport = udpport("LocalPort",2021);
 %% set up udp callback that listens for "Screen" commands
@@ -64,7 +70,7 @@ PsychImaging('AddTask', 'General', 'UsePanelFitter', [gr.screenXpixels, gr.scree
 [gr.xCenter, gr.yCenter] = RectCenter(gr.windowRect);
 
 
-% iode stuff
+% diode stuff
 gr.diode_pos=[0,gr.screenYpixels-50,50,gr.screenYpixels];
 
 % for some reason draw a circle for a frame idk why i need to do this
@@ -85,6 +91,111 @@ writeline(graphicsport,'isGraphicsReady=1;','0.0.0.0',2020);
 %% keep function alive
 while 1
     pause(0.0001) %allow for callbacks to be checked
+    %% evaluate graphics buffer
+    if ~isempty(gr.functionsbuffer) && gr.trialstarted
+        args={};
+        outs={};
+        additionalinfo={};
+        setmet=1;
+        for i=1:length(gr.functionsbuffer)
+            v = fieldnames(gr.functionsbuffer);
+            for ii = 1 : length(v) %unwrap commands
+                eval([v{ii} '= gr.functionsbuffer.' v{ii} ';']);
+            end
+            %% check if user wants to set a graphics parameter
+            if length(args)>2 &&...
+                    (isstring(args{end-1}) || ischar(args{end-1})) &&...
+                    matches(args{end-1},'set','IgnoreCase',true)           % this is to check if the user wants to set a parameter in the graphics handler
+
+                if length(args)>=2 %this needs to change to better logic
+                    args{2}=gr.window_main;
+                    if contains(args{end},'monitor')
+                        args{2}=gr.window_monitor;
+                    end
+                end
+
+                evalstring=strcat(args{end},'=Screen(args{1:end-2});');
+                eval(evalstring);
+                setmet=0;
+            end
+            if isempty(outs) && setmet
+                if length(args) >= 2 && (isstring(args{2}) || ischar(args{2}))
+                    if length(args)==2 &&...
+                            matches(args{2},'mh') &&...
+                            ~matches(args{1},'flip','IgnoreCase',true)
+
+                        Screen(args{1},gr.window_main);
+                        Screen(args{1},gr.window_monitor);
+
+                    elseif length(args)>2 && matches(args{2},'mh')
+
+                        Screen(args{1},gr.window_main,args{3:end});
+
+                        if (isstring(args{1}) || ischar(args{1})) && matches(args{1},'DrawTexture','IgnoreCase',true)
+                            args{3}=additionalinfo{1};
+                            try
+                                Screen(args{1},gr.window_monitor,args{3:end});
+                            end
+                        else
+                            Screen(args{1},gr.window_monitor,args{3:end});
+                        end
+
+                    end
+                else
+                    Screen(args{:});
+                end
+                %% if output is requested
+            elseif ~isempty(outs) && setmet
+                a1=[];a2=[];a3=[];a4=[];a5=[];a6=[];a7=[];
+                evalstring=strcat('[',sprintf('%s,',outs{:}),']');
+
+                if length(args)>=2 %this needs to change to better logic
+                    args{2}=gr.window_main;
+                end
+
+                eval(strcat(evalstring,'=Screen(args{:});'));
+
+                outstr='';
+                for i=1:length(outs)
+                    outstr=strcat(outstr,outs{i},'=',string(eval(outs{i})),';');
+                end
+                writeline(graphicsport,strcat('mh.graphicssent=0;', outstr),'0.0.0.0',2020)
+            end
+
+            %% movie logic
+            if (isstring(args{1}) || ischar(args{1})) && matches(args{1},'PlayMovie','IgnoreCase',true)
+                gr.movieplaying=1;
+                disp('movie playing')
+            elseif (isstring(args{1}) || ischar(args{1})) && matches(args{1},'CloseMovie','IgnoreCase',true)
+                gr.movieplaying=0;
+                disp('movie closed')
+            end
+            if gr.movieplaying==1
+                gr.texture=Screen('GetMovieImage', gr.window_main, gr.movie);
+                gr.monitortexture=Screen('MakeTexture', gr.window_monitor, gr.monitormovieplaceholder);
+                disp('got texture')
+            end
+        end
+        Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
+        Screen('TextSize', gr.window_monitor,80);
+        Screen('DrawText', gr.window_monitor, gr.activestatename, 5, 5 , [255,255,255]);
+        Screen('DrawText', gr.window_monitor, num2str(gr.eye.geteye), gr.xCenter, 5 , [255,255,255]);
+
+        Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
+        Screen('Flip',gr.window_monitor);
+        Screen('Flip',gr.window_main);
+    end
+    %% we gonna be constantly flipping now
+    if ~gr.trialstarted
+        Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
+        Screen('TextSize', gr.window_monitor,80);
+        Screen('DrawText', gr.window_monitor, gr.activestatename, 5, 5 , [255,255,255]);
+        Screen('DrawText', gr.window_monitor, num2str(gr.eye.geteye), gr.xCenter, 5 , [255,255,255]);
+    
+        Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
+        Screen('Flip',gr.window_monitor);
+        Screen('Flip',gr.window_main);
+    end
 end
 %% callback function that does the graphics handling
     function getCommands(graphicsport,~)
@@ -100,106 +211,15 @@ end
 
 %% recive and execute Screen calls
     function executeScreen(graphicsport)
-        
-        setmet=1;
-        args={};
-        outs={};
-        additionalinfo={};
+
+        args_udp={};
+        outs_udp={};
+        additionalinfo_udp={};
         eval(graphicsport.UserData.in);
-        if length(args)>2 &&...
-                (isstring(args{end-1}) || ischar(args{end-1})) &&...
-                matches(args{end-1},'set','IgnoreCase',true)
 
-            if length(args)>=2 %this needs to change to better logic
-                args{2}=gr.window_main;
-                if contains(args{end},'monitor')
-                    args{2}=gr.window_monitor;
-                end
-            end
-
-            evalstring=strcat(args{end},'=Screen(args{1:end-2});');
-            eval(evalstring);
-            setmet=0;
-            gr.flipped=0;
-        end
-
-        if isempty(outs) && setmet
-            if length(args) >= 2 && (isstring(args{2}) || ischar(args{2}))
-                if length(args)==2 &&...
-                        matches(args{2},'mh') &&...
-                        ~matches(args{1},'flip','IgnoreCase',true)
-
-                    Screen(args{1},gr.window_main);
-                    Screen(args{1},gr.window_monitor);
-                    gr.flipped=0;
-
-                elseif length(args)>2 && matches(args{2},'mh')
-
-                    Screen(args{1},gr.window_main,args{3:end});
-
-                    if (isstring(args{1}) || ischar(args{1})) && matches(args{1},'DrawTexture','IgnoreCase',true)
-                        args{3}=additionalinfo{1};
-                        try
-                            Screen(args{1},gr.window_monitor,args{3:end});
-                        end
-                    end
-
-                    gr.flipped=0;
-                end
-            else
-                Screen(args{:});
-                gr.flipped=0;
-            end
-
-        elseif ~isempty(outs) && setmet
-            a1=[];a2=[];a3=[];a4=[];a5=[];a6=[];a7=[];
-            evalstring=strcat('[',sprintf('%s,',outs{:}),']');
-
-            if length(args)>=2 %this needs to change to better logic
-                args{2}=gr.window_main;
-            end
-
-            eval(strcat(evalstring,'=Screen(args{:});'));
-
-            outstr='';
-            for i=1:length(outs)
-                outstr=strcat(outstr,outs{i},'=',string(eval(outs{i})),';');
-            end
-            writeline(graphicsport,strcat('mh.graphicssent=0;', outstr),'0.0.0.0',2020)
-        end
-
-        %% movie logic
-        if (isstring(args{1}) || ischar(args{1})) && matches(args{1},'PlayMovie','IgnoreCase',true)
-            gr.movieplaying=1;
-            disp('movie playing')
-        elseif (isstring(args{1}) || ischar(args{1})) && matches(args{1},'CloseMovie','IgnoreCase',true)
-            gr.movieplaying=0;
-            disp('movie closed')
-        end
-
-        if gr.movieplaying==1
-            gr.texture=Screen('GetMovieImage', gr.window_main, gr.movie);
-            gr.monitortexture=Screen('MakeTexture', gr.window_monitor, gr.monitormovieplaceholder);
-            disp('got texture')
-            gr.flipped=0;
-        end
-
-        %% extra stuff on monitor
-        Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
-        Screen('TextSize', gr.window_monitor,80);
-        Screen('DrawText', gr.window_monitor, gr.activestatename, 5, 5 , [255,255,255]);
-        Screen('DrawText', gr.window_monitor, num2str(gr.eye.geteye), gr.xCenter, 5 , [255,255,255]);
-
-        if ~isempty(args) && setmet
-            if matches(args{1},'Flip','IgnoreCase',true) %&& gr.flipped==0
-                Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
-                Screen('Flip',gr.window_main,[],1);
-                Screen('Flip',gr.window_monitor);
-                gr.flipped=1;
-                flush(graphicsport)
-            end
-        end
-
+        gr.functionsbuffer(end+1).args=args_udp;
+        gr.functionsbuffer(end+1).outs=outs_udp;
+        gr.functionsbuffer(end+1).additionalinfo=additionalinfo_udp;
     end
 %% set eye calibration
     function seteye

@@ -26,7 +26,8 @@ classdef graphics < handle
         target
         movieplaying=0
         diode_color=[0 0 0];
-        newgraphics=0;
+        functionsbuffer=[];
+        trialstarted=0;
     end
 end
 

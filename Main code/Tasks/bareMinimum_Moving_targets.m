@@ -11,21 +11,18 @@ if ~mh.trialstarted
     mh.getint('T0_hold');
     mh.getint('T1_reach');
     mh.getint('T1_hold');
-    TestString='lol';
-
-    % PUT EVERYTHING INTO OUTGOING TRIAL DATA
-    mh.trial.insert('UserDefined',TestString);
 
     % start the trial and label the first state
-    mh.trialstarted = 1;
+    mh.starttrial
     mh.setstate('T0_reach');
 end
 
 %%
 %check for a condition to start the first active 'state' of the tiral
 if mh.checkstate('T0_reach')
+    mh.Screen('DrawTexture', mh, mh.trialtarg('T0_moving','gettexture') ,[], mh.trialtarg('T0_moving','getpos'));  % Draw the texture to the screen
     if mh.checkint('T0_reach','T0_reach')  && ~mh.checkeye('T0_moving')
-        mh.Screen('DrawTexture', mh, mh.trialtarg('T0_moving','gettexture') ,[], mh.trialtarg('T0_moving','getpos'));  % Draw the texture to the screen
+        %just chill
     elseif ~mh.checkeye('T0_moving')
         mh.stoptrial(0)
     else
@@ -35,8 +32,9 @@ if mh.checkstate('T0_reach')
 end
 %%
 if mh.checkstate('T0_hold') && mh.checkeye('T0_moving')
+    mh.Screen('FillOval', mh, mh.trialtarg('T0_moving','getcolor'),mh.trialtarg('T0_moving','getpos','continue'));
     if mh.checkint('T0_hold','T0_hold')
-        mh.Screen('FillOval', mh, mh.trialtarg('T0_moving','getcolor'),mh.trialtarg('T0_moving','getpos','continue'));
+        
     elseif mh.checkstate('T0_hold') && ~mh.checkeye('T0_moving')
         mh.stoptrial(0)
     else %set conditions for continuing
@@ -46,9 +44,8 @@ if mh.checkstate('T0_hold') && mh.checkeye('T0_moving')
 end
 %%
 if mh.checkstate('T1_reach')
+    mh.Screen('FillRect', mh, mh.trialtarg('T1_moving','getcolor') , mh.trialtarg('T1_moving','getpos'));
     if mh.checkint('T1_reach','T1_reach')
-
-        mh.Screen('FillRect', mh, mh.trialtarg('T1_moving','getcolor') , mh.trialtarg('T1_moving','getpos'));
 
     else %set conditions for continuing
         mh.setstate('T1_hold')
@@ -58,9 +55,8 @@ end
 
 %%
 if mh.checkstate('T1_hold')
+    mh.Screen('FillRect', mh, mh.trialtarg('T1_moving','getcolor') , mh.trialtarg('T1_moving','getpos','T1_reach'));
     if mh.checkint('T1_hold','T1_hold')
-
-        mh.Screen('FillRect', mh, mh.trialtarg('T1_moving','getcolor') , mh.trialtarg('T1_moving','getpos','T1_reach'));
 
     else %set conditions for ending
         mh.stoptrial(1);

@@ -1,7 +1,7 @@
 function mh=makeparams(mh)
 % Set your intervals
 mh.addint('maxtime',20)
-mh.addint('iti',0.5)
+mh.addint('iti',5)
 mh.addint('reward',0.4)
 
 % Set your targets. if doing target logic inside the trial, don't forget to
@@ -61,8 +61,6 @@ mh.addint('T0_reach',1)
 mh.addint('T0_hold',2)
 mh.addint('T1_reach',5)
 mh.addint('T1_hold',2)
-mh.addint('iti',0.5)
-mh.addint('reward',0.4)
 
 % get a picture if you like
 image1={imread("assets/Texture1.jpg")};

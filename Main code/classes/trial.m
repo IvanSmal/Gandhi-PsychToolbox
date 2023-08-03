@@ -28,16 +28,15 @@ classdef trial < handle
         end
 
         function obj = insert(obj,field,varargin)
-            for i = 1:nargin-2
-                if isempty(inputname(i+2))
-                    name=[class(varargin{i}),num2str(varargin{i})];
-                else
-                    name=inputname(i+2);
-                end
-                if length(obj)==1
-                    obj.(field).(name)=varargin{i};
-                else
-                    obj(end).(field).(name)=varargin{i};
+            for i = 1:length(varargin)
+                try
+                    if length(obj)==1
+                        obj.(field).(varargin{i}.name)=varargin{i};
+                    else
+                        obj(end).(varargin{i}.name)=varargin{i};
+                    end
+                catch
+                    obj.(field).other_data{i}=varargin{:};
                 end
             end
         end

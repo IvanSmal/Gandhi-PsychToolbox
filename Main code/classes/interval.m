@@ -15,18 +15,19 @@ classdef interval
             end
         end
 
-        function out=getint(in, prob)
+        function out=getint(in, yesname)
             if nargin==1
                 if in.prob >= rand
                     out=in.duration;
                 else
                     out=0;
                 end
-            else
-                if prob >= rand
-                    out = in.duration;
+            elseif yesname
+                out.name=in.name;
+                if in.prob >= rand
+                    out.duration = in.duration;
                 else
-                    out=0;
+                    out.duration=0;
                 end
             end
         end

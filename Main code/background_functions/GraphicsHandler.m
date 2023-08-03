@@ -4,7 +4,7 @@ if ~debug
     rmpath('/home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/DEBUG') % remove DEBUG code override
 end
 addpath('/opt/Trellis/Tools/xippmex');
-xippmex
+xippmex;
 %% set up udp port
 graphicsport = udpport("LocalPort",2021);
 %% set up udp callback that listens for "Screen" commands
@@ -96,7 +96,6 @@ while 1
         args={};
         outs={};
         additionalinfo={};
-        setmet=1;
         for i=1:length(gr.functionsbuffer)
             v = fieldnames(gr.functionsbuffer);
             for ii = 1 : length(v) %unwrap commands
@@ -107,18 +106,16 @@ while 1
                     (isstring(args{end-1}) || ischar(args{end-1})) &&...
                     matches(args{end-1},'set','IgnoreCase',true)           % this is to check if the user wants to set a parameter in the graphics handler
 
-                if length(args)>=2 %this needs to change to better logic
-                    args{2}=gr.window_main;
-                    if contains(args{end},'monitor')
-                        args{2}=gr.window_monitor;
-                    end
-                end
+                % user MUST be setting something to a window
+                args{2}=gr.window_main;
+                if contains(args{end},'monitor')
+                    args{2}=gr.window_monitor;
+                end                
 
                 evalstring=strcat(args{end},'=Screen(args{1:end-2});');
                 eval(evalstring);
-                setmet=0;
             end
-            if isempty(outs) && setmet
+            if isempty(outs)
                 if length(args) >= 2 && (isstring(args{2}) || ischar(args{2}))
                     if length(args)==2 &&...
                             matches(args{2},'mh') &&...
@@ -145,7 +142,7 @@ while 1
                     Screen(args{:});
                 end
                 %% if output is requested
-            elseif ~isempty(outs) && setmet
+            elseif ~isempty(outs)
                 a1=[];a2=[];a3=[];a4=[];a5=[];a6=[];a7=[];
                 evalstring=strcat('[',sprintf('%s,',outs{:}),']');
 
@@ -156,8 +153,8 @@ while 1
                 eval(strcat(evalstring,'=Screen(args{:});'));
 
                 outstr='';
-                for i=1:length(outs)
-                    outstr=strcat(outstr,outs{i},'=',string(eval(outs{i})),';');
+                for ii=1:length(outs)
+                    outstr=strcat(outstr,outs{ii},'=',string(eval(outs{ii})),';');
                 end
                 writeline(graphicsport,strcat('mh.graphicssent=0;', outstr),'0.0.0.0',2020)
             end
@@ -179,13 +176,13 @@ while 1
         Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
         Screen('TextSize', gr.window_monitor,80);
         Screen('DrawText', gr.window_monitor, gr.activestatename, 5, 5 , [255,255,255]);
-        Screen('DrawText', gr.window_monitor, num2str(gr.eye.geteye), gr.xCenter, 5 , [255,255,255]);
+        Screen('DrawText', gr.window_monitor, num2str(gr.eye.geteye), gr.xCenter-10, 5 , [255,255,255]);
 
         Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
         Screen('Flip',gr.window_monitor);
         Screen('Flip',gr.window_main);
     end
-    %% we gonna be constantly flipping now
+    %% this is to show eye when trials are not running
     if ~gr.trialstarted
         Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
         Screen('TextSize', gr.window_monitor,80);
@@ -211,7 +208,6 @@ end
 
 %% recive and execute Screen calls
     function executeScreen(graphicsport)
-
         args_udp={};
         outs_udp={};
         additionalinfo_udp={};

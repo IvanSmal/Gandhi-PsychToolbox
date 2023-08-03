@@ -18,15 +18,6 @@ classdef trial < handle
     end
 
     methods
-        function setstate(obj, name, time, count)
-            obj.state.(name).time=time;
-            if nargin == 4
-                obj.state.(name).count=count;
-            else
-                obj.state.(name).count=length(obj.state);
-            end
-        end
-
         function obj = insert(obj,field,varargin)
             for i = 1:length(varargin)
                 try

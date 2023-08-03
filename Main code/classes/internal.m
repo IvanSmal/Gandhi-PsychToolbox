@@ -52,6 +52,7 @@ classdef internal < handle
 
         % trialtypes logic table
         ttypeslogic
+        failcounter
 
         %collision stuff
         coltimer=0
@@ -60,6 +61,10 @@ classdef internal < handle
         graphicsport
         graphicssent=0
 
+    end
+
+    properties (Access=private)
+        checkeye_counter=[0,0,0,0,0]; % grace period of 5 samples for eye to be in        
     end
 
     methods       
@@ -83,7 +88,6 @@ classdef internal < handle
             end
         end
 
-        
         function varargout = Screen(mh,varargin)
             if ~matches(varargin{1},'clearbuffer','IgnoreCase',true)
                 str=string();
@@ -103,7 +107,8 @@ classdef internal < handle
                     end
                     str=strcat(str, 'args_udp{',num2str(i), '}=', varval, ';');
                 end
-                if matches(varargin{1},'DrawTexture')
+
+                if matches(varargin{1},'DrawTexture') %add a texture for monitor window
                     varval=replace(varargin{3},'.texture','.monitortexture');
                     str=strcat(str, 'additionalinfo_udp{1}=', varval, ';');
                 end
@@ -119,7 +124,7 @@ classdef internal < handle
                 
                 if nargout>0
                     commands=readline(mh.graphicsport);
-                    eval(commands)
+                    eval(commands);
                     for i=1:nargout
                         varargout{i}=eval(['a' num2str(i)]);
                     end
@@ -159,12 +164,10 @@ classdef internal < handle
                 count=length(mh.trial.state);
             end
 
-            mh.trial.state.(name).time=getsecs;
-
-            mh.trial.state.(name).count=count;
+            mh.trial.state.(name).time(count)=getsecs;
 
             if ~strcmp(mh.activestatename,name)
-                mh.activestatetime = mh.trial.state.(name).time;
+                mh.activestatetime = mh.trial.state.(name).time(end);
                 mh.activestatename = name;
             end
             
@@ -194,16 +197,18 @@ classdef internal < handle
             out = strcmp(state, mh.activestatename) && (getsecs < mh.activestatetime + mh.trialint(int));
         end
 
-        function out=checkeye(obj,targ)
-            targpos=obj.trialtarg(targ,'getpos','center');
-            howfareye=targpos-obj.eye.geteye;
+        function out=checkeye(mh,targ)
+            targpos=mh.trialtarg(targ,'getpos','center');
+            howfareye=targpos-mh.eye.geteye;
             hypoteye=hypot(howfareye(1),howfareye(2));
-            out=obj.trial.targets.(targ).window>hypoteye;
+            mh.checkeye_counter(end)=mh.trial.targets.(targ).window>hypoteye;
+            mh.checkeye_counter=cicrshift(mh.checkeye_counter,-1);
+            out=ceil(mean(mh.checkeye_counter));
         end
 
         function starttrial(mh)
             mh.trialstarted = 1; 
-            mh.evalgraphics('gr.trialstarted=1');
+            mh.evalgraphics('gr.trialstarted=1;');
         end
 
         function stoptrial(mh,success)
@@ -211,7 +216,7 @@ classdef internal < handle
             mh.trialstarted = 0;            
             mh.runtrial = 0;
             mh.trial.success=success;
-            mh.evalgraphics('gr.trialstarted=0');
+            mh.evalgraphics('gr.trialstarted=0;');
         end
 
         function getmovie(obj, moviepath,varargin)

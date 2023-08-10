@@ -202,7 +202,7 @@ classdef internal < handle
             howfareye=targpos-mh.eye.geteye;
             hypoteye=hypot(howfareye(1),howfareye(2));
             mh.checkeye_counter(end)=mh.trial.targets.(targ).window>hypoteye;
-            mh.checkeye_counter=cicrshift(mh.checkeye_counter,-1);
+            mh.checkeye_counter=circshift(mh.checkeye_counter,-1);
             out=ceil(mean(mh.checkeye_counter));
         end
 

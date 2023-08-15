@@ -1,7 +1,7 @@
 function mh=makeparams(mh)
 % Set your intervals
 mh.addint('maxtime',20)
-mh.addint('iti',5)
+mh.addint('iti',1)
 mh.addint('reward',0.4)
 
 % Set your targets. if doing target logic inside the trial, don't forget to

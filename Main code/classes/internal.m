@@ -48,7 +48,7 @@ classdef internal < handle
         activestatetime=[]
         activestatename = 'null';
         targettime
-        
+
 
         % trialtypes logic table
         ttypeslogic
@@ -60,25 +60,26 @@ classdef internal < handle
         %communicate with graphics
         graphicsport
         graphicssent=0
+        cachedout = 'default'
 
     end
 
     properties (Access=private)
-        checkeye_counter=[0,0,0,0,0]; % grace period of 5 samples for eye to be in        
+        checkeye_counter=[0,0,0,0,0]; % grace period of 5 samples for eye to be in
     end
 
-    methods       
+    methods
         function endstate(obj)
             obj.graphicssent=1;
         end
-        
+
         function evalgraphics(obj,command)
-                writeline(obj.graphicsport,['execute' command],'0.0.0.0',2021)
+            writeline(obj.graphicsport,['execute' command],'0.0.0.0',2021)
         end
 
         function WaitForGraphics(mh)
             mh.graphicssent=0;
-            while mh.graphicssent==0                
+            while mh.graphicssent==0
                 str=('writeline(graphicsport,''mh.graphicssent=1;'',''0.0.0.0'',2020);');
                 mh.evalgraphics(str);
                 com=readline(mh.graphicsport);
@@ -89,48 +90,53 @@ classdef internal < handle
         end
 
         function varargout = Screen(mh,varargin)
-            if ~matches(varargin{1},'clearbuffer','IgnoreCase',true)
-                str=string();
-                for i=1:length(varargin)
-                    namecount=1;
-                    if matches(class(varargin{i}),'char')
-                        if contains(varargin{i},'gr')
-                            varval=['' varargin{i} ''];
+
+            if ~strcmp(mh.cachedout,jsonencode(varargin{:})) %check that it is not sending the same command
+                mh.cachedout=jsonencode(varargin{:}); %cache current command
+
+                if ~matches(varargin{1},'clearbuffer','IgnoreCase',true) %check that user is not trying to clear the UDP buffer
+                    str=string();
+                    for i=1:length(varargin)
+                        namecount=1;
+                        if matches(class(varargin{i}),'char')
+                            if contains(varargin{i},'gr') % if the user calls for graphics then...
+                                varval=['' varargin{i} '']; % send "gr" as a call to the gr object
+                            else
+                                varval=['''' varargin{i} '''']; % otherwise convert to interpretable string
+                            end
+                        elseif isnumeric(varargin{i}) % if it's a number, make it a string
+                            varval=mat2str(varargin{i});
                         else
-                            varval=['''' varargin{i} ''''];
+                            varval=strcat('''',string(inputname(namecount)),'''');
+                            namecount=namecount+1;
                         end
-                    elseif isnumeric(varargin{i})
-                        varval=mat2str(varargin{i});
-                    else
-                        varval=strcat('''',string(inputname(namecount)),'''');
-                        namecount=namecount+1;                        
+                        str=strcat(str, 'args_udp{',num2str(i), '}=', varval, ';');
                     end
-                    str=strcat(str, 'args_udp{',num2str(i), '}=', varval, ';');
-                end
 
-                if matches(varargin{1},'DrawTexture') %add a texture for monitor window
-                    varval=replace(varargin{3},'.texture','.monitortexture');
-                    str=strcat(str, 'additionalinfo_udp{1}=', varval, ';');
-                end
-
-                if nargout>0
-                    for i=1:nargout
-                        str=strcat(str, 'outs_udp{',num2str(i), '}=', '''a',num2str(i), ''';');
+                    if matches(varargin{1},'DrawTexture') %add a texture for monitor window
+                        varval=replace(varargin{3},'.texture','.monitortexture');
+                        str=strcat(str, 'additionalinfo_udp{1}=', varval, ';'); %put this command into the additional option slot
                     end
-                end
 
-                writeline(mh.graphicsport,str,'0.0.0.0',2021); %actually send the data
-
-                
-                if nargout>0
-                    commands=readline(mh.graphicsport);
-                    eval(commands);
-                    for i=1:nargout
-                        varargout{i}=eval(['a' num2str(i)]);
+                    if nargout>0 %if the user wants an output from psychtoolbox, it goes here
+                        for i=1:nargout
+                            str=strcat(str, 'outs_udp{',num2str(i), '}=', '''a',num2str(i), ''';');
+                        end
                     end
+
+                    writeline(mh.graphicsport,str,'0.0.0.0',2021); %actually send the data
+
+
+                    if nargout>0 %get outs. this needs work
+                        commands=readline(mh.graphicsport);
+                        eval(commands);
+                        for i=1:nargout
+                            varargout{i}=eval(['a' num2str(i)]);
+                        end
+                    end
+                else %if user calls to clear buffer, clear buffer
+                    writeline(mh.graphicsport,'executegr.functionsbuffer=[];','0.0.0.0',2021)
                 end
-            else
-                writeline(mh.graphicsport,'executegr.functionsbuffer=[];','0.0.0.0',2021)
             end
         end
 
@@ -170,7 +176,7 @@ classdef internal < handle
                 mh.activestatetime = mh.trial.state.(name).time(end);
                 mh.activestatename = name;
             end
-            
+
             mh.evalgraphics(['gr.activestatename =' '''' mh.activestatename '''' ';'])
 
             mh.diodeflip
@@ -207,13 +213,13 @@ classdef internal < handle
         end
 
         function starttrial(mh)
-            mh.trialstarted = 1; 
+            mh.trialstarted = 1;
             mh.evalgraphics('gr.trialstarted=1;');
         end
 
         function stoptrial(mh,success)
             mh.setstate('stop')
-            mh.trialstarted = 0;            
+            mh.trialstarted = 0;
             mh.runtrial = 0;
             mh.trial.success=success;
             mh.evalgraphics('gr.trialstarted=0;');

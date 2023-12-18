@@ -19,8 +19,10 @@ end
 
 %%
 %check for a condition to start the first active 'state' of the tiral
-if mh.checkstate('T0_reach')
-    mh.Screen('DrawTexture', mh, mh.trialtarg('T0_moving','gettexture') ,[], mh.trialtarg('T0_moving','getpos'));  % Draw the texture to the screen
+while mh.checkstate('T0_reach')
+    position=mh.trialtarg('T0_moving','getpos');
+    texture=mh.trialtarg('T0_moving','gettexture');
+    mh.Screen('DrawTexture', mh, texture ,[], position);  % Draw the texture to the screen
     if mh.checkint('T0_reach','T0_reach')  && ~mh.checkeye('T0_moving')
         %just chill
     elseif ~mh.checkeye('T0_moving')

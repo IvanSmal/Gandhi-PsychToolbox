@@ -64,13 +64,11 @@ classdef internal < handle
     end
 
     properties (Access=private)
-        checkeye_counter=[0,0,0,0,0]; % grace period of 5 samples for eye to be in        
+        checkeye_counter=[0,0,0,0,0]; % grace period of 5 samples for eye to be in     
+        digflip=0;
     end
 
     methods       
-        function endstate(obj)
-            obj.graphicssent=1;
-        end
         
         function evalgraphics(obj,command)
                 writeline(obj.graphicsport,['execute' command],'0.0.0.0',2021)
@@ -188,9 +186,10 @@ classdef internal < handle
                 mh.diode_color=[0;0;0];
                 mh.diode_on = 0;
             end
-            % mh.Screen('FillRect', mh, mh.diode_color, mh.diode_pos);
-            mh.evalgraphics(['gr.diode_color=' mat2str(mh.diode_color) ';'])
-            % mh.WaitForGraphics;
+            mh.evalgraphics(['gr.diode_color=' mat2str(mh.diode_color) ';']);
+
+            xippmex('digout', 2, double(mh.digflip));
+            mh.digflip=~mh.digflip;
         end
 
         function out = checkint(mh, state, int)
@@ -217,6 +216,9 @@ classdef internal < handle
             mh.runtrial = 0;
             mh.trial.success=success;
             mh.evalgraphics('gr.trialstarted=0;');
+            if mh.diode_on
+                mh.diodeflip
+            end
         end
 
         function getmovie(obj, moviepath,varargin)

@@ -4,6 +4,7 @@ classdef data
         cursor
         neural_data
         eyesync
+        digsync
     end
 
     methods

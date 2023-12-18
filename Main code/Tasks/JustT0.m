@@ -26,7 +26,6 @@ if mh.checkstate('T0_reach')
     else
         mh.setstate('T0_hold');
     end
-    mh.endstate;
 end
 %%
 if mh.checkstate('T0_hold')
@@ -40,7 +39,6 @@ if mh.checkstate('T0_hold')
         mh.stoptrial(1);
         mh.reward(mh.getint('reward'));
     end
-    mh.endstate;
 end
 
 end

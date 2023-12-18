@@ -21,10 +21,6 @@ gr.activestatename='null';
 
 %% set up the screens for experiments
 Screen('Preference', 'SkipSyncTests', 0);
-% Priority(2);
-
-% % set experimental environment
-% setenv('PSYCH_EXPERIMENTAL_NETWMTS', '1');
 
 % Clear the workspace and the screen
 sca;
@@ -40,13 +36,9 @@ gr.screens = Screen('Screens');
 black = BlackIndex(1);
 
 % Open an on screen window
-
 PsychImaging('PrepareConfiguration');
 PsychImaging('AddTask', 'General', 'UseVirtualFramebuffer');
 PsychImaging('AddTask', 'General', 'FloatingPoint16Bit');
-% PsychImaging('AddTask', 'General',...
-%     'MirrorDisplayTo2ndOutputHead',...
-%     0 , monitor_rect);%, specialFlags=0][, useOverlay=0]);
 
 [gr.window_main, gr.windowRect] = PsychImaging('OpenWindow', 1, black);
 
@@ -63,7 +55,6 @@ monitor_rect=floor(gr.windowRect/2);
 PsychImaging('PrepareConfiguration');
 PsychImaging('AddTask', 'General', 'UseVirtualFramebuffer');
 PsychImaging('AddTask', 'General', 'UsePanelFitter', [gr.screenXpixels, gr.screenYpixels], 'Full');
-% PsychImaging('AddTask', 'General', 'FloatingPoint16Bit')
 [gr.window_monitor, gr.monitor_rect]=PsychImaging('OpenWindow', 0, black,monitor_rect,[],[],[],[],[],kPsychGUIWindow);
 
 % Get the centre coordinate of the window
@@ -73,8 +64,8 @@ PsychImaging('AddTask', 'General', 'UsePanelFitter', [gr.screenXpixels, gr.scree
 % diode stuff
 gr.diode_pos=[0,gr.screenYpixels-50,50,gr.screenYpixels];
 
-% for some reason draw a circle for a frame idk why i need to do this
-
+% for some reason draw a circle for a frame idk why i need to do this, but
+% otherwise it will not display circles
 Screen('FillOval', gr.window_main, [1 1 1], [0 0 10 10]);
 Screen('Flip', gr.window_main);
 

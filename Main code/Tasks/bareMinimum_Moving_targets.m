@@ -19,7 +19,7 @@ end
 
 %%
 %check for a condition to start the first active 'state' of the tiral
-while mh.checkstate('T0_reach')
+if mh.checkstate('T0_reach')
     position=mh.trialtarg('T0_moving','getpos');
     texture=mh.trialtarg('T0_moving','gettexture');
     mh.Screen('DrawTexture', mh, texture ,[], position);  % Draw the texture to the screen

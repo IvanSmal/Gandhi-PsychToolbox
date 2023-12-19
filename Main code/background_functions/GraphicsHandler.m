@@ -124,7 +124,7 @@ while 1
                             try
                                 Screen(args{1},gr.window_monitor,args{3:end});
                             end
-                        else
+                        elsehello
                             Screen(args{1},gr.window_monitor,args{3:end});
                         end
 

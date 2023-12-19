@@ -90,9 +90,9 @@ classdef internal < handle
         end
 
         function varargout = Screen(mh,varargin)
-
-            if ~strcmp(mh.cachedout,jsonencode(varargin{:})) %check that it is not sending the same command
-                mh.cachedout=jsonencode(varargin{:}); %cache current command
+            % currentcommand=jsonencode(varargin);
+            % if ~strcmp(mh.cachedout,currentcommand) %check that it is not sending the same command
+            %     mh.cachedout=currentcommand; %cache current command
 
                 if ~matches(varargin{1},'clearbuffer','IgnoreCase',true) %check that user is not trying to clear the UDP buffer
                     str=string();
@@ -137,7 +137,7 @@ classdef internal < handle
                 else %if user calls to clear buffer, clear buffer
                     writeline(mh.graphicsport,'executegr.functionsbuffer=[];','0.0.0.0',2021)
                 end
-            end
+            % end
         end
 
         function obj=reward(obj,int)

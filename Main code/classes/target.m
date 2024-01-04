@@ -46,8 +46,8 @@ classdef target
                     mh.targettime=mh.trial.state.(curstate).time;
                 elseif any(matches(varargin(:),'continue',IgnoreCase=true))
                     try
-                        curstate = mh.trial.state.(varargin{:}).time;
-                        tim=getsecs-mh.trial.state.(curstate).time;                        
+                        curstate = varargin{end};
+                        tim=getsecs-mh.trial.state.(curstate).time; 
                     catch
                         tim=getsecs-mh.targettime;
                         center=varargin(1);

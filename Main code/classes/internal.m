@@ -61,11 +61,15 @@ classdef internal < handle
         graphicsport
         graphicssent=0
         cachedout = 'default'
-
+        graphicscommandbuffer=''; %graphics buffer. move to private later
+        lastcommand = 1; %movr to private later
+       
     end
 
     properties (Access=private)
-        checkeye_counter=[0,0,0,0,0]; % grace period of 5 samples for eye to be in
+        checkeye_counter=[0,0,0]; % grace period of 3 samples for eye to be in
+        parpool=backgroundPool;
+        
     end
 
     methods
@@ -90,11 +94,12 @@ classdef internal < handle
         end
 
         function varargout = Screen(mh,varargin)
-            % currentcommand=jsonencode(varargin);
-            % if ~strcmp(mh.cachedout,currentcommand) %check that it is not sending the same command
-            %     mh.cachedout=currentcommand; %cache current command
+            currentcommand=jsonencode({varargin{[1,3:end]}});
+            if ~strcmp(mh.cachedout,currentcommand) %check that it is not sending the same command
+                mh.cachedout=currentcommand; %cache current command
 
-                if ~matches(varargin{1},'clearbuffer','IgnoreCase',true) %check that user is not trying to clear the UDP buffer
+                if ~matches(varargin{1},'clearbuffer','IgnoreCase',true) &&...
+                        ~matches(varargin{1},'sendtogr','IgnoreCase',true) %check that user is not trying to clear the UDP buffer
                     str=string();
                     for i=1:length(varargin)
                         namecount=1;
@@ -110,7 +115,8 @@ classdef internal < handle
                             varval=strcat('''',string(inputname(namecount)),'''');
                             namecount=namecount+1;
                         end
-                        str=strcat(str, 'args_udp{',num2str(i), '}=', varval, ';');
+                        str=strcat(str, 'args_udp{',num2str(mh.lastcommand), '}=', varval, ';');
+                        mh.lastcommand=mh.lastcommand+1;
                     end
 
                     if matches(varargin{1},'DrawTexture') %add a texture for monitor window
@@ -123,9 +129,10 @@ classdef internal < handle
                             str=strcat(str, 'outs_udp{',num2str(i), '}=', '''a',num2str(i), ''';');
                         end
                     end
-
-                    writeline(mh.graphicsport,str,'0.0.0.0',2021); %actually send the data
-
+                    
+                    deliminator=strcat('args_udp{',num2str(mh.lastcommand), '}=''endcommand'';');
+                    mh.lastcommand=mh.lastcommand+1;
+                    mh.graphicscommandbuffer=strcat(mh.graphicscommandbuffer, str,deliminator);                
 
                     if nargout>0 %get outs. this needs work
                         commands=readline(mh.graphicsport);
@@ -137,7 +144,15 @@ classdef internal < handle
                 else %if user calls to clear buffer, clear buffer
                     writeline(mh.graphicsport,'executegr.functionsbuffer=[];','0.0.0.0',2021)
                 end
-            % end
+            end
+            if matches(varargin{1},'sendtogr','IgnoreCase',true) && ~isempty(mh.graphicscommandbuffer)
+                writeline(mh.graphicsport,mh.graphicscommandbuffer,'0.0.0.0',2021); %actually send the data
+                mh.graphicscommandbuffer='';
+                mh.lastcommand=1;
+                writeline(mh.graphicsport,'executegr.functionsbuffer=[];','0.0.0.0',2021); %need to figure out how to asynch this
+                % parfeval(mh.parpool,@writeline,0,mh.graphicsport,'executegr.functionsbuffer=[];','0.0.0.0',2021);
+                
+            end
         end
 
         function obj=reward(obj,int)
@@ -149,25 +164,41 @@ classdef internal < handle
         end
 
         function obj = rewcheck(obj,app)
+            if obj.rew.rewon==1 && isnumeric(obj.rew.int)
+                duration = obj.rew.int;
+            elseif obj.rew.rewon == 1
+                duration = obj.rew.int.duration;
+            end
+
             if obj.rew.rewon==1 &&...
-                    getsecs<obj.rew.rewstart+obj.rew.int.duration
+                    getsecs<obj.rew.rewstart+duration
 
                 xippmex('digout',[3,4],[1,1]);
 
             elseif obj.rew.rewon==1 &&...
-                    getsecs>obj.rew.rewstart+obj.rew.int.duration
+                    getsecs>obj.rew.rewstart+duration
                 xippmex('digout',[3,4],[0,0]);
-                app.insToTxtbox(['reward t: ' num2str(getsecs-obj.rew.rewstart)]);
+                app.insToTxtbox(['reward t: ' num2str(getsecs-obj.rew.rewstart) 's']);
                 obj.rew.rewon=0;
             end
         end
 
+        function plotwindow(mh,targ, pos)
+            radius=mh.trial.targets.(targ).window;
+            targetlocation = pos;
+            centerx=(targetlocation(3)+targetlocation(1))/2;
+            centery=(targetlocation(4)+targetlocation(2))/2;
+            squarepos=[centerx-radius centery-radius centerx+radius centery+radius];
+            mh.Screen('FrameOval','monitoronly',[1 1 1],squarepos);
+        end
+
         function setstate(mh, name, count)
             if ~isfield(mh.trial.state,name)
-                mh.trial.state.(name).count=-100;
+                mh.trial.state.(name).count=0;
             end
             if nargin < 3
-                count=length(mh.trial.state);
+                count=mh.trial.state.(name).count+1;
+                mh.trial.state.(name).count=count;
             end
 
             mh.trial.state.(name).time(count)=getsecs;
@@ -203,13 +234,29 @@ classdef internal < handle
             out = strcmp(state, mh.activestatename) && (getsecs < mh.activestatetime + mh.trialint(int));
         end
 
-        function out=checkeye(mh,targ)
-            targpos=mh.trialtarg(targ,'getpos','center');
+        function out=checkeye(mh,targ,pos)
+            if ~exist('pos','var') || isempty(pos)                
+                targpos=mh.trialtarg(targ,'getpos','center');
+                targposSquare=mh.trialtarg(targ,'getpos');
+            else
+                targetlocation = pos;
+                centerx=(targetlocation(3)+targetlocation(1))/2;
+                centery=(targetlocation(4)+targetlocation(2))/2;
+                targpos=[centerx centery];
+                targposSquare=pos;
+            end
+            
+            radius=mh.trial.targets.(targ).window;
             howfareye=targpos-mh.eye.geteye;
             hypoteye=hypot(howfareye(1),howfareye(2));
-            mh.checkeye_counter(end)=mh.trial.targets.(targ).window>hypoteye;
+            mh.checkeye_counter(end)=radius>hypoteye;
             mh.checkeye_counter=circshift(mh.checkeye_counter,-1);
             out=ceil(mean(mh.checkeye_counter));
+            
+            centerx=(targposSquare(3)+targposSquare(1))/2;
+            centery=(targposSquare(4)+targposSquare(2))/2;
+            squarepos=[centerx-radius centery-radius centerx+radius centery+radius];
+            mh.Screen('FrameOval','monitoronly',[1 0 0],squarepos);
         end
 
         function starttrial(mh)

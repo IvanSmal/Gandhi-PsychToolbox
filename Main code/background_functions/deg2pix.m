@@ -29,6 +29,8 @@ for i=1:size(in,1)
         [desiredXY(1), desiredXY(2)]=pol2cart(deg2rad(in(i,1)),in(i,2));
     elseif matches(type,'size',IgnoreCase=1)
         desiredXY=in(i,:);
+    elseif matches(type,'speed',IgnoreCase=1)
+        desiredXY=[in(i) 0];
     else
         errordlg('please specify either ''cart'' or ''pol''')
         return
@@ -43,6 +45,11 @@ for i=1:size(in,1)
         out(i,2)=0;
         out(i,3)=floor(((tand(desiredXY(1))*distanceFromScreen)/PixelSize(1)));
         out(i,4)=floor(((tand(desiredXY(2))*distanceFromScreen)/PixelSize(2)));
-end
+    end
+
+    if matches(type,'speed',IgnoreCase=1)
+        clear out
+        out=floor(((tand(desiredXY(1))*distanceFromScreen)/PixelSize(1)));
+    end
 end
 

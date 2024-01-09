@@ -25,7 +25,9 @@ classdef interval
             elseif yesname
                 out.name=in.name;
                 if in.prob >= rand
-                    out.duration = in.duration;
+                    %out.duration = in.duration;
+                    idx=randi([1,size(in.duration,2)]);
+                    out.duration =in.duration(idx);
                 else
                     out.duration=0;
                 end

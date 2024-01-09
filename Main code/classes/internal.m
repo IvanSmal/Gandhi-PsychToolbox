@@ -173,11 +173,11 @@ classdef internal < handle
             if obj.rew.rewon==1 &&...
                     getsecs<obj.rew.rewstart+duration
 
-                xippmex('digout',[3,4],[1,1]);
+                xippmex('digout',[3],[1]);
 
             elseif obj.rew.rewon==1 &&...
                     getsecs>obj.rew.rewstart+duration
-                xippmex('digout',[3,4],[0,0]);
+                xippmex('digout',[3],[0]);
                 app.insToTxtbox(['reward t: ' num2str(getsecs-obj.rew.rewstart) 's']);
                 obj.rew.rewon=0;
             end

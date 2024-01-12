@@ -63,13 +63,13 @@ classdef internal < handle
         cachedout = 'default'
         graphicscommandbuffer=''; %graphics buffer. move to private later
         lastcommand = 1; %movr to private later
-       
+
     end
 
     properties (Access=private)
         checkeye_counter=[0,0,0]; % grace period of 3 samples for eye to be in
         parpool=backgroundPool;
-        
+
     end
 
     methods
@@ -129,10 +129,10 @@ classdef internal < handle
                             str=strcat(str, 'outs_udp{',num2str(i), '}=', '''a',num2str(i), ''';');
                         end
                     end
-                    
+
                     deliminator=strcat('args_udp{',num2str(mh.lastcommand), '}=''endcommand'';');
                     mh.lastcommand=mh.lastcommand+1;
-                    mh.graphicscommandbuffer=strcat(mh.graphicscommandbuffer, str,deliminator);                
+                    mh.graphicscommandbuffer=strcat(mh.graphicscommandbuffer, str,deliminator);
 
                     if nargout>0 %get outs. this needs work
                         commands=readline(mh.graphicsport);
@@ -151,35 +151,52 @@ classdef internal < handle
                 mh.lastcommand=1;
                 writeline(mh.graphicsport,'executegr.functionsbuffer=[];','0.0.0.0',2021); %need to figure out how to asynch this
                 % parfeval(mh.parpool,@writeline,0,mh.graphicsport,'executegr.functionsbuffer=[];','0.0.0.0',2021);
-                
+
             end
         end
 
-        function obj=reward(obj,int)
-            if obj.rew.rewon==0
-                obj.rew.rewstart=getsecs;
-                obj.rew.rewon=1;
-                obj.rew.int=int;
+        function mh = rewcheck(mh,app)
+            %reward button check
+            [~,~,events]=xippmex('digin');
+            if ~isempty(events)
+                if sum([events.sma4])>1
+                    mh.reward(app.RewardDuration.Value);
+                end
+            end
+            %reward gui check
+            if app.RewardButton.Value
+                if ~mh.rew.rewon
+                    mh.reward(app.RewardDuration.Value);
+                    app.RewardButton.Value=1;
+                else
+                    app.RewardButton.Value=0;
+                end
+            end
+
+            if mh.rew.rewon==1 && isnumeric(mh.rew.int)
+                duration = mh.rew.int;
+            elseif mh.rew.rewon == 1
+                duration = mh.rew.int.duration;
+            end
+
+            if mh.rew.rewon==1 &&...
+                    getsecs<mh.rew.rewstart+duration
+
+                xippmex('digout',3,1);
+
+            elseif mh.rew.rewon==1 &&...
+                    getsecs>mh.rew.rewstart+duration
+                xippmex('digout',3,0);
+                app.insToTxtbox(['reward t: ' num2str(getsecs-mh.rew.rewstart) 's']);
+                mh.rew.rewon=0;
             end
         end
 
-        function obj = rewcheck(obj,app)
-            if obj.rew.rewon==1 && isnumeric(obj.rew.int)
-                duration = obj.rew.int;
-            elseif obj.rew.rewon == 1
-                duration = obj.rew.int.duration;
-            end
-
-            if obj.rew.rewon==1 &&...
-                    getsecs<obj.rew.rewstart+duration
-
-                xippmex('digout',[3],[1]);
-
-            elseif obj.rew.rewon==1 &&...
-                    getsecs>obj.rew.rewstart+duration
-                xippmex('digout',[3],[0]);
-                app.insToTxtbox(['reward t: ' num2str(getsecs-obj.rew.rewstart) 's']);
-                obj.rew.rewon=0;
+        function mh=reward(mh,int)
+            if mh.rew.rewon==0
+                mh.rew.rewstart=getsecs;
+                mh.rew.rewon=1;
+                mh.rew.int=int;
             end
         end
 
@@ -213,8 +230,8 @@ classdef internal < handle
             mh.diodeflip
         end
 
-        function out = checkstate(obj,state)
-            out = strcmp(state, obj.activestatename);
+        function out = checkstate(mh,state)
+            out = strcmp(state, mh.activestatename);
         end
 
         function diodeflip(mh)
@@ -238,7 +255,7 @@ classdef internal < handle
         end
 
         function out=checkeye(mh,targ,pos)
-            if ~exist('pos','var') || isempty(pos)                
+            if ~exist('pos','var') || isempty(pos)
                 targpos=mh.trialtarg(targ,'getpos','center');
                 targposSquare=mh.trialtarg(targ,'getpos');
             else
@@ -248,19 +265,19 @@ classdef internal < handle
                 targpos=[centerx centery];
                 targposSquare=pos;
             end
-            
+
             radius=mh.trial.targets.(targ).window;
             howfareye=targpos-mh.eye.geteye;
             hypoteye=hypot(howfareye(1),howfareye(2));
-            
+
             myeye=mh.eye.geteye;
             mh.checkeye_counter(end)=radius>hypoteye;
             mh.checkeye_counter=circshift(mh.checkeye_counter,-1);
             %out=ceil(mean(mh.checkeye_counter));
             out=floor(mean(mh.checkeye_counter));
-           
+
             %display(mh.checkeye_counter)
-            
+
             centerx=(targposSquare(3)+targposSquare(1))/2;
             centery=(targposSquare(4)+targposSquare(2))/2;
             squarepos=[centerx-radius centery-radius centerx+radius centery+radius];
@@ -280,8 +297,8 @@ classdef internal < handle
             mh.evalgraphics('gr.trialstarted=0;');
         end
 
-        function getmovie(obj, moviepath,varargin)
-            obj.movie=Screen('OpenMovie',obj.window_main,moviepath,varargin{:});
+        function getmovie(mh, moviepath,varargin)
+            mh.movie=Screen('OpenMovie',mh.window_main,moviepath,varargin{:});
         end
 
         function out=targcollisioncheck(obj,t1,t2)

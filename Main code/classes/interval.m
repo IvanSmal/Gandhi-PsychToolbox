@@ -18,7 +18,7 @@ classdef interval
         function out=getint(in, yesname)
             if nargin==1
                 if in.prob >= rand
-                    out=in.duration;
+                    out=in.duration(randi(length(in.duration)));
                 else
                     out=0;
                 end

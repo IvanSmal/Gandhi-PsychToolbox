@@ -333,7 +333,11 @@ classdef internal < handle
         end
 
         function out=trialint(mh,name)% internal
-            out=mh.trial.intervals.(name).duration;
+            if ~isnumeric(name)
+                out=mh.trial.intervals.(name).duration;
+            else
+                out=name;
+            end
         end
 
         function out=trialtarg(obj,name,arg,varargin)

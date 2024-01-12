@@ -232,6 +232,9 @@ classdef internal < handle
 
         function out = checkint(mh, state, int)
             out = strcmp(state, mh.activestatename) && (getsecs < mh.activestatetime + mh.trialint(int));
+            if out~=1
+                display(mh.activestatetime + mh.trialint(int)-getsecs)
+            end
         end
 
         function out=checkeye(mh,targ,pos)
@@ -249,9 +252,14 @@ classdef internal < handle
             radius=mh.trial.targets.(targ).window;
             howfareye=targpos-mh.eye.geteye;
             hypoteye=hypot(howfareye(1),howfareye(2));
+            
+            myeye=mh.eye.geteye;
             mh.checkeye_counter(end)=radius>hypoteye;
             mh.checkeye_counter=circshift(mh.checkeye_counter,-1);
-            out=ceil(mean(mh.checkeye_counter));
+            %out=ceil(mean(mh.checkeye_counter));
+            out=floor(mean(mh.checkeye_counter));
+           
+            %display(mh.checkeye_counter)
             
             centerx=(targposSquare(3)+targposSquare(1))/2;
             centery=(targposSquare(4)+targposSquare(2))/2;

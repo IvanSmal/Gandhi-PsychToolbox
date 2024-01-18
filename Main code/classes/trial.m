@@ -12,6 +12,8 @@ classdef trial < handle
         success
         intervals
 
+        trellis_trial_number;
+
         UserDefined =[]
 
         System_Properties

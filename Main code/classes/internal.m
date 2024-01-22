@@ -276,6 +276,21 @@ classdef internal < handle
             %out=ceil(mean(mh.checkeye_counter));
             out=floor(mean(mh.checkeye_counter));
 
+            if out==1
+                 whereseye=mh.eye.geteye;
+                if isempty(autocalibrationmatrix)                   
+                    mh.eye.autocalibrationmatrix(1)=centerx;
+                    mh.eye.autocalibrationmatrix(2)=whereseye(1);
+                    mh.eye.autocalibrationmatrix(3)=centery;
+                    mh.eye.autocalibrationmatrix(4)=whereseye(2);
+                else
+                    idx=size(mh.eye.autocalibrationmatrix,1);
+                    mh.eye.autocalibrationmatrix(idx,1)=centerx;
+                    mh.eye.autocalibrationmatrix(idx,2)=whereseye(1);
+                    mh.eye.autocalibrationmatrix(idx,3)=centery;
+                    mh.eye.autocalibrationmatrix(idx,4)=whereseye(2);
+                end
+
             %display(mh.checkeye_counter)
 
             centerx=(targposSquare(3)+targposSquare(1))/2;

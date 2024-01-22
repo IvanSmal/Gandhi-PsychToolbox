@@ -10,6 +10,8 @@ classdef eyeinfo < handle
         ygain (1,1) double = 1
         xoffset (1,1) double = 1
         yoffset (1,1) double = 1
+
+        autocalibrationmatrix=[];
     end
 
     methods

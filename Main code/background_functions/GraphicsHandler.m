@@ -185,7 +185,7 @@ while 1
         Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
         Screen('TextSize', gr.window_monitor,80);
         Screen('DrawText', gr.window_monitor, gr.activestatename, 5, 5 , [255,255,255]);
-        Screen('DrawText', gr.window_monitor, num2str(gr.eye.geteye), gr.xCenter-10, 5 , [255,255,255]);
+        Screen('DrawText', gr.window_monitor, num2str(round(gr.eye.geteye)), gr.xCenter-10, 3 , [255,255,255]);
 
         Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
     elseif isempty(gr.functionsbuffer) && gr.trialstarted && ~gr.flipped
@@ -199,7 +199,7 @@ while 1
         Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
         Screen('TextSize', gr.window_monitor,80);
         Screen('DrawText', gr.window_monitor, gr.activestatename, 5, 5 , [255,255,255]);
-        Screen('DrawText', gr.window_monitor, num2str(gr.eye.geteye), gr.xCenter, 5 , [255,255,255]);
+        Screen('DrawText', gr.window_monitor, num2str(round(gr.eye.geteye)), gr.xCenter-10, 3 , [255,255,255]);
 
         Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
         Screen('Flip',gr.window_monitor);

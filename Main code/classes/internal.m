@@ -278,7 +278,7 @@ classdef internal < handle
             out=floor(mean(mh.checkeye_counter));
 
             if out==1
-                 whereseye=mh.eye.geteye;
+                 whereseye=mh.eye.getraweye;
                 if isempty(mh.autocalibrationmatrix)                   
                     mh.autocalibrationmatrix(1)=targpos(1);
                     mh.autocalibrationmatrix(2)=whereseye(1);
@@ -291,9 +291,8 @@ classdef internal < handle
                     mh.autocalibrationmatrix(idx,3)=targpos(2);
                     mh.autocalibrationmatrix(idx,4)=whereseye(2);
                 end
-                [~,uidx]=unique(mh.autocalibrationmatrix(:,[1,3]),'rows');
+                [~,uidx]=unique(mh.autocalibrationmatrix(:,[1,3]),'last','rows');
                 mh.autocalibrationmatrix=mh.autocalibrationmatrix(uidx,:);
-
             end
 
             centerx=(targposSquare(3)+targposSquare(1))/2;

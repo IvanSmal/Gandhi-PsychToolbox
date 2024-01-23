@@ -41,6 +41,7 @@ classdef internal < handle
         % for eye movement detection
         eye % maybe move to "experiment"
         targhistory=zeros(4,10);
+        autocalibrationmatrix=[];
 
         rew = struct('rewon',0);
 
@@ -278,20 +279,22 @@ classdef internal < handle
 
             if out==1
                  whereseye=mh.eye.geteye;
-                if isempty(autocalibrationmatrix)                   
-                    mh.eye.autocalibrationmatrix(1)=centerx;
-                    mh.eye.autocalibrationmatrix(2)=whereseye(1);
-                    mh.eye.autocalibrationmatrix(3)=centery;
-                    mh.eye.autocalibrationmatrix(4)=whereseye(2);
+                if isempty(mh.autocalibrationmatrix)                   
+                    mh.autocalibrationmatrix(1)=targpos(1);
+                    mh.autocalibrationmatrix(2)=whereseye(1);
+                    mh.autocalibrationmatrix(3)=targpos(2);
+                    mh.autocalibrationmatrix(4)=whereseye(2);
                 else
-                    idx=size(mh.eye.autocalibrationmatrix,1);
-                    mh.eye.autocalibrationmatrix(idx,1)=centerx;
-                    mh.eye.autocalibrationmatrix(idx,2)=whereseye(1);
-                    mh.eye.autocalibrationmatrix(idx,3)=centery;
-                    mh.eye.autocalibrationmatrix(idx,4)=whereseye(2);
+                    idx=size(mh.autocalibrationmatrix,1)+1;
+                    mh.autocalibrationmatrix(idx,1)=targpos(1);
+                    mh.autocalibrationmatrix(idx,2)=whereseye(1);
+                    mh.autocalibrationmatrix(idx,3)=targpos(2);
+                    mh.autocalibrationmatrix(idx,4)=whereseye(2);
                 end
+                [~,uidx]=unique(mh.autocalibrationmatrix(:,[1,3]),'rows');
+                mh.autocalibrationmatrix=mh.autocalibrationmatrix(uidx,:);
 
-            %display(mh.checkeye_counter)
+            end
 
             centerx=(targposSquare(3)+targposSquare(1))/2;
             centery=(targposSquare(4)+targposSquare(2))/2;

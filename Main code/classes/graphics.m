@@ -29,6 +29,7 @@ classdef graphics < handle
         functionsbuffer=[];
         trialstarted=0;
         lastarg;
+        gridlinesmatrix;
     end
 end
 

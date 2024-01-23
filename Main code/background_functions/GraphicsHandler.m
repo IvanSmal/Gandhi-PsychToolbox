@@ -75,6 +75,17 @@ Screen('Flip', gr.window_monitor);
 % set up movie placeholder image for monitor
 gr.monitormovieplaceholder=imread("assets/MoviePlaceholder.jpg");
 
+%set up grid params
+toconvert(:,1)=-40:10:40;
+toconvert(:,2)=-40:10:40;
+pixelsforlines=deg2pix(toconvert,'cart');
+xlines=reshape(repmat(pixelsforlines(:,1),2)',1,[]);
+fully=reshape(repmat([0 1080], length(xlines)/2,1)',1,[]);
+ylines = reshape(repmat(pixelsforlines(:,2),2)',1,[]);
+fullx=reshape(repmat([0 3000], length(ylines)/2,1)',1,[]);
+gr.gridlinesmatrix=[xlines fullx;fully ylines];
+
+
 % send ready signal to mh
 writeline(graphicsport,'isGraphicsReady=1;','0.0.0.0',2020);
 
@@ -183,9 +194,10 @@ while 1
             end
         end
         Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
-        Screen('TextSize', gr.window_monitor,80);
+        Screen('TextSize', gr.window_monitor,30);
         Screen('DrawText', gr.window_monitor, gr.activestatename, 5, 5 , [255,255,255]);
-        Screen('DrawText', gr.window_monitor, num2str(round(gr.eye.geteye)), gr.xCenter-10, 3 , [255,255,255]);
+        Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 600, 5 , [255,255,255]);
+        Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix,1,[.3 .3 .3]);
 
         Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
     elseif isempty(gr.functionsbuffer) && gr.trialstarted && ~gr.flipped
@@ -197,9 +209,10 @@ while 1
     %% this is to show eye when trials are not running
     if ~gr.trialstarted
         Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
-        Screen('TextSize', gr.window_monitor,80);
-        Screen('DrawText', gr.window_monitor, gr.activestatename, 5, 5 , [255,255,255]);
-        Screen('DrawText', gr.window_monitor, num2str(round(gr.eye.geteye)), gr.xCenter-10, 3 , [255,255,255]);
+        Screen('TextSize', gr.window_monitor,30);
+        % Screen('DrawText', gr.window_monitor, gr.activestatename, 5, 5 , [255,255,255]);
+        Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 600, 5 , [255,255,255]);
+        Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix,1,[.3 .3 .3]);
 
         Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
         Screen('Flip',gr.window_monitor);
@@ -233,6 +246,15 @@ end
 %% set eye calibration
     function seteye
         gr.eye=eyeinfo;
+        toconvert(:,1)=-40:10:40;
+        toconvert(:,2)=-40:10:40;
+        pixelsforlines=deg2pix(toconvert,'cart');
+        xlines=reshape(repmat(pixelsforlines(:,1),2)',1,[]);
+        fully=reshape(repmat([0 1080], length(xlines)/2,1)',1,[]);
+        ylines = reshape(repmat(pixelsforlines(:,2),2)',1,[]);
+        fullx=reshape(repmat([0 3000], length(ylines)/2,1)',1,[]);
+        gr.gridlinesmatrix=[xlines fullx;fully ylines];
+
     end
 %% execut raw stream
     function rawexecute(graphicsport)

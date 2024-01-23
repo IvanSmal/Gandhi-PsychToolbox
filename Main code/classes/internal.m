@@ -113,27 +113,27 @@ classdef internal < handle
                         elseif isnumeric(varargin{i}) % if it's a number, make it a string
                             varval=mat2str(varargin{i});
                         else
-                            varval=strcat('''',string(inputname(namecount)),'''');
+                            varval=['''',string(inputname(namecount)),''''];
                             namecount=namecount+1;
                         end
-                        str=strcat(str, 'args_udp{',num2str(mh.lastcommand), '}=', varval, ';');
+                        str=[str, 'args_udp{',num2str(mh.lastcommand), '}=', varval, ';'];
                         mh.lastcommand=mh.lastcommand+1;
                     end
 
                     if matches(varargin{1},'DrawTexture') %add a texture for monitor window
                         varval=replace(varargin{3},'.texture','.monitortexture');
-                        str=strcat(str, 'additionalinfo_udp{1}=', varval, ';'); %put this command into the additional option slot
+                        str=[str, 'additionalinfo_udp{1}=', varval, ';']; %put this command into the additional option slot
                     end
 
                     if nargout>0 %if the user wants an output from psychtoolbox, it goes here
                         for i=1:nargout
-                            str=strcat(str, 'outs_udp{',num2str(i), '}=', '''a',num2str(i), ''';');
+                            str=[str, 'outs_udp{',num2str(i), '}=', '''a',num2str(i), ''';'];
                         end
                     end
 
-                    deliminator=strcat('args_udp{',num2str(mh.lastcommand), '}=''endcommand'';');
+                    deliminator=['args_udp{',num2str(mh.lastcommand), '}=''endcommand'';'];
                     mh.lastcommand=mh.lastcommand+1;
-                    mh.graphicscommandbuffer=strcat(mh.graphicscommandbuffer, str,deliminator);
+                    mh.graphicscommandbuffer=[mh.graphicscommandbuffer, str,deliminator];
 
                     if nargout>0 %get outs. this needs work
                         commands=readline(mh.graphicsport);
@@ -147,7 +147,7 @@ classdef internal < handle
                 end
             end
             if matches(varargin{1},'sendtogr','IgnoreCase',true) && ~isempty(mh.graphicscommandbuffer)
-                writeline(mh.graphicsport,mh.graphicscommandbuffer,'0.0.0.0',2021); %actually send the data
+                writeline(mh.graphicsport,[mh.graphicscommandbuffer{:}],'0.0.0.0',2021); %actually send the data
                 mh.graphicscommandbuffer='';
                 mh.lastcommand=1;
                 writeline(mh.graphicsport,'executegr.functionsbuffer=[];','0.0.0.0',2021); %need to figure out how to asynch this

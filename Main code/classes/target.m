@@ -73,7 +73,7 @@ classdef target
                 end
             end
             
-            pixpos=deg2pix(temppos,targ.degreestype);
+            pixpos=deg2pix(temppos,targ.degreestype,mh.screenparams);
 
             if any(matches(varargin(:),'center',IgnoreCase=true))
                 out=pixpos;

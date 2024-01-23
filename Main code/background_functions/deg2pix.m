@@ -1,23 +1,32 @@
-function out = deg2pix(in,type)
+function out = deg2pix(in,type,screenparams)
 %DEG2PIX Summary of this function goes here
 %  Detailed explanation goes here
-if ~exist('type','var')
+if ~exist('type','var') || isempty(type)
     type='pol';
 end
 
-% get ini params
-ini=IniConfig();
 
-isini=ini.ReadFile('inis/ScreenParams.ini');
+if ~exist('screenparams','var') || isempty(screenparams)
+    % get ini params
 
-if ~isini
-    errordlg('ini not found. Missing or in the wrong path.')
-elseif isini
-    PixelSize(1)=ini.GetValues('for deg2pix','xPixelSize');
-    PixelSize(2)=ini.GetValues('for deg2pix','yPixelSize');
-    centerXY=ini.GetValues('for deg2pix','true center');
-    distanceFromScreen=ini.GetValues('for deg2pix','subject distance');
-end 
+    ini=IniConfig();
+
+    isini=ini.ReadFile('inis/ScreenParams.ini');
+
+    if ~isini
+        errordlg('ini not found. Missing or in the wrong path.')
+    elseif isini
+        PixelSize(1)=ini.GetValues('for deg2pix','xPixelSize');
+        PixelSize(2)=ini.GetValues('for deg2pix','yPixelSize');
+        centerXY=ini.GetValues('for deg2pix','true center');
+        distanceFromScreen=ini.GetValues('for deg2pix','subject distance');
+    end
+else
+    PixelSize(1) = screenparams.xPixelSize;
+    PixelSize(2) = screenparams.yPixelSize;
+    centerXY=screenparams.true_center;
+    distanceFromScreen=screenparams.subject_distance;
+end
 
 % do the calculations
 for i=1:size(in,1)

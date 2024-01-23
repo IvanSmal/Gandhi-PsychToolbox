@@ -42,6 +42,7 @@ classdef internal < handle
         eye % maybe move to "experiment"
         targhistory=zeros(4,10);
         autocalibrationmatrix=[];
+        screenparams
 
         rew = struct('rewon',0);
 

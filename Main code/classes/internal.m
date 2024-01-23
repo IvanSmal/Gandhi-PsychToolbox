@@ -150,7 +150,7 @@ classdef internal < handle
                 writeline(mh.graphicsport,[mh.graphicscommandbuffer{:}],'0.0.0.0',2021); %actually send the data
                 mh.graphicscommandbuffer='';
                 mh.lastcommand=1;
-                writeline(mh.graphicsport,'executegr.functionsbuffer=[];','0.0.0.0',2021); %need to figure out how to asynch this
+                % writeline(mh.graphicsport,'executegr.functionsbuffer=[];','0.0.0.0',2021); %need to figure out how to asynch this
                 % parfeval(mh.parpool,@writeline,0,mh.graphicsport,'executegr.functionsbuffer=[];','0.0.0.0',2021);
 
             end
@@ -271,7 +271,6 @@ classdef internal < handle
             howfareye=targpos-mh.eye.geteye;
             hypoteye=hypot(howfareye(1),howfareye(2));
 
-            myeye=mh.eye.geteye;
             mh.checkeye_counter(end)=radius>hypoteye;
             mh.checkeye_counter=circshift(mh.checkeye_counter,-1);
             %out=ceil(mean(mh.checkeye_counter));

@@ -16,10 +16,10 @@ classdef eyeinfo < handle
         function obj=eyeinfo
             ini = IniConfig();
             ini.ReadFile('inis/ScreenParams.ini');
-            
+
             obj.xgain=ini.GetValues('eye calibration','xgain');
             obj.ygain=ini.GetValues('eye calibration','ygain');
-            
+
             obj.xoffset=ini.GetValues('eye calibration','xoffset');
             obj.yoffset=ini.GetValues('eye calibration','yoffset');
         end
@@ -57,6 +57,14 @@ classdef eyeinfo < handle
                 seteyepos(obj,xeye(end),yeye(end));
                 out=[xeye;yeye];
             end
+        end
+
+        function out = getraweye(obj)
+            chidx=xippmex('elec','analog');
+
+            xeye=xippmex('cont', chidx(1),1,'1ksps');
+            yeye=xippmex('cont', chidx(2),1,'1ksps');
+            out=[xeye,yeye];
         end
     end
 end

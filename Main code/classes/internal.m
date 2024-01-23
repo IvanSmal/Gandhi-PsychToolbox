@@ -62,7 +62,7 @@ classdef internal < handle
         graphicssent=0
         cachedout = 'default'
         graphicscommandbuffer=''; %graphics buffer. move to private later
-        lastcommand = 1; %movr to private later
+        lastcommand = 1; %move to private later
 
     end
 

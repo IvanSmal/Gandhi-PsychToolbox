@@ -64,9 +64,9 @@ classdef target
                 else
                     xf=@(mh,t,x) eval(targ.custompath_x);
                     yf=@(mh,t,y) eval(targ.custompath_y);
-
-                    tempx=xf(mh,tim,targ.position(1));
-                    tempy=yf(mh,tim,targ.position(2));
+                    
+                    tempx=xf(mh,tim*targ.speed,targ.position(1));
+                    tempy=yf(mh,tim*targ.speed,targ.position(2));
 
                     temppos=[tempx tempy];
                     mh.trial.targets.(targ.name).final_position=temppos;

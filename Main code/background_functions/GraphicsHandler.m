@@ -211,7 +211,9 @@ while 1
         Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
         Screen('TextSize', gr.window_monitor,30);
         % Screen('DrawText', gr.window_monitor, gr.activestatename, 5, 5 , [255,255,255]);
+        try
         Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 600, 5 , [255,255,255]);
+        end
         Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix,1,[.3 .3 .3]);
 
         Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);

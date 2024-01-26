@@ -1,6 +1,4 @@
-function test
-%TEST Summary of this function goes here
-%   Detailed explanation goes here
-disp('did it')
-
+function out = test(mh,t,pos)
+temp=mh.eye.geteye;
+out= temp(1)+10;
 end

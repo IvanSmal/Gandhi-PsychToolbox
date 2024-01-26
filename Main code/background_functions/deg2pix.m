@@ -60,5 +60,6 @@ for i=1:size(in,1)
         clear out
         out=floor(((tand(desiredXY(1))*distanceFromScreen)/PixelSize(1)));
     end
+    out=rmmissing(out);
 end
 

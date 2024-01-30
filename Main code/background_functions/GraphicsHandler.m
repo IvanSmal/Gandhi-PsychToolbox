@@ -1,8 +1,4 @@
 function GraphicsHandler
-debug=0;
-if ~debug
-    rmpath('/home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/DEBUG') % remove DEBUG code override
-end
 addpath('/opt/Trellis/Tools/xippmex');
 xippmex;
 %% set up udp port
@@ -208,6 +204,9 @@ while 1
     end
     %% this is to show eye when trials are not running
     if ~gr.trialstarted
+        try
+            seteye;
+        end
         Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
         Screen('TextSize', gr.window_monitor,30);
         % Screen('DrawText', gr.window_monitor, gr.activestatename, 5, 5 , [255,255,255]);

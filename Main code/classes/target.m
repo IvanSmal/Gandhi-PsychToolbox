@@ -4,7 +4,7 @@ classdef target
         size = [0 0 5 5]
         position = [0 0]
         final_position 
-        degreestype='polar'
+        degreestype='cartesian'
         window = 200;
         color = [1 0 0]
         shape = 'square'

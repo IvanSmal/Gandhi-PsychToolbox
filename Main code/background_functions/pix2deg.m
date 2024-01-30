@@ -22,8 +22,8 @@ if ~exist('screenparams','var') || isempty(screenparams)
 else
     PixelSize(1) = screenparams.xPixelSize;
     PixelSize(2) = screenparams.yPixelSize;
-    centerXY=screenparams.true_center;
-    distanceFromScreen=screenparams.subject_distance;
+    trueCenter=screenparams.true_center;
+    distFromScreen=screenparams.subject_distance;
 end
 
 %% do the calculations
@@ -31,6 +31,12 @@ for i=1:size(in,1)
     XYin=in(i,:);
     XYin(1)=XYin(1)-trueCenter(1);
     XYin(2)=-(XYin(2)-trueCenter(2));
+
+    if matches(type,'size')
+        XYin(1)=XYin(1)+trueCenter(1);
+        XYin(2)=-XYin(2)+trueCenter(2);
+        type='cart';
+    end
 
     Xmm=XYin(1)*PixelSize(1);
     Ymm=XYin(2)*PixelSize(2);

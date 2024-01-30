@@ -182,15 +182,18 @@ classdef internal < handle
             end
 
             if mh.rew.rewon==1 &&...
-                    getsecs<mh.rew.rewstart+duration
+                    getsecs<mh.rew.rewstart+duration &&...
+                    ~app.StopRewardButton.Value
 
                 xippmex('digout',3,1);
 
-            elseif mh.rew.rewon==1 &&...
-                    getsecs>mh.rew.rewstart+duration
+            elseif (mh.rew.rewon==1 &&...
+                    getsecs>mh.rew.rewstart+duration) || app.StopRewardButton.Value
                 xippmex('digout',3,0);
                 app.insToTxtbox(['reward t: ' num2str(getsecs-mh.rew.rewstart) 's']);
                 mh.rew.rewon=0;
+                app.StopRewardButton.Value = 0;
+                app.RewardButton.Value=0;
             end
         end
 
@@ -203,11 +206,12 @@ classdef internal < handle
         end
 
         function plotwindow(mh,targ, pos)
-            radius=mh.trial.targets.(targ).window;
+            windowsize_all=deg2pix([mh.trial.targets.(targ).window mh.trial.targets.(targ).window],'size');
+            radius=windowsize_all(3);
             targetlocation = pos;
             centerx=(targetlocation(3)+targetlocation(1))/2;
             centery=(targetlocation(4)+targetlocation(2))/2;
-            squarepos=[centerx-radius centery-radius centerx+radius centery+radius];
+            squarepos=round([centerx-radius centery-radius centerx+radius centery+radius]);
             mh.Screen('FrameOval','monitoronly',[1 1 1],squarepos);
         end
 
@@ -268,7 +272,8 @@ classdef internal < handle
                 targposSquare=pos;
             end
 
-            radius=mh.trial.targets.(targ).window;
+            windowsize_all=deg2pix([mh.trial.targets.(targ).window mh.trial.targets.(targ).window],'size');
+            radius=windowsize_all(3);
             howfareye=targpos-mh.eye.geteye;
             hypoteye=hypot(howfareye(1),howfareye(2));
 
@@ -297,7 +302,7 @@ classdef internal < handle
 
             centerx=(targposSquare(3)+targposSquare(1))/2;
             centery=(targposSquare(4)+targposSquare(2))/2;
-            squarepos=[centerx-radius centery-radius centerx+radius centery+radius];
+            squarepos=round([centerx-radius centery-radius centerx+radius centery+radius]);
             mh.Screen('FrameOval','monitoronly',[1 0 0],squarepos);
         end
 

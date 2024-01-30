@@ -20,10 +20,10 @@ classdef eyeinfo < handle
             obj.xgain=ini.GetValues('eye calibration','xgain');
             obj.ygain=ini.GetValues('eye calibration','ygain');
 
-            true_center=ini.GetValues('for deg2pix','true center');
+            % true_center=ini.GetValues('for deg2pix','true center');
 
-            obj.xoffset=(deg2pix([ini.GetValues('eye calibration','xoffset') nan],'cart')-true_center(1));
-            obj.yoffset=(deg2pix([nan ini.GetValues('eye calibration','yoffset')],'cart')-true_center(1));
+            obj.xoffset=deg2pix([ini.GetValues('eye calibration','xoffset') nan],'cart');
+            obj.yoffset=deg2pix([nan ini.GetValues('eye calibration','yoffset')],'cart');
         end
 
         function obj = set(obj,prop,val)
@@ -59,7 +59,9 @@ classdef eyeinfo < handle
                 seteyepos(obj,xeye(end),yeye(end));
                 out=[xeye;yeye];
             end
+            out=round(out);
         end
+
 
         function out = getraweye(obj)
             chidx=xippmex('elec','analog');

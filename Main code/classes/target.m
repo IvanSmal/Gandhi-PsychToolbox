@@ -1,10 +1,10 @@
-classdef target
+classdef target < handle
     properties
         name
         size = [0 0 5 5]
         position = [0 0]
         final_position 
-        degreestype='polar'
+        degreestype='cartesian'
         window = 200;
         color = [1 0 0]
         shape = 'square'
@@ -46,8 +46,8 @@ classdef target
                     mh.targettime=mh.trial.state.(curstate).time;
                 elseif any(matches(varargin(:),'continue',IgnoreCase=true))
                     try
-                        curstate = mh.trial.state.(varargin{:}).time;
-                        tim=getsecs-mh.trial.state.(curstate).time;                        
+                        curstate = varargin{end};
+                        tim=getsecs-mh.trial.state.(curstate).time; 
                     catch
                         tim=getsecs-mh.targettime;
                         center=varargin(1);
@@ -64,16 +64,16 @@ classdef target
                 else
                     xf=@(mh,t,x) eval(targ.custompath_x);
                     yf=@(mh,t,y) eval(targ.custompath_y);
-
-                    tempx=xf(mh,tim,targ.position(1));
-                    tempy=yf(mh,tim,targ.position(2));
+                    
+                    tempx=xf(mh,tim*targ.speed,targ.position(1));
+                    tempy=yf(mh,tim*targ.speed,targ.position(2));
 
                     temppos=[tempx tempy];
                     mh.trial.targets.(targ.name).final_position=temppos;
                 end
             end
             
-            pixpos=deg2pix(temppos,targ.degreestype);
+            pixpos=deg2pix(temppos,targ.degreestype,mh.screenparams);
 
             if any(matches(varargin(:),'center',IgnoreCase=true))
                 out=pixpos;

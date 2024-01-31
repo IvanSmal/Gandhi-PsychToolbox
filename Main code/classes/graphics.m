@@ -28,6 +28,8 @@ classdef graphics < handle
         diode_color=[0 0 0];
         functionsbuffer=[];
         trialstarted=0;
+        lastarg;
+        gridlinesmatrix;
     end
 end
 

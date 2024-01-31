@@ -1,8 +1,4 @@
 function GraphicsHandler
-debug=0;
-if ~debug
-    rmpath('/home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/DEBUG') % remove DEBUG code override
-end
 addpath('/opt/Trellis/Tools/xippmex');
 xippmex;
 %% set up udp port
@@ -62,7 +58,7 @@ PsychImaging('AddTask', 'General', 'UsePanelFitter', [gr.screenXpixels, gr.scree
 
 
 % diode stuff
-gr.diode_pos=[0,gr.screenYpixels-50,50,gr.screenYpixels];
+gr.diode_pos=[0,gr.screenYpixels-20,20,gr.screenYpixels];
 
 % for some reason draw a circle for a frame idk why i need to do this, but
 % otherwise it will not display circles
@@ -75,6 +71,17 @@ Screen('Flip', gr.window_monitor);
 % set up movie placeholder image for monitor
 gr.monitormovieplaceholder=imread("assets/MoviePlaceholder.jpg");
 
+%set up grid params
+toconvert(:,1)=-40:10:40;
+toconvert(:,2)=-40:10:40;
+pixelsforlines=deg2pix(toconvert,'cart');
+xlines=reshape(repmat(pixelsforlines(:,1),2)',1,[]);
+fully=reshape(repmat([0 1080], length(xlines)/2,1)',1,[]);
+ylines = reshape(repmat(pixelsforlines(:,2),2)',1,[]);
+fullx=reshape(repmat([0 3000], length(ylines)/2,1)',1,[]);
+gr.gridlinesmatrix=[xlines fullx;fully ylines];
+
+
 % send ready signal to mh
 writeline(graphicsport,'isGraphicsReady=1;','0.0.0.0',2020);
 
@@ -84,14 +91,29 @@ while 1
     pause(0.0001) %allow for callbacks to be checked
     %% evaluate graphics buffer
     if ~isempty(gr.functionsbuffer) && gr.trialstarted
-        args={};
+        gr.flipped=0;
+        args_uncut={};
         outs={};
         additionalinfo={};
-        for i=1:length(gr.functionsbuffer)
-            v = fieldnames(gr.functionsbuffer);
-            for ii = 1 : length(v) %unwrap commands
-                eval([v{ii} '= gr.functionsbuffer.' v{ii} ';']);
+
+        v = fieldnames(gr.functionsbuffer);
+        for ii = 1 : length(v) %unwrap commands
+            eval([v{ii} '= gr.functionsbuffer.' v{ii} ';']);
+        end
+
+        commandcount=1;
+        lastargcount=1;
+        for iii = 1:length(args_uncut)
+            if strcmp(args_uncut{iii},'endcommand')
+                % args_uncut(iii)=[];
+                allargs{commandcount}=args_uncut(lastargcount:iii-1);
+                commandcount=commandcount+1;
+                lastargcount=iii+1;
             end
+        end
+
+        for i=1:length(allargs)
+            args=allargs{i};
             %% check if user wants to set a graphics parameter
             if length(args)>2 &&...
                     (isstring(args{end-1}) || ischar(args{end-1})) &&...
@@ -101,7 +123,7 @@ while 1
                 args{2}=gr.window_main;
                 if contains(args{end},'monitor')
                     args{2}=gr.window_monitor;
-                end                
+                end
 
                 evalstring=strcat(args{end},'=Screen(args{1:end-2});');
                 eval(evalstring);
@@ -127,7 +149,10 @@ while 1
                         else
                             Screen(args{1},gr.window_monitor,args{3:end});
                         end
-
+                    elseif length(args)>2 && matches(args{2},'monitoronly')
+                        try
+                            Screen(args{1},gr.window_monitor,args{3:end});
+                        end
                     end
                 else
                     Screen(args{:});
@@ -165,21 +190,31 @@ while 1
             end
         end
         Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
-        Screen('TextSize', gr.window_monitor,80);
+        Screen('TextSize', gr.window_monitor,30);
         Screen('DrawText', gr.window_monitor, gr.activestatename, 5, 5 , [255,255,255]);
-        Screen('DrawText', gr.window_monitor, num2str(gr.eye.geteye), gr.xCenter-10, 5 , [255,255,255]);
+        Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 600, 5 , [255,255,255]);
+        Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix,1,[.3 .3 .3]);
 
         Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
+    elseif isempty(gr.functionsbuffer) && gr.trialstarted && ~gr.flipped
         Screen('Flip',gr.window_monitor);
         Screen('Flip',gr.window_main);
+        clear allargs
+        gr.flipped=1;
     end
     %% this is to show eye when trials are not running
     if ~gr.trialstarted
+        try
+            seteye;
+        end
         Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
-        Screen('TextSize', gr.window_monitor,80);
-        Screen('DrawText', gr.window_monitor, gr.activestatename, 5, 5 , [255,255,255]);
-        Screen('DrawText', gr.window_monitor, num2str(gr.eye.geteye), gr.xCenter, 5 , [255,255,255]);
-    
+        Screen('TextSize', gr.window_monitor,30);
+        % Screen('DrawText', gr.window_monitor, gr.activestatename, 5, 5 , [255,255,255]);
+        try
+        Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 600, 5 , [255,255,255]);
+        end
+        Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix,1,[.3 .3 .3]);
+
         Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
         Screen('Flip',gr.window_monitor);
         Screen('Flip',gr.window_main);
@@ -202,15 +237,25 @@ end
         args_udp={};
         outs_udp={};
         additionalinfo_udp={};
+        gr.lastarg=1;
         eval(graphicsport.UserData.in);
 
-        gr.functionsbuffer(end+1).args=args_udp;
+        gr.functionsbuffer(end+1).args_uncut=args_udp;
         gr.functionsbuffer(end+1).outs=outs_udp;
         gr.functionsbuffer(end+1).additionalinfo=additionalinfo_udp;
     end
 %% set eye calibration
     function seteye
         gr.eye=eyeinfo;
+        toconvert(:,1)=-40:10:40;
+        toconvert(:,2)=-40:10:40;
+        pixelsforlines=deg2pix(toconvert,'cart');
+        xlines=reshape(repmat(pixelsforlines(:,1),2)',1,[]);
+        fully=reshape(repmat([0 1080], length(xlines)/2,1)',1,[]);
+        ylines = reshape(repmat(pixelsforlines(:,2),2)',1,[]);
+        fullx=reshape(repmat([0 3000], length(ylines)/2,1)',1,[]);
+        gr.gridlinesmatrix=[xlines fullx;fully ylines];
+
     end
 %% execut raw stream
     function rawexecute(graphicsport)

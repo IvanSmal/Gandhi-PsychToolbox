@@ -41,6 +41,8 @@ classdef internal < handle
         % for eye movement detection
         eye % maybe move to "experiment"
         targhistory=zeros(4,10);
+        autocalibrationmatrix=[];
+        screenparams
 
         rew = struct('rewon',0);
 
@@ -61,11 +63,15 @@ classdef internal < handle
         graphicsport
         graphicssent=0
         cachedout = 'default'
+        graphicscommandbuffer=''; %graphics buffer. move to private later
+        lastcommand = 1; %move to private later
 
     end
 
     properties (Access=private)
-        checkeye_counter=[0,0,0,0,0]; % grace period of 5 samples for eye to be in
+        checkeye_counter=[0,0,0]; % grace period of 3 samples for eye to be in
+        parpool=backgroundPool;
+
     end
 
     methods
@@ -90,11 +96,12 @@ classdef internal < handle
         end
 
         function varargout = Screen(mh,varargin)
+            currentcommand=jsonencode({varargin{[1,3:end]}});
+            if ~strcmp(mh.cachedout,currentcommand) %check that it is not sending the same command
+                mh.cachedout=currentcommand; %cache current command
 
-            if ~strcmp(mh.cachedout,jsonencode(varargin{:})) %check that it is not sending the same command
-                mh.cachedout=jsonencode(varargin{:}); %cache current command
-
-                if ~matches(varargin{1},'clearbuffer','IgnoreCase',true) %check that user is not trying to clear the UDP buffer
+                if ~matches(varargin{1},'clearbuffer','IgnoreCase',true) &&...
+                        ~matches(varargin{1},'sendtogr','IgnoreCase',true) %check that user is not trying to clear the UDP buffer
                     str=string();
                     for i=1:length(varargin)
                         namecount=1;
@@ -107,25 +114,27 @@ classdef internal < handle
                         elseif isnumeric(varargin{i}) % if it's a number, make it a string
                             varval=mat2str(varargin{i});
                         else
-                            varval=strcat('''',string(inputname(namecount)),'''');
+                            varval=['''',string(inputname(namecount)),''''];
                             namecount=namecount+1;
                         end
-                        str=strcat(str, 'args_udp{',num2str(i), '}=', varval, ';');
+                        str=[str, 'args_udp{',num2str(mh.lastcommand), '}=', varval, ';'];
+                        mh.lastcommand=mh.lastcommand+1;
                     end
 
                     if matches(varargin{1},'DrawTexture') %add a texture for monitor window
                         varval=replace(varargin{3},'.texture','.monitortexture');
-                        str=strcat(str, 'additionalinfo_udp{1}=', varval, ';'); %put this command into the additional option slot
+                        str=[str, 'additionalinfo_udp{1}=', varval, ';']; %put this command into the additional option slot
                     end
 
                     if nargout>0 %if the user wants an output from psychtoolbox, it goes here
                         for i=1:nargout
-                            str=strcat(str, 'outs_udp{',num2str(i), '}=', '''a',num2str(i), ''';');
+                            str=[str, 'outs_udp{',num2str(i), '}=', '''a',num2str(i), ''';'];
                         end
                     end
 
-                    writeline(mh.graphicsport,str,'0.0.0.0',2021); %actually send the data
-
+                    deliminator=['args_udp{',num2str(mh.lastcommand), '}=''endcommand'';'];
+                    mh.lastcommand=mh.lastcommand+1;
+                    mh.graphicscommandbuffer=[mh.graphicscommandbuffer, str,deliminator];
 
                     if nargout>0 %get outs. this needs work
                         commands=readline(mh.graphicsport);
@@ -138,36 +147,81 @@ classdef internal < handle
                     writeline(mh.graphicsport,'executegr.functionsbuffer=[];','0.0.0.0',2021)
                 end
             end
-        end
+            if matches(varargin{1},'sendtogr','IgnoreCase',true) && ~isempty(mh.graphicscommandbuffer)
+                writeline(mh.graphicsport,[mh.graphicscommandbuffer{:}],'0.0.0.0',2021); %actually send the data
+                mh.graphicscommandbuffer='';
+                mh.lastcommand=1;
+                % writeline(mh.graphicsport,'executegr.functionsbuffer=[];','0.0.0.0',2021); %need to figure out how to asynch this
+                % parfeval(mh.parpool,@writeline,0,mh.graphicsport,'executegr.functionsbuffer=[];','0.0.0.0',2021);
 
-        function obj=reward(obj,int)
-            if obj.rew.rewon==0
-                obj.rew.rewstart=getsecs;
-                obj.rew.rewon=1;
-                obj.rew.int=int;
             end
         end
 
-        function obj = rewcheck(obj,app)
-            if obj.rew.rewon==1 &&...
-                    getsecs<obj.rew.rewstart+obj.rew.int.duration
-
-                xippmex('digout',[3,4],[1,1]);
-
-            elseif obj.rew.rewon==1 &&...
-                    getsecs>obj.rew.rewstart+obj.rew.int.duration
-                xippmex('digout',[3,4],[0,0]);
-                app.insToTxtbox(['reward t: ' num2str(getsecs-obj.rew.rewstart)]);
-                obj.rew.rewon=0;
+        function mh = rewcheck(mh,app)
+            %reward button check
+            [~,~,events]=xippmex('digin');
+            if ~isempty(events)
+                if sum([events.sma4])>1
+                    mh.reward(app.RewardDuration.Value);
+                end
             end
+            %reward gui check
+            if app.RewardButton.Value
+                if ~mh.rew.rewon
+                    mh.reward(app.RewardDuration.Value);
+                    app.RewardButton.Value=1;
+                else
+                    app.RewardButton.Value=0;
+                end
+            end
+
+            if mh.rew.rewon==1 && isnumeric(mh.rew.int)
+                duration = mh.rew.int;
+            elseif mh.rew.rewon == 1
+                duration = mh.rew.int.duration;
+            end
+
+            if mh.rew.rewon==1 &&...
+                    getsecs<mh.rew.rewstart+duration &&...
+                    ~app.StopRewardButton.Value
+
+                xippmex('digout',3,1);
+
+            elseif (mh.rew.rewon==1 &&...
+                    getsecs>mh.rew.rewstart+duration) || app.StopRewardButton.Value
+                xippmex('digout',3,0);
+                app.insToTxtbox(['reward t: ' num2str(getsecs-mh.rew.rewstart) 's']);
+                mh.rew.rewon=0;
+                app.StopRewardButton.Value = 0;
+                app.RewardButton.Value=0;
+            end
+        end
+
+        function mh=reward(mh,int)
+            if mh.rew.rewon==0
+                mh.rew.rewstart=getsecs;
+                mh.rew.rewon=1;
+                mh.rew.int=int;
+            end
+        end
+
+        function plotwindow(mh,targ, pos)
+            windowsize_all=deg2pix([mh.trial.targets.(targ).window mh.trial.targets.(targ).window],'size');
+            radius=windowsize_all(3);
+            targetlocation = pos;
+            centerx=(targetlocation(3)+targetlocation(1))/2;
+            centery=(targetlocation(4)+targetlocation(2))/2;
+            squarepos=round([centerx-radius centery-radius centerx+radius centery+radius]);
+            mh.Screen('FrameOval','monitoronly',[1 1 1],squarepos);
         end
 
         function setstate(mh, name, count)
             if ~isfield(mh.trial.state,name)
-                mh.trial.state.(name).count=-100;
+                mh.trial.state.(name).count=0;
             end
             if nargin < 3
-                count=length(mh.trial.state);
+                count=mh.trial.state.(name).count+1;
+                mh.trial.state.(name).count=count;
             end
 
             mh.trial.state.(name).time(count)=getsecs;
@@ -179,11 +233,11 @@ classdef internal < handle
 
             mh.evalgraphics(['gr.activestatename =' '''' mh.activestatename '''' ';'])
 
-            mh.diodeflip
+            mh.diodeflip;
         end
 
-        function out = checkstate(obj,state)
-            out = strcmp(state, obj.activestatename);
+        function out = checkstate(mh,state)
+            out = strcmp(state, mh.activestatename);
         end
 
         function diodeflip(mh)
@@ -201,15 +255,55 @@ classdef internal < handle
 
         function out = checkint(mh, state, int)
             out = strcmp(state, mh.activestatename) && (getsecs < mh.activestatetime + mh.trialint(int));
+            if out~=1
+                display(mh.activestatetime + mh.trialint(int)-getsecs)
+            end
         end
 
-        function out=checkeye(mh,targ)
-            targpos=mh.trialtarg(targ,'getpos','center');
+        function out=checkeye(mh,targ,pos)
+            if ~exist('pos','var') || isempty(pos)
+                targpos=mh.trialtarg(targ,'getpos','center');
+                targposSquare=mh.trialtarg(targ,'getpos');
+            else
+                targetlocation = pos;
+                centerx=(targetlocation(3)+targetlocation(1))/2;
+                centery=(targetlocation(4)+targetlocation(2))/2;
+                targpos=[centerx centery];
+                targposSquare=pos;
+            end
+
+            windowsize_all=deg2pix([mh.trial.targets.(targ).window mh.trial.targets.(targ).window],'size');
+            radius=windowsize_all(3);
             howfareye=targpos-mh.eye.geteye;
             hypoteye=hypot(howfareye(1),howfareye(2));
-            mh.checkeye_counter(end)=mh.trial.targets.(targ).window>hypoteye;
-            mh.checkeye_counter=cicrshift(mh.checkeye_counter,-1);
-            out=ceil(mean(mh.checkeye_counter));
+
+            mh.checkeye_counter(end)=radius>hypoteye;
+            mh.checkeye_counter=circshift(mh.checkeye_counter,-1);
+            %out=ceil(mean(mh.checkeye_counter));
+            out=floor(mean(mh.checkeye_counter));
+
+            if out==1
+                 whereseye=mh.eye.getraweye;
+                if isempty(mh.autocalibrationmatrix)                   
+                    mh.autocalibrationmatrix(1)=targpos(1);
+                    mh.autocalibrationmatrix(2)=whereseye(1);
+                    mh.autocalibrationmatrix(3)=targpos(2);
+                    mh.autocalibrationmatrix(4)=whereseye(2);
+                else
+                    idx=size(mh.autocalibrationmatrix,1)+1;
+                    mh.autocalibrationmatrix(idx,1)=targpos(1);
+                    mh.autocalibrationmatrix(idx,2)=whereseye(1);
+                    mh.autocalibrationmatrix(idx,3)=targpos(2);
+                    mh.autocalibrationmatrix(idx,4)=whereseye(2);
+                end
+                [~,uidx]=unique(mh.autocalibrationmatrix(:,[1,3]),'last','rows');
+                mh.autocalibrationmatrix=mh.autocalibrationmatrix(uidx,:);
+            end
+
+            centerx=(targposSquare(3)+targposSquare(1))/2;
+            centery=(targposSquare(4)+targposSquare(2))/2;
+            squarepos=round([centerx-radius centery-radius centerx+radius centery+radius]);
+            mh.Screen('FrameOval','monitoronly',[1 0 0],squarepos);
         end
 
         function starttrial(mh)
@@ -225,8 +319,8 @@ classdef internal < handle
             mh.evalgraphics('gr.trialstarted=0;');
         end
 
-        function getmovie(obj, moviepath,varargin)
-            obj.movie=Screen('OpenMovie',obj.window_main,moviepath,varargin{:});
+        function getmovie(mh, moviepath,varargin)
+            mh.movie=Screen('OpenMovie',mh.window_main,moviepath,varargin{:});
         end
 
         function out=targcollisioncheck(obj,t1,t2)
@@ -278,7 +372,11 @@ classdef internal < handle
         end
 
         function out=trialint(mh,name)% internal
-            out=mh.trial.intervals.(name).duration;
+            if ~isnumeric(name)
+                out=mh.trial.intervals.(name).duration;
+            else
+                out=name;
+            end
         end
 
         function out=trialtarg(obj,name,arg,varargin)

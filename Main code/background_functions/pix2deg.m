@@ -5,18 +5,25 @@ if ~exist('type','var')
     type='pol';
 end
 
-%% get ini params
-ini=IniConfig();
+if ~exist('screenparams','var') || isempty(screenparams)
+    %% get ini params
+    ini=IniConfig();
 
-isini=ini.ReadFile('inis/ScreenParams.ini');
+    isini=ini.ReadFile('inis/ScreenParams.ini');
 
-if ~isini
-    errordlg('ini not found. Missing or in the wrong path.')
-elseif isini
-    PixelSize(1)=ini.GetValues('for deg2pix','xPixelSize');
-    PixelSize(2)=ini.GetValues('for deg2pix','yPixelSize');
-    trueCenter=ini.GetValues('for deg2pix','true center');
-    distFromScreen=ini.GetValues('for deg2pix','subject distance');
+    if ~isini
+        errordlg('ini not found. Missing or in the wrong path.')
+    elseif isini
+        PixelSize(1)=ini.GetValues('for deg2pix','xPixelSize');
+        PixelSize(2)=ini.GetValues('for deg2pix','yPixelSize');
+        trueCenter=ini.GetValues('for deg2pix','true center');
+        distFromScreen=ini.GetValues('for deg2pix','subject distance');
+    end
+else
+    PixelSize(1) = screenparams.xPixelSize;
+    PixelSize(2) = screenparams.yPixelSize;
+    trueCenter=screenparams.true_center;
+    distFromScreen=screenparams.subject_distance;
 end
 
 %% do the calculations
@@ -24,6 +31,12 @@ for i=1:size(in,1)
     XYin=in(i,:);
     XYin(1)=XYin(1)-trueCenter(1);
     XYin(2)=-(XYin(2)-trueCenter(2));
+
+    if matches(type,'size')
+        XYin(1)=XYin(1)+trueCenter(1);
+        XYin(2)=-XYin(2)+trueCenter(2);
+        type='cart';
+    end
 
     Xmm=XYin(1)*PixelSize(1);
     Ymm=XYin(2)*PixelSize(2);
@@ -44,5 +57,6 @@ for i=1:size(in,1)
         out(i,:)=[theta r];
     end
 end
+out=rmmissing(out);
 end
 

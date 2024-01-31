@@ -233,7 +233,7 @@ classdef internal < handle
 
             mh.evalgraphics(['gr.activestatename =' '''' mh.activestatename '''' ';'])
 
-            mh.diodeflip
+            mh.diodeflip;
         end
 
         function out = checkstate(mh,state)

@@ -32,6 +32,7 @@ classdef internal < handle
         trialnumpersistent=0;
         tlogic
         trial_function
+        numsuccess = 0;
 
         %diode properties
         diode_pos = [0,1300 ,50, 1350];

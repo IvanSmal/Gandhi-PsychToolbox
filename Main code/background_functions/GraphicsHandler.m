@@ -68,6 +68,9 @@ Screen('Flip', gr.window_main);
 Screen('FillOval', gr.window_monitor, [1 1 1], [0 0 10 10]);
 Screen('Flip', gr.window_monitor);
 
+%turn off mouse on monkey screen
+HideCursor(gr.window_main)
+
 % set up movie placeholder image for monitor
 gr.monitormovieplaceholder=imread("assets/MoviePlaceholder.jpg");
 

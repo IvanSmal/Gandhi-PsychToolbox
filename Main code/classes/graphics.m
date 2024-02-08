@@ -30,6 +30,7 @@ classdef graphics < handle
         trialstarted=0;
         lastarg;
         gridlinesmatrix;
+        eyehistory;
     end
 end
 

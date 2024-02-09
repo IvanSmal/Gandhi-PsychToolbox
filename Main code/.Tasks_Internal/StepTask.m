@@ -72,7 +72,7 @@ if mh.checkstate('T1_hold_state_stationary')
 
     if mh.checkint('T1_hold_state_stationary','T1_Hold') && mh.checkeye('T_Calibrate')
        % just chill
-    elseif mh.checkint('T1_hold_state_stationary','T1_Hold') && ~mh.checkeye('T_Calibrate')
+    elseif mh.checkint('T1_hold_state_stationary','T1_Hold) && ~mh.checkeye('T_Calibrate')
         mh.stoptrial(0);
     elseif ~mh.checkint('T1_hold_state_stationary','T1_Hold') && mh.checkeye('T_Calibrate')
         mh.reward(mh.getint('reward'));

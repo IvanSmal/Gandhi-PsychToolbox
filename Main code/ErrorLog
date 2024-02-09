@@ -51,4 +51,910 @@ Error in appdesigner.internal.service.AppManagementService/executeCallback (line
                 callback(appOrUserComponent, event);
 
 Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...First input must be a positive scalar integer value IMAX, or two integer values [IMIN IMAX] with IMIN less than or equal to IMAX.
+Error using randi
+First input must be a positive scalar integer value IMAX, or two integer values
+[IMIN IMAX] with IMIN less than or equal to IMAX.
+
+Error in MHost2/Run_Experiment (line 183)
+                    randTrial=randi(length(tlist));
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using randi
+First input must be a positive scalar integer value IMAX, or two integer values
+[IMIN IMAX] with IMIN less than or equal to IMAX.
+
+Error in MHost2/Run_Experiment (line 183)
+                    randTrial=randi(length(tlist));
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using randi
+First input must be a positive scalar integer value IMAX, or two integer values
+[IMIN IMAX] with IMIN less than or equal to IMAX.
+
+Error in MHost2/Run_Experiment (line 183)
+                    randTrial=randi(length(tlist));
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using randi
+First input must be a positive scalar integer value IMAX, or two integer values
+[IMIN IMAX] with IMIN less than or equal to IMAX.
+
+Error in MHost2/Run_Experiment (line 183)
+                    randTrial=randi(length(tlist));
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...First input must be a positive scalar integer value IMAX, or two integer values [IMIN IMAX] with IMIN less than or equal to IMAX.
+Error using randi
+First input must be a positive scalar integer value IMAX, or two integer values
+[IMIN IMAX] with IMIN less than or equal to IMAX.
+
+Error in MHost2/Run_Experiment (line 183)
+                    randTrial=randi(length(tlist));
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using randi
+First input must be a positive scalar integer value IMAX, or two integer values
+[IMIN IMAX] with IMIN less than or equal to IMAX.
+
+Error in MHost2/Run_Experiment (line 183)
+                    randTrial=randi(length(tlist));
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using randi
+First input must be a positive scalar integer value IMAX, or two integer values
+[IMIN IMAX] with IMIN less than or equal to IMAX.
+
+Error in MHost2/Run_Experiment (line 183)
+                    randTrial=randi(length(tlist));
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using randi
+First input must be a positive scalar integer value IMAX, or two integer values
+[IMIN IMAX] with IMIN less than or equal to IMAX.
+
+Error in MHost2/Run_Experiment (line 183)
+                    randTrial=randi(length(tlist));
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...First input must be a positive scalar integer value IMAX, or two integer values [IMIN IMAX] with IMIN less than or equal to IMAX.
+Error using randi
+First input must be a positive scalar integer value IMAX, or two integer values
+[IMIN IMAX] with IMIN less than or equal to IMAX.
+
+Error in MHost2/Run_Experiment (line 183)
+                    randTrial=randi(length(tlist));
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using randi
+First input must be a positive scalar integer value IMAX, or two integer values
+[IMIN IMAX] with IMIN less than or equal to IMAX.
+
+Error in MHost2/Run_Experiment (line 183)
+                    randTrial=randi(length(tlist));
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using randi
+First input must be a positive scalar integer value IMAX, or two integer values
+[IMIN IMAX] with IMIN less than or equal to IMAX.
+
+Error in MHost2/Run_Experiment (line 183)
+                    randTrial=randi(length(tlist));
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using randi
+First input must be a positive scalar integer value IMAX, or two integer values
+[IMIN IMAX] with IMIN less than or equal to IMAX.
+
+Error in MHost2/Run_Experiment (line 183)
+                    randTrial=randi(length(tlist));
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "T1_Hold".
+Unrecognized field name "T1_Hold".
+
+Error in internal/trialint (line 376)
+                out=mh.trial.intervals.(name).duration;
+
+Error in internal/checkint (line 257)
+            out = strcmp(state, mh.activestatename) && (getsecs < mh.activestatetime + mh.trialint(int));
+
+Error in MovingTargOutward (line 90)
+    if mh.checkint('T1_hold_state_moving','T1_Hold') && mh.checkeye('T1_Moving_out',targpos)
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "T1_Hold".
+
+Error in internal/trialint (line 376)
+                out=mh.trial.intervals.(name).duration;
+
+Error in internal/checkint (line 257)
+            out = strcmp(state, mh.activestatename) && (getsecs < mh.activestatetime + mh.trialint(int));
+
+Error in MovingTargOutward (line 90)
+    if mh.checkint('T1_hold_state_moving','T1_Hold') && mh.checkeye('T1_Moving_out',targpos)
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "T1_Hold".
+
+Error in internal/trialint (line 376)
+                out=mh.trial.intervals.(name).duration;
+
+Error in internal/checkint (line 257)
+            out = strcmp(state, mh.activestatename) && (getsecs < mh.activestatetime + mh.trialint(int));
+
+Error in MovingTargOutward (line 90)
+    if mh.checkint('T1_hold_state_moving','T1_Hold') && mh.checkeye('T1_Moving_out',targpos)
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "T1_Hold".
+
+Error in internal/trialint (line 376)
+                out=mh.trial.intervals.(name).duration;
+
+Error in internal/checkint (line 257)
+            out = strcmp(state, mh.activestatename) && (getsecs < mh.activestatetime + mh.trialint(int));
+
+Error in MovingTargOutward (line 90)
+    if mh.checkint('T1_hold_state_moving','T1_Hold') && mh.checkeye('T1_Moving_out',targpos)
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "T1_Hold".
+
+Error in internal/trialint (line 376)
+                out=mh.trial.intervals.(name).duration;
+
+Error in internal/checkint (line 257)
+            out = strcmp(state, mh.activestatename) && (getsecs < mh.activestatetime + mh.trialint(int));
+
+Error in MovingTargOutward (line 90)
+    if mh.checkint('T1_hold_state_moving','T1_Hold') && mh.checkeye('T1_Moving_out',targpos)
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "T1_Hold".
+
+Error in internal/trialint (line 376)
+                out=mh.trial.intervals.(name).duration;
+
+Error in internal/checkint (line 257)
+            out = strcmp(state, mh.activestatename) && (getsecs < mh.activestatetime + mh.trialint(int));
+
+Error in MovingTargOutward (line 90)
+    if mh.checkint('T1_hold_state_moving','T1_Hold') && mh.checkeye('T1_Moving_out',targpos)
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "T1_Hold".
+
+Error in internal/trialint (line 376)
+                out=mh.trial.intervals.(name).duration;
+
+Error in internal/checkint (line 257)
+            out = strcmp(state, mh.activestatename) && (getsecs < mh.activestatetime + mh.trialint(int));
+
+Error in MovingTargOutward (line 90)
+    if mh.checkint('T1_hold_state_moving','T1_Hold') && mh.checkeye('T1_Moving_out',targpos)
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.
+Invalid or deleted object.
+
+Error in internal/rewcheck (line 169)
+            if app.RewardButton.Value
+
+Error in MHost2/Run_Experiment (line 282)
+                        mh.rewcheck(app);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.
+
+Error in internal/rewcheck (line 169)
+            if app.RewardButton.Value
+
+Error in MHost2/Run_Experiment (line 282)
+                        mh.rewcheck(app);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.
+
+Error in internal/rewcheck (line 169)
+            if app.RewardButton.Value
+
+Error in MHost2/Run_Experiment (line 282)
+                        mh.rewcheck(app);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.
+
+Error in internal/rewcheck (line 169)
+            if app.RewardButton.Value
+
+Error in MHost2/Run_Experiment (line 282)
+                        mh.rewcheck(app);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.
+
+Error in internal/rewcheck (line 169)
+            if app.RewardButton.Value
+
+Error in MHost2/Run_Experiment (line 282)
+                        mh.rewcheck(app);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/.Tasks_Internal/StepTask.m Line: 75 Column: 78
+Invalid expression. Check for missing multiplication operator, missing or unbalanced delimiters, or other syntax error. To construct matrices, use brackets instead of parentheses.
+File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
+code/.Tasks_Internal/StepTask.m Line: 75 Column: 78
+Invalid expression. Check for missing multiplication operator, missing or
+unbalanced delimiters, or other syntax error. To construct matrices, use
+brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
+code/.Tasks_Internal/StepTask.m Line: 75 Column: 78
+Invalid expression. Check for missing multiplication operator, missing or
+unbalanced delimiters, or other syntax error. To construct matrices, use
+brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
+code/.Tasks_Internal/StepTask.m Line: 75 Column: 78
+Invalid expression. Check for missing multiplication operator, missing or
+unbalanced delimiters, or other syntax error. To construct matrices, use
+brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
+code/.Tasks_Internal/StepTask.m Line: 75 Column: 78
+Invalid expression. Check for missing multiplication operator, missing or
+unbalanced delimiters, or other syntax error. To construct matrices, use
+brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/.Tasks_Internal/StepTask.m Line: 75 Column: 78
+Invalid expression. Check for missing multiplication operator, missing or unbalanced delimiters, or other syntax error. To construct matrices, use brackets instead of parentheses.
+File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
+code/.Tasks_Internal/StepTask.m Line: 75 Column: 78
+Invalid expression. Check for missing multiplication operator, missing or
+unbalanced delimiters, or other syntax error. To construct matrices, use
+brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
+code/.Tasks_Internal/StepTask.m Line: 75 Column: 78
+Invalid expression. Check for missing multiplication operator, missing or
+unbalanced delimiters, or other syntax error. To construct matrices, use
+brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
+code/.Tasks_Internal/StepTask.m Line: 75 Column: 78
+Invalid expression. Check for missing multiplication operator, missing or
+unbalanced delimiters, or other syntax error. To construct matrices, use
+brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
+code/.Tasks_Internal/StepTask.m Line: 75 Column: 78
+Invalid expression. Check for missing multiplication operator, missing or
+unbalanced delimiters, or other syntax error. To construct matrices, use
+brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/.Tasks_Internal/StepTask.m Line: 75 Column: 78
+Invalid expression. Check for missing multiplication operator, missing or unbalanced delimiters, or other syntax error. To construct matrices, use brackets instead of parentheses.
+File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
+code/.Tasks_Internal/StepTask.m Line: 75 Column: 78
+Invalid expression. Check for missing multiplication operator, missing or
+unbalanced delimiters, or other syntax error. To construct matrices, use
+brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
+code/.Tasks_Internal/StepTask.m Line: 75 Column: 78
+Invalid expression. Check for missing multiplication operator, missing or
+unbalanced delimiters, or other syntax error. To construct matrices, use
+brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
+code/.Tasks_Internal/StepTask.m Line: 75 Column: 78
+Invalid expression. Check for missing multiplication operator, missing or
+unbalanced delimiters, or other syntax error. To construct matrices, use
+brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
+code/.Tasks_Internal/StepTask.m Line: 75 Column: 78
+Invalid expression. Check for missing multiplication operator, missing or
+unbalanced delimiters, or other syntax error. To construct matrices, use
+brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/.Tasks_Internal/StepTask.m Line: 75 Column: 78
+Invalid expression. Check for missing multiplication operator, missing or unbalanced delimiters, or other syntax error. To construct matrices, use brackets instead of parentheses.
+File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
+code/.Tasks_Internal/StepTask.m Line: 75 Column: 78
+Invalid expression. Check for missing multiplication operator, missing or
+unbalanced delimiters, or other syntax error. To construct matrices, use
+brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
+code/.Tasks_Internal/StepTask.m Line: 75 Column: 78
+Invalid expression. Check for missing multiplication operator, missing or
+unbalanced delimiters, or other syntax error. To construct matrices, use
+brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
+code/.Tasks_Internal/StepTask.m Line: 75 Column: 78
+Invalid expression. Check for missing multiplication operator, missing or
+unbalanced delimiters, or other syntax error. To construct matrices, use
+brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
+code/.Tasks_Internal/StepTask.m Line: 75 Column: 78
+Invalid expression. Check for missing multiplication operator, missing or
+unbalanced delimiters, or other syntax error. To construct matrices, use
+brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/.Tasks_Internal/StepTask.m Line: 75 Column: 78
+Invalid expression. Check for missing multiplication operator, missing or unbalanced delimiters, or other syntax error. To construct matrices, use brackets instead of parentheses.
+File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
+code/.Tasks_Internal/StepTask.m Line: 75 Column: 78
+Invalid expression. Check for missing multiplication operator, missing or
+unbalanced delimiters, or other syntax error. To construct matrices, use
+brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
+code/.Tasks_Internal/StepTask.m Line: 75 Column: 78
+Invalid expression. Check for missing multiplication operator, missing or
+unbalanced delimiters, or other syntax error. To construct matrices, use
+brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
+code/.Tasks_Internal/StepTask.m Line: 75 Column: 78
+Invalid expression. Check for missing multiplication operator, missing or
+unbalanced delimiters, or other syntax error. To construct matrices, use
+brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
+code/.Tasks_Internal/StepTask.m Line: 75 Column: 78
+Invalid expression. Check for missing multiplication operator, missing or
+unbalanced delimiters, or other syntax error. To construct matrices, use
+brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...<a href="matlab: opentoline('/home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/.Tasks_Internal/StepTask.m',75,78)">File: StepTask.m Line: 75 Column: 78</a>
+Invalid expression. Check for missing multiplication operator, missing or unbalanced delimiters, or other syntax error. To construct matrices, use brackets instead of parentheses.
+<a href="matlab: opentoline('/home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/.Tasks_Internal/StepTask.m',75,78)">File: StepTask.m Line: 75 Column: 78</a>
+Invalid expression. Check for missing multiplication operator, missing or unbalanced delimiters, or other syntax error.
+To construct matrices, use brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...<a href="matlab: opentoline('/home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/.Tasks_Internal/StepTask.m',75,78)">File: StepTask.m Line: 75 Column: 78</a>
+Invalid expression. Check for missing multiplication operator, missing or unbalanced delimiters, or other syntax error.
+To construct matrices, use brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...<a href="matlab: opentoline('/home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/.Tasks_Internal/StepTask.m',75,78)">File: StepTask.m Line: 75 Column: 78</a>
+Invalid expression. Check for missing multiplication operator, missing or unbalanced delimiters, or other syntax error.
+To construct matrices, use brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...<a href="matlab: opentoline('/home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/.Tasks_Internal/StepTask.m',75,78)">File: StepTask.m Line: 75 Column: 78</a>
+Invalid expression. Check for missing multiplication operator, missing or unbalanced delimiters, or other syntax error. To construct matrices, use brackets instead of parentheses.
+<a href="matlab: opentoline('/home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/.Tasks_Internal/StepTask.m',75,78)">File: StepTask.m Line: 75 Column: 78</a>
+Invalid expression. Check for missing multiplication operator, missing or unbalanced delimiters, or other syntax error.
+To construct matrices, use brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...<a href="matlab: opentoline('/home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/.Tasks_Internal/StepTask.m',75,78)">File: StepTask.m Line: 75 Column: 78</a>
+Invalid expression. Check for missing multiplication operator, missing or unbalanced delimiters, or other syntax error.
+To construct matrices, use brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...<a href="matlab: opentoline('/home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/.Tasks_Internal/StepTask.m',75,78)">File: StepTask.m Line: 75 Column: 78</a>
+Invalid expression. Check for missing multiplication operator, missing or unbalanced delimiters, or other syntax error.
+To construct matrices, use brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "ball".
+Unrecognized field name "ball".
+
+Error in internal/gettarg (line 397)
+            temptarg=mh.targets.(targname);
+
+Error in Pong_straightDown (line 6)
+    ball=mh.gettarg('ball'); % grab T0
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "ball".
+
+Error in internal/gettarg (line 397)
+            temptarg=mh.targets.(targname);
+
+Error in Pong_straightDown (line 6)
+    ball=mh.gettarg('ball'); % grab T0
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "ball".
+
+Error in internal/gettarg (line 397)
+            temptarg=mh.targets.(targname);
+
+Error in Pong_straightDown (line 6)
+    ball=mh.gettarg('ball'); % grab T0
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "ball".
+
+Error in internal/gettarg (line 397)
+            temptarg=mh.targets.(targname);
+
+Error in Pong_straightDown (line 6)
+    ball=mh.gettarg('ball'); % grab T0
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "ball".
+
+Error in internal/gettarg (line 397)
+            temptarg=mh.targets.(targname);
+
+Error in Pong_straightDown (line 6)
+    ball=mh.gettarg('ball'); % grab T0
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...<a href="matlab: opentoline('/home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/.Tasks_Internal/StepTask.m',75,78)">File: StepTask.m Line: 75 Column: 78</a>
+Invalid expression. Check for missing multiplication operator, missing or unbalanced delimiters, or other syntax error. To construct matrices, use brackets instead of parentheses.
+<a href="matlab: opentoline('/home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/.Tasks_Internal/StepTask.m',75,78)">File: StepTask.m Line: 75 Column: 78</a>
+Invalid expression. Check for missing multiplication operator, missing or unbalanced delimiters, or other syntax
+error. To construct matrices, use brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...<a href="matlab: opentoline('/home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/.Tasks_Internal/StepTask.m',75,78)">File: StepTask.m Line: 75 Column: 78</a>
+Invalid expression. Check for missing multiplication operator, missing or unbalanced delimiters, or other syntax
+error. To construct matrices, use brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...<a href="matlab: opentoline('/home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/.Tasks_Internal/StepTask.m',75,78)">File: StepTask.m Line: 75 Column: 78</a>
+Invalid expression. Check for missing multiplication operator, missing or unbalanced delimiters, or other syntax
+error. To construct matrices, use brackets instead of parentheses.
+
+Error in MHost2/Run_Experiment (line 277)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 781)
+            Run_Experiment(app,mh);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
             newCallback = @(source, event)executeCallback(ams, ...

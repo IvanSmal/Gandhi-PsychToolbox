@@ -43,7 +43,7 @@ classdef internal < handle
         targhistory=zeros(4,10);
         autocalibrationmatrix=[];
         screenparams
-
+        
         rew = struct('rewon',0);
 
         % For statechanges and diode flips
@@ -58,6 +58,7 @@ classdef internal < handle
 
         %collision stuff
         coltimer=0
+        eccentricity_gain;
 
         %communicate with graphics
         graphicsport

@@ -17,6 +17,7 @@ gr.activestatename='null';
 
 %% set up the screens for experiments
 Screen('Preference', 'SkipSyncTests', 0);
+Screen('Preference', 'VisualDebugLevel', 3);
 
 % Clear the workspace and the screen
 sca;

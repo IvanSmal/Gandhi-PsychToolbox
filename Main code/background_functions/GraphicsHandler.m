@@ -146,7 +146,7 @@ while 1
                         Screen(args{1},gr.window_main,args{3:end});
 
                         if (isstring(args{1}) || ischar(args{1})) && matches(args{1},'DrawTexture','IgnoreCase',true)
-                            args{3}=additionalinfo{1};
+                            % args{3}=additionalinfo{1};
                             try
                                 Screen(args{1},gr.window_monitor,args{3:end});
                             end

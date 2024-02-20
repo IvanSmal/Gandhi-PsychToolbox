@@ -274,12 +274,13 @@ classdef internal < handle
                 targposSquare=pos;
             end
 
-            degreesfromcenter=(targpos);
+            degreesfromcenter=pix2deg(targpos,'cart',mh.screenparams);
             targfromcenter=hypot(degreesfromcenter(1),degreesfromcenter(2));
-            truegainvalue=targfromcenter+mh.eccentricity_gain;
+            truegainvalue=targfromcenter*mh.eccentricity_gain;
+            truegainpixels=deg2pix([truegainvalue truegainvalue],'size',mh.screenparams);
 
             windowsize_all=deg2pix([mh.trial.targets.(targ).window mh.trial.targets.(targ).window],'size');
-            radius=windowsize_all(3)+truegainvalue;
+            radius=windowsize_all(3)+truegainpixels(3);
             howfareye=targpos-mh.eye.geteye;
             hypoteye=hypot(howfareye(1),howfareye(2));
 

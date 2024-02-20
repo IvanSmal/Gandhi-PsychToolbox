@@ -194,6 +194,7 @@ classdef internal < handle
                 mh.rew.rewon=0;
                 app.StopRewardButton.Value = 0;
                 app.RewardButton.Value=0;
+                clear sound
             end
         end
 
@@ -201,6 +202,7 @@ classdef internal < handle
             if mh.rew.rewon==0
                 mh.rew.rewstart=getsecs;
                 mh.rew.rewon=1;
+                sound(sin(1:1e6),3000);
                 mh.rew.int=int;
             end
         end
@@ -283,7 +285,6 @@ classdef internal < handle
 
             mh.checkeye_counter(end)=radius>hypoteye;
             mh.checkeye_counter=circshift(mh.checkeye_counter,-1);
-            %out=ceil(mean(mh.checkeye_counter));
             out=floor(mean(mh.checkeye_counter));
 
             if out==1

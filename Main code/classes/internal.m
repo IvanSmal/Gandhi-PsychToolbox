@@ -7,7 +7,6 @@ classdef internal < handle
         intervals
         targets % database of targets to use in tasks
 
-
         % screen properties (do these need to be saved?)
         screens
         window_main
@@ -273,8 +272,12 @@ classdef internal < handle
                 targposSquare=pos;
             end
 
+            degreesfromcenter=(targpos);
+            targfromcenter=hypot(degreesfromcenter(1),degreesfromcenter(2));
+            truegainvalue=targfromcenter+mh.eccentricity_gain;
+
             windowsize_all=deg2pix([mh.trial.targets.(targ).window mh.trial.targets.(targ).window],'size');
-            radius=windowsize_all(3);
+            radius=windowsize_all(3)+truegainvalue;
             howfareye=targpos-mh.eye.geteye;
             hypoteye=hypot(howfareye(1),howfareye(2));
 

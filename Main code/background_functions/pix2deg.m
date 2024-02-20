@@ -1,8 +1,8 @@
-function out = pix2deg(in,type)
+function out = pix2deg(in,type,screenparams)
 %DEG2PIX Summary of this function goes here
 %   Detailed explanation goes here
 if ~exist('type','var')
-    type='pol';
+    type='cart';
 end
 
 if ~exist('screenparams','var') || isempty(screenparams)

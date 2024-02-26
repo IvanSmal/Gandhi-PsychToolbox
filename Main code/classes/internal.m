@@ -161,10 +161,8 @@ classdef internal < handle
             %reward button check
             [~,~,events]=xippmex('digin');
             if ~isempty(events)
-                if sum([events.sma4])>1
-                    if ~mh.rew.rewon
-                        mh.reward(app.RewardDuration.Value);
-                    end
+                if sum([events.sma4])>1 && ~mh.rew.rewon
+                    mh.reward(app.RewardDuration.Value);
                 end
             end
             %reward gui check

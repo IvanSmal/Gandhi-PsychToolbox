@@ -162,7 +162,9 @@ classdef internal < handle
             [~,~,events]=xippmex('digin');
             if ~isempty(events)
                 if sum([events.sma4])>1
-                    mh.reward(app.RewardDuration.Value);
+                    if ~mh.rew.rewon
+                        mh.reward(app.RewardDuration.Value);
+                    end
                 end
             end
             %reward gui check
@@ -196,6 +198,7 @@ classdef internal < handle
                 app.RewardButton.Value=0;
                 clear sound
             end
+            [~,~,events]=xippmex('digin'); %clear digital buffer
         end
 
         function mh=reward(mh,int)

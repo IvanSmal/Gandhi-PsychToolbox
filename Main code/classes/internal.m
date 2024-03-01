@@ -94,12 +94,14 @@ classdef internal < handle
                 com=readline(mh.graphicsport);
                 try %this is a dirty way to make sure 'com' is evaluatable
                     eval(com);
+                catch
                 end
             end
         end
 
         function varargout = Screen(mh,varargin)
-            currentcommand=jsonencode({varargin{[1,3:end]}});
+            % currentcommand=jsonencode({varargin{[1,3:end]}});
+            currentcommand=jsonencode(varargin([1,3:end]));
             if ~strcmp(mh.cachedout,currentcommand) %check that it is not sending the same command
                 mh.cachedout=currentcommand; %cache current command
 
@@ -107,7 +109,7 @@ classdef internal < handle
                         ~matches(varargin{1},'sendtogr','IgnoreCase',true) %check that user is not trying to clear the UDP buffer
                     str=string();
                     for i=1:length(varargin)
-                        namecount=1;
+                        namecount=0;
                         if matches(class(varargin{i}),'char')
                             if contains(varargin{i},'gr') % if the user calls for graphics then...
                                 varval=['' varargin{i} '']; % send "gr" as a call to the gr object
@@ -117,21 +119,21 @@ classdef internal < handle
                         elseif isnumeric(varargin{i}) % if it's a number, make it a string
                             varval=mat2str(varargin{i});
                         else
-                            varval=['''',string(inputname(namecount)),''''];
                             namecount=namecount+1;
+                            varval=['''',string(inputname(namecount)),''''];                            
                         end
-                        str=[str, 'args_udp{',num2str(mh.lastcommand), '}=', varval, ';'];
+                        str.append(['args_udp{',num2str(mh.lastcommand), '}=', varval, ';']);
                         mh.lastcommand=mh.lastcommand+1;
                     end
 
                     if matches(varargin{1},'DrawTexture') %add a texture for monitor window
                         varval=replace(varargin{3},'.texture','.monitortexture');
-                        str=[str, 'additionalinfo_udp{1}=', varval, ';']; %put this command into the additional option slot
+                        str.append([ 'additionalinfo_udp{1}=', varval, ';']); %put this command into the additional option slot
                     end
 
                     if nargout>0 %if the user wants an output from psychtoolbox, it goes here
                         for i=1:nargout
-                            str=[str, 'outs_udp{',num2str(i), '}=', '''a',num2str(i), ''';'];
+                            str.append(['outs_udp{',num2str(i), '}=', '''a',num2str(i), ''';']);
                         end
                     end
 
@@ -142,6 +144,7 @@ classdef internal < handle
                     if nargout>0 %get outs. this needs work
                         commands=readline(mh.graphicsport);
                         eval(commands);
+                        varargout=cell(nargout);
                         for i=1:nargout
                             varargout{i}=eval(['a' num2str(i)]);
                         end
@@ -199,7 +202,7 @@ classdef internal < handle
                 app.RewardButton.Value=0;
                 clear sound
             end
-            [~,~,events]=xippmex('digin'); %clear digital buffer
+            [~,~,~]=xippmex('digin'); %clear digital buffer
         end
 
         function mh=reward(mh,int)
@@ -363,16 +366,16 @@ classdef internal < handle
             end
         end
         %% methods from old "experiment" structure
-        function addtarg(e,name,varargin)
-            outcells={'name', name, varargin{:}};
-            e.targets.(name)=target(outcells{:});
+        function addtarg(mh,name,varargin)
+            outcells=[{'name'}, {name}, varargin(:)'];
+            mh.targets.(name)=target(outcells{:});
         end
 
-        function addint(e,name,dur, prob)
+        function addint(mh,name,dur, prob)
             if nargin ==3
-                e.intervals.(name)=interval(name, dur);
+                mh.intervals.(name)=interval(name, dur);
             else
-                e.intervals.(name)=interval(name, dur, prob);
+                mh.intervals.(name)=interval(name, dur, prob);
             end
         end
 
@@ -397,10 +400,6 @@ classdef internal < handle
             for i=length(e)
                 e(i).(a)=b;
             end
-        end
-
-        function adddata(e,d)                                               %dump data in
-            e.trial(e.trialnum).data=d;
         end
 
         function out=gettarg(mh,targname)

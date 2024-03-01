@@ -269,4 +269,450 @@ Error in appdesigner.internal.service.AppManagementService/executeCallback (line
                 callback(appOrUserComponent, event);
 
 Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Replication factors must be a row vector of integers or integer scalars.
+Error using repmat
+Replication factors must be a row vector of integers or integer scalars.
+
+Error in MHost2/Run_Experiment (line 200)
+                        tlist=[tlist repmat(mh.ttypeslogic(i,1),1,cell2mat(mh.ttypeslogic(i,2)))];
+
+Error in MHost2/STARTButtonPushed (line 935)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using repmat
+Replication factors must be a row vector of integers or integer scalars.
+
+Error in MHost2/Run_Experiment (line 200)
+                        tlist=[tlist repmat(mh.ttypeslogic(i,1),1,cell2mat(mh.ttypeslogic(i,2)))];
+
+Error in MHost2/STARTButtonPushed (line 935)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using repmat
+Replication factors must be a row vector of integers or integer scalars.
+
+Error in MHost2/Run_Experiment (line 200)
+                        tlist=[tlist repmat(mh.ttypeslogic(i,1),1,cell2mat(mh.ttypeslogic(i,2)))];
+
+Error in MHost2/STARTButtonPushed (line 935)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using repmat
+Replication factors must be a row vector of integers or integer scalars.
+
+Error in MHost2/Run_Experiment (line 200)
+                        tlist=[tlist repmat(mh.ttypeslogic(i,1),1,cell2mat(mh.ttypeslogic(i,2)))];
+
+Error in MHost2/STARTButtonPushed (line 935)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using repmat
+Replication factors must be a row vector of integers or integer scalars.
+
+Error in MHost2/Run_Experiment (line 200)
+                        tlist=[tlist repmat(mh.ttypeslogic(i,1),1,cell2mat(mh.ttypeslogic(i,2)))];
+
+Error in MHost2/STARTButtonPushed (line 935)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Operands to the logical AND (&&) and OR (||) operators must be convertible to logical scalar values. Use the ANY or ALL functions to reduce operands to logical scalar values.
+Operands to the logical AND (&&) and OR (||) operators must be convertible to
+logical scalar values. Use the ANY or ALL functions to reduce operands to
+logical scalar values.
+
+Error in target/getpos (line 37)
+            if targ.speed==0 && isempty(targ.custompath_x)
+
+Error in internal/trialtarg (line 393)
+            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+
+Error in CW_10deg (line 58)
+    mh.Screen('FillOval', mh, mh.trialtarg('T1_Moving_CW_10','getcolor'),mh.trialtarg('T1_Moving_CW_10','getpos'));
+
+Error in MHost2/Run_Experiment (line 296)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 935)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Operands to the logical AND (&&) and OR (||) operators must be convertible to
+logical scalar values. Use the ANY or ALL functions to reduce operands to
+logical scalar values.
+
+Error in target/getpos (line 37)
+            if targ.speed==0 && isempty(targ.custompath_x)
+
+Error in internal/trialtarg (line 393)
+            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+
+Error in CW_10deg (line 58)
+    mh.Screen('FillOval', mh, mh.trialtarg('T1_Moving_CW_10','getcolor'),mh.trialtarg('T1_Moving_CW_10','getpos'));
+
+Error in MHost2/Run_Experiment (line 296)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 935)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Operands to the logical AND (&&) and OR (||) operators must be convertible to
+logical scalar values. Use the ANY or ALL functions to reduce operands to
+logical scalar values.
+
+Error in target/getpos (line 37)
+            if targ.speed==0 && isempty(targ.custompath_x)
+
+Error in internal/trialtarg (line 393)
+            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+
+Error in CW_10deg (line 58)
+    mh.Screen('FillOval', mh, mh.trialtarg('T1_Moving_CW_10','getcolor'),mh.trialtarg('T1_Moving_CW_10','getpos'));
+
+Error in MHost2/Run_Experiment (line 296)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 935)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Operands to the logical AND (&&) and OR (||) operators must be convertible to
+logical scalar values. Use the ANY or ALL functions to reduce operands to
+logical scalar values.
+
+Error in target/getpos (line 37)
+            if targ.speed==0 && isempty(targ.custompath_x)
+
+Error in internal/trialtarg (line 393)
+            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+
+Error in CW_10deg (line 58)
+    mh.Screen('FillOval', mh, mh.trialtarg('T1_Moving_CW_10','getcolor'),mh.trialtarg('T1_Moving_CW_10','getpos'));
+
+Error in MHost2/Run_Experiment (line 296)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 935)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Operands to the logical AND (&&) and OR (||) operators must be convertible to
+logical scalar values. Use the ANY or ALL functions to reduce operands to
+logical scalar values.
+
+Error in target/getpos (line 37)
+            if targ.speed==0 && isempty(targ.custompath_x)
+
+Error in internal/trialtarg (line 393)
+            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+
+Error in CW_10deg (line 58)
+    mh.Screen('FillOval', mh, mh.trialtarg('T1_Moving_CW_10','getcolor'),mh.trialtarg('T1_Moving_CW_10','getpos'));
+
+Error in MHost2/Run_Experiment (line 296)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 935)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Operands to the logical AND (&&) and OR (||) operators must be convertible to
+logical scalar values. Use the ANY or ALL functions to reduce operands to
+logical scalar values.
+
+Error in target/getpos (line 37)
+            if targ.speed==0 && isempty(targ.custompath_x)
+
+Error in internal/trialtarg (line 393)
+            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+
+Error in CW_10deg (line 58)
+    mh.Screen('FillOval', mh, mh.trialtarg('T1_Moving_CW_10','getcolor'),mh.trialtarg('T1_Moving_CW_10','getpos'));
+
+Error in MHost2/Run_Experiment (line 296)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 935)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Operands to the logical AND (&&) and OR (||) operators must be convertible to
+logical scalar values. Use the ANY or ALL functions to reduce operands to
+logical scalar values.
+
+Error in target/getpos (line 37)
+            if targ.speed==0 && isempty(targ.custompath_x)
+
+Error in internal/trialtarg (line 393)
+            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+
+Error in CW_10deg (line 58)
+    mh.Screen('FillOval', mh, mh.trialtarg('T1_Moving_CW_10','getcolor'),mh.trialtarg('T1_Moving_CW_10','getpos'));
+
+Error in MHost2/Run_Experiment (line 296)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 935)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
+Dot indexing is not supported for variables of this type.
+
+Error in internal/trialtarg (line 393)
+            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+
+Error in CCW_10deg (line 57)
+    mh.Screen('FillOval', mh, mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
+
+Error in MHost2/Run_Experiment (line 296)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 935)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
+
+Error in internal/trialtarg (line 393)
+            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+
+Error in CCW_10deg (line 57)
+    mh.Screen('FillOval', mh, mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
+
+Error in MHost2/Run_Experiment (line 296)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 935)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
+
+Error in internal/trialtarg (line 393)
+            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+
+Error in CCW_10deg (line 57)
+    mh.Screen('FillOval', mh, mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
+
+Error in MHost2/Run_Experiment (line 296)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 935)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
+
+Error in internal/trialtarg (line 393)
+            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+
+Error in CCW_10deg (line 57)
+    mh.Screen('FillOval', mh, mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
+
+Error in MHost2/Run_Experiment (line 296)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 935)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
+
+Error in internal/trialtarg (line 393)
+            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+
+Error in CCW_10deg (line 57)
+    mh.Screen('FillOval', mh, mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
+
+Error in MHost2/Run_Experiment (line 296)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 935)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
+
+Error in internal/trialtarg (line 393)
+            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+
+Error in CCW_10deg (line 57)
+    mh.Screen('FillOval', mh, mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
+
+Error in MHost2/Run_Experiment (line 296)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 935)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
+Dot indexing is not supported for variables of this type.
+
+Error in internal/trialtarg (line 393)
+            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+
+Error in CCW_10deg (line 57)
+    mh.Screen('FillOval', mh, mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
+
+Error in MHost2/Run_Experiment (line 296)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 935)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
+
+Error in internal/trialtarg (line 393)
+            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+
+Error in CCW_10deg (line 57)
+    mh.Screen('FillOval', mh, mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
+
+Error in MHost2/Run_Experiment (line 296)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 935)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
+
+Error in internal/trialtarg (line 393)
+            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+
+Error in CCW_10deg (line 57)
+    mh.Screen('FillOval', mh, mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
+
+Error in MHost2/Run_Experiment (line 296)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 935)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
+
+Error in internal/trialtarg (line 393)
+            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+
+Error in CCW_10deg (line 57)
+    mh.Screen('FillOval', mh, mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
+
+Error in MHost2/Run_Experiment (line 296)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 935)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
+
+Error in internal/trialtarg (line 393)
+            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+
+Error in CCW_10deg (line 57)
+    mh.Screen('FillOval', mh, mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
+
+Error in MHost2/Run_Experiment (line 296)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 935)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
+
+Error in internal/trialtarg (line 393)
+            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+
+Error in CCW_10deg (line 57)
+    mh.Screen('FillOval', mh, mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
+
+Error in MHost2/Run_Experiment (line 296)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 935)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
             newCallback = @(source, event)executeCallback(ams, ...

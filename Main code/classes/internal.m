@@ -104,7 +104,6 @@ classdef internal < handle
             currentcommand=jsonencode(varargin([1,3:end]));
             if ~strcmp(mh.cachedout,currentcommand) %check that it is not sending the same command
                 mh.cachedout=currentcommand; %cache current command
-
                 if ~matches(varargin{1},'clearbuffer','IgnoreCase',true) &&...
                         ~matches(varargin{1},'sendtogr','IgnoreCase',true) %check that user is not trying to clear the UDP buffer
                     str=string();
@@ -118,7 +117,7 @@ classdef internal < handle
                             end
                         elseif isnumeric(varargin{i}) % if it's a number, make it a string
                             varval=mat2str(varargin{i});
-                        else
+                        else %if its a variable make the name a string
                             namecount=namecount+1;
                             varval=['''',string(inputname(namecount)),''''];                            
                         end
@@ -257,9 +256,7 @@ classdef internal < handle
                 mh.diode_color=[0;0;0];
                 mh.diode_on = 0;
             end
-            % mh.Screen('FillRect', mh, mh.diode_color, mh.diode_pos);
             mh.evalgraphics(['gr.diode_color=' mat2str(mh.diode_color) ';'])
-            % mh.WaitForGraphics;
         end
 
         function out = checkint(mh, state, int)

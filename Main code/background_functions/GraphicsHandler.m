@@ -135,13 +135,13 @@ while 1
             if isempty(outs)
                 if length(args) >= 2 && (isstring(args{2}) || ischar(args{2}))
                     if length(args)==2 &&...
-                            matches(args{2},'mh') &&...
+                            matches(args{2},'window') &&...
                             ~matches(args{1},'flip','IgnoreCase',true)
 
                         Screen(args{1},gr.window_main);
                         Screen(args{1},gr.window_monitor);
 
-                    elseif length(args)>2 && matches(args{2},'mh')
+                    elseif length(args)>2 && matches(args{2},'windowPtr')
 
                         Screen(args{1},gr.window_main,args{3:end});
 

@@ -1,859 +1,11 @@
-Unrecognized function or variable 'win'.
-Unrecognized function or variable 'win'.
-
-Error in MovieTask (line 29)
-    mh.Screen('GetMovieImage', win, 'gr.movie','set','gr.movietexture')
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Unrecognized function or variable 'win'.
-
-Error in MovieTask (line 29)
-    mh.Screen('GetMovieImage', win, 'gr.movie','set','gr.movietexture')
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Unrecognized function or variable 'win'.
-
-Error in MovieTask (line 29)
-    mh.Screen('GetMovieImage', win, 'gr.movie','set','gr.movietexture')
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Unrecognized function or variable 'win'.
-
-Error in MovieTask (line 29)
-    mh.Screen('GetMovieImage', win, 'gr.movie','set','gr.movietexture')
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Unrecognized function or variable 'win'.
-
-Error in MovieTask (line 29)
-    mh.Screen('GetMovieImage', win, 'gr.movie','set','gr.movietexture')
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.
-Invalid or deleted object.
-
-Error in internal/rewcheck (line 169)
-            if app.RewardButton.Value
-
-Error in MHost2/Run_Experiment (line 297)
-                        mh.rewcheck(app);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.
-
-Error in internal/rewcheck (line 169)
-            if app.RewardButton.Value
-
-Error in MHost2/Run_Experiment (line 297)
-                        mh.rewcheck(app);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.
-
-Error in internal/rewcheck (line 169)
-            if app.RewardButton.Value
-
-Error in MHost2/Run_Experiment (line 297)
-                        mh.rewcheck(app);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.
-
-Error in internal/rewcheck (line 169)
-            if app.RewardButton.Value
-
-Error in MHost2/Run_Experiment (line 297)
-                        mh.rewcheck(app);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.
-
-Error in internal/rewcheck (line 169)
-            if app.RewardButton.Value
-
-Error in MHost2/Run_Experiment (line 297)
-                        mh.rewcheck(app);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/.Tasks_Internal/MovingTargOutward 30.m Line: 82 Column: 21
-Character vector is not terminated properly.
-Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward 30.m Line: 82 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward 30.m Line: 82 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward 30.m Line: 82 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward 30.m Line: 82 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/.Tasks_Internal/MovingTargOutward 30.m Line: 82 Column: 21
-Character vector is not terminated properly.
-Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward 30.m Line: 82 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward 30.m Line: 82 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward 30.m Line: 82 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward 30.m Line: 82 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/.Tasks_Internal/MovingTargOutward 30.m Line: 82 Column: 21
-Character vector is not terminated properly.
-Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward 30.m Line: 82 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward 30.m Line: 82 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward 30.m Line: 82 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward 30.m Line: 82 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/.Tasks_Internal/MovingTargOutward 30.m Line: 82 Column: 21
-Character vector is not terminated properly.
-Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward 30.m Line: 82 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward 30.m Line: 82 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward 30.m Line: 82 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward 30.m Line: 82 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/.Tasks_Internal/MovingTargOutward 30.m Line: 82 Column: 21
-Character vector is not terminated properly.
-Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward 30.m Line: 82 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward 30.m Line: 82 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward 30.m Line: 82 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward 30.m Line: 82 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/.Tasks_Internal/MovingTargOutward.m Line: 80 Column: 21
-Character vector is not terminated properly.
-Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward.m Line: 80 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward.m Line: 80 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward.m Line: 80 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward.m Line: 80 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/.Tasks_Internal/MovingTargOutward.m Line: 80 Column: 21
-Character vector is not terminated properly.
-Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward.m Line: 80 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward.m Line: 80 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward.m Line: 80 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward.m Line: 80 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code/.Tasks_Internal/MovingTargOutward.m Line: 80 Column: 21
-Character vector is not terminated properly.
-Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward.m Line: 80 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward.m Line: 80 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward.m Line: 80 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error: File: /home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main
-code/.Tasks_Internal/MovingTargOutward.m Line: 80 Column: 21
-Character vector is not terminated properly.
-
-Error in MHost2/Run_Experiment (line 292)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...First input must be a positive scalar integer value IMAX, or two integer values [IMIN IMAX] with IMIN less than or equal to IMAX.
-Error using randi
-First input must be a positive scalar integer value IMAX, or two integer values
-[IMIN IMAX] with IMIN less than or equal to IMAX.
-
-Error in MHost2/Run_Experiment (line 199)
-                    randTrial=randi(length(tlist));
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error using randi
-First input must be a positive scalar integer value IMAX, or two integer values
-[IMIN IMAX] with IMIN less than or equal to IMAX.
-
-Error in MHost2/Run_Experiment (line 199)
-                    randTrial=randi(length(tlist));
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error using randi
-First input must be a positive scalar integer value IMAX, or two integer values
-[IMIN IMAX] with IMIN less than or equal to IMAX.
-
-Error in MHost2/Run_Experiment (line 199)
-                    randTrial=randi(length(tlist));
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error using randi
-First input must be a positive scalar integer value IMAX, or two integer values
-[IMIN IMAX] with IMIN less than or equal to IMAX.
-
-Error in MHost2/Run_Experiment (line 199)
-                    randTrial=randi(length(tlist));
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Replication factors must be a row vector of integers or integer scalars.
-Error using repmat
-Replication factors must be a row vector of integers or integer scalars.
-
-Error in MHost2/Run_Experiment (line 197)
-                        tlist=[tlist repmat(mh.ttypeslogic(i,1),1,cell2mat(mh.ttypeslogic(i,2)))];
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error using repmat
-Replication factors must be a row vector of integers or integer scalars.
-
-Error in MHost2/Run_Experiment (line 197)
-                        tlist=[tlist repmat(mh.ttypeslogic(i,1),1,cell2mat(mh.ttypeslogic(i,2)))];
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error using repmat
-Replication factors must be a row vector of integers or integer scalars.
-
-Error in MHost2/Run_Experiment (line 197)
-                        tlist=[tlist repmat(mh.ttypeslogic(i,1),1,cell2mat(mh.ttypeslogic(i,2)))];
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error using repmat
-Replication factors must be a row vector of integers or integer scalars.
-
-Error in MHost2/Run_Experiment (line 197)
-                        tlist=[tlist repmat(mh.ttypeslogic(i,1),1,cell2mat(mh.ttypeslogic(i,2)))];
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Error using repmat
-Replication factors must be a row vector of integers or integer scalars.
-
-Error in MHost2/Run_Experiment (line 197)
-                        tlist=[tlist repmat(mh.ttypeslogic(i,1),1,cell2mat(mh.ttypeslogic(i,2)))];
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "T1_Moving_out".
-Unrecognized field name "T1_Moving_out".
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargInward30 (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "T1_Moving_out".
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargInward30 (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "T1_Moving_out".
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargInward30 (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "T1_Moving_out".
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargInward30 (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "T1_Moving_out".
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargInward30 (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "T1_Moving_out".
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargInward30 (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
+Dot indexing is not supported for variables of this type.
 Dot indexing is not supported for variables of this type.
 
-Error in internal/trialtarg (line 389)
+Error in internal/trialtarg (line 393)
             out=obj.trial.targets.(name).(arg)(obj,varargin{:});
 
-Error in MovingTargInward_D2 (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
+Error in Sta_10deg (line 53)
+    mh.Screen('FillOval', mh, mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
 
 Error in MHost2/Run_Experiment (line 293)
                         mh = mh.trial_function(mh);
@@ -867,11 +19,11 @@ Error in appdesigner.internal.service.AppManagementService/executeCallback (line
 Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
             newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
 
-Error in internal/trialtarg (line 389)
+Error in internal/trialtarg (line 393)
             out=obj.trial.targets.(name).(arg)(obj,varargin{:});
 
-Error in MovingTargInward_D2 (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
+Error in Sta_10deg (line 53)
+    mh.Screen('FillOval', mh, mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
 
 Error in MHost2/Run_Experiment (line 293)
                         mh = mh.trial_function(mh);
@@ -885,11 +37,11 @@ Error in appdesigner.internal.service.AppManagementService/executeCallback (line
 Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
             newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
 
-Error in internal/trialtarg (line 389)
+Error in internal/trialtarg (line 393)
             out=obj.trial.targets.(name).(arg)(obj,varargin{:});
 
-Error in MovingTargInward_D2 (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
+Error in Sta_10deg (line 53)
+    mh.Screen('FillOval', mh, mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
 
 Error in MHost2/Run_Experiment (line 293)
                         mh = mh.trial_function(mh);
@@ -903,11 +55,11 @@ Error in appdesigner.internal.service.AppManagementService/executeCallback (line
 Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
             newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
 
-Error in internal/trialtarg (line 389)
+Error in internal/trialtarg (line 393)
             out=obj.trial.targets.(name).(arg)(obj,varargin{:});
 
-Error in MovingTargInward_D2 (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
+Error in Sta_10deg (line 53)
+    mh.Screen('FillOval', mh, mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
 
 Error in MHost2/Run_Experiment (line 293)
                         mh = mh.trial_function(mh);
@@ -921,11 +73,11 @@ Error in appdesigner.internal.service.AppManagementService/executeCallback (line
 Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
             newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
 
-Error in internal/trialtarg (line 389)
+Error in internal/trialtarg (line 393)
             out=obj.trial.targets.(name).(arg)(obj,varargin{:});
 
-Error in MovingTargInward_D2 (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
+Error in Sta_10deg (line 53)
+    mh.Screen('FillOval', mh, mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
 
 Error in MHost2/Run_Experiment (line 293)
                         mh = mh.trial_function(mh);
@@ -939,11 +91,11 @@ Error in appdesigner.internal.service.AppManagementService/executeCallback (line
 Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
             newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
 
-Error in internal/trialtarg (line 389)
+Error in internal/trialtarg (line 393)
             out=obj.trial.targets.(name).(arg)(obj,varargin{:});
 
-Error in MovingTargInward_D2 (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
+Error in Sta_10deg (line 53)
+    mh.Screen('FillOval', mh, mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
 
 Error in MHost2/Run_Experiment (line 293)
                         mh = mh.trial_function(mh);
@@ -955,14 +107,19 @@ Error in appdesigner.internal.service.AppManagementService/executeCallback (line
                 callback(appOrUserComponent, event);
 
 Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
-Dot indexing is not supported for variables of this type.
+            newCallback = @(source, event)executeCallback(ams, ...Operands to the logical AND (&&) and OR (||) operators must be convertible to logical scalar values. Use the ANY or ALL functions to reduce operands to logical scalar values.
+Operands to the logical AND (&&) and OR (||) operators must be convertible to
+logical scalar values. Use the ANY or ALL functions to reduce operands to
+logical scalar values.
 
-Error in internal/trialtarg (line 389)
+Error in target/getpos (line 37)
+            if targ.speed==0 && isempty(targ.custompath_x)
+
+Error in internal/trialtarg (line 393)
             out=obj.trial.targets.(name).(arg)(obj,varargin{:});
 
-Error in MovingTargInward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
+Error in CW_8deg (line 58)
+    mh.Screen('FillOval', mh, mh.trialtarg('T1_Moving_CW_8','getcolor'),mh.trialtarg('T1_Moving_CW_8','getpos'));
 
 Error in MHost2/Run_Experiment (line 293)
                         mh = mh.trial_function(mh);
@@ -974,13 +131,18 @@ Error in appdesigner.internal.service.AppManagementService/executeCallback (line
                 callback(appOrUserComponent, event);
 
 Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
+            newCallback = @(source, event)executeCallback(ams, ...Operands to the logical AND (&&) and OR (||) operators must be convertible to
+logical scalar values. Use the ANY or ALL functions to reduce operands to
+logical scalar values.
 
-Error in internal/trialtarg (line 389)
+Error in target/getpos (line 37)
+            if targ.speed==0 && isempty(targ.custompath_x)
+
+Error in internal/trialtarg (line 393)
             out=obj.trial.targets.(name).(arg)(obj,varargin{:});
 
-Error in MovingTargInward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
+Error in CW_8deg (line 58)
+    mh.Screen('FillOval', mh, mh.trialtarg('T1_Moving_CW_8','getcolor'),mh.trialtarg('T1_Moving_CW_8','getpos'));
 
 Error in MHost2/Run_Experiment (line 293)
                         mh = mh.trial_function(mh);
@@ -992,13 +154,18 @@ Error in appdesigner.internal.service.AppManagementService/executeCallback (line
                 callback(appOrUserComponent, event);
 
 Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
+            newCallback = @(source, event)executeCallback(ams, ...Operands to the logical AND (&&) and OR (||) operators must be convertible to
+logical scalar values. Use the ANY or ALL functions to reduce operands to
+logical scalar values.
 
-Error in internal/trialtarg (line 389)
+Error in target/getpos (line 37)
+            if targ.speed==0 && isempty(targ.custompath_x)
+
+Error in internal/trialtarg (line 393)
             out=obj.trial.targets.(name).(arg)(obj,varargin{:});
 
-Error in MovingTargInward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
+Error in CW_8deg (line 58)
+    mh.Screen('FillOval', mh, mh.trialtarg('T1_Moving_CW_8','getcolor'),mh.trialtarg('T1_Moving_CW_8','getpos'));
 
 Error in MHost2/Run_Experiment (line 293)
                         mh = mh.trial_function(mh);
@@ -1010,13 +177,18 @@ Error in appdesigner.internal.service.AppManagementService/executeCallback (line
                 callback(appOrUserComponent, event);
 
 Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
+            newCallback = @(source, event)executeCallback(ams, ...Operands to the logical AND (&&) and OR (||) operators must be convertible to
+logical scalar values. Use the ANY or ALL functions to reduce operands to
+logical scalar values.
 
-Error in internal/trialtarg (line 389)
+Error in target/getpos (line 37)
+            if targ.speed==0 && isempty(targ.custompath_x)
+
+Error in internal/trialtarg (line 393)
             out=obj.trial.targets.(name).(arg)(obj,varargin{:});
 
-Error in MovingTargInward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
+Error in CW_8deg (line 58)
+    mh.Screen('FillOval', mh, mh.trialtarg('T1_Moving_CW_8','getcolor'),mh.trialtarg('T1_Moving_CW_8','getpos'));
 
 Error in MHost2/Run_Experiment (line 293)
                         mh = mh.trial_function(mh);
@@ -1028,13 +200,18 @@ Error in appdesigner.internal.service.AppManagementService/executeCallback (line
                 callback(appOrUserComponent, event);
 
 Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
+            newCallback = @(source, event)executeCallback(ams, ...Operands to the logical AND (&&) and OR (||) operators must be convertible to
+logical scalar values. Use the ANY or ALL functions to reduce operands to
+logical scalar values.
 
-Error in internal/trialtarg (line 389)
+Error in target/getpos (line 37)
+            if targ.speed==0 && isempty(targ.custompath_x)
+
+Error in internal/trialtarg (line 393)
             out=obj.trial.targets.(name).(arg)(obj,varargin{:});
 
-Error in MovingTargInward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
+Error in CW_8deg (line 58)
+    mh.Screen('FillOval', mh, mh.trialtarg('T1_Moving_CW_8','getcolor'),mh.trialtarg('T1_Moving_CW_8','getpos'));
 
 Error in MHost2/Run_Experiment (line 293)
                         mh = mh.trial_function(mh);
@@ -1046,13 +223,18 @@ Error in appdesigner.internal.service.AppManagementService/executeCallback (line
                 callback(appOrUserComponent, event);
 
 Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
+            newCallback = @(source, event)executeCallback(ams, ...Operands to the logical AND (&&) and OR (||) operators must be convertible to
+logical scalar values. Use the ANY or ALL functions to reduce operands to
+logical scalar values.
 
-Error in internal/trialtarg (line 389)
+Error in target/getpos (line 37)
+            if targ.speed==0 && isempty(targ.custompath_x)
+
+Error in internal/trialtarg (line 393)
             out=obj.trial.targets.(name).(arg)(obj,varargin{:});
 
-Error in MovingTargInward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
+Error in CW_8deg (line 58)
+    mh.Screen('FillOval', mh, mh.trialtarg('T1_Moving_CW_8','getcolor'),mh.trialtarg('T1_Moving_CW_8','getpos'));
 
 Error in MHost2/Run_Experiment (line 293)
                         mh = mh.trial_function(mh);
@@ -1064,540 +246,18 @@ Error in appdesigner.internal.service.AppManagementService/executeCallback (line
                 callback(appOrUserComponent, event);
 
 Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
-Dot indexing is not supported for variables of this type.
+            newCallback = @(source, event)executeCallback(ams, ...Operands to the logical AND (&&) and OR (||) operators must be convertible to
+logical scalar values. Use the ANY or ALL functions to reduce operands to
+logical scalar values.
 
-Error in internal/trialtarg (line 389)
+Error in target/getpos (line 37)
+            if targ.speed==0 && isempty(targ.custompath_x)
+
+Error in internal/trialtarg (line 393)
             out=obj.trial.targets.(name).(arg)(obj,varargin{:});
 
-Error in MovingTargInward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargInward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargInward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargInward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargInward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargInward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
-Dot indexing is not supported for variables of this type.
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargOutward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargOutward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargOutward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargOutward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargOutward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargOutward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
-Dot indexing is not supported for variables of this type.
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargOutward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargOutward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargOutward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargOutward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargOutward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargOutward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "T1_Moving_out".
-Unrecognized field name "T1_Moving_out".
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargInward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "T1_Moving_out".
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargInward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "T1_Moving_out".
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargInward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "T1_Moving_out".
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargInward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "T1_Moving_out".
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargInward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "T1_Moving_out".
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargInward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
-Dot indexing is not supported for variables of this type.
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargOutward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargOutward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargOutward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargOutward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargOutward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
-
-Error in MHost2/Run_Experiment (line 293)
-                        mh = mh.trial_function(mh);
-
-Error in MHost2/STARTButtonPushed (line 902)
-            Run_Experiment(app,mh);
-
-Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
-                callback(appOrUserComponent, event);
-
-Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...Dot indexing is not supported for variables of this type.
-
-Error in internal/trialtarg (line 389)
-            out=obj.trial.targets.(name).(arg)(obj,varargin{:});
-
-Error in MovingTargOutward (line 73)
-    targpos=mh.trialtarg('T1_Moving_out','getpos','continue','delay_state');
+Error in CW_8deg (line 58)
+    mh.Screen('FillOval', mh, mh.trialtarg('T1_Moving_CW_8','getcolor'),mh.trialtarg('T1_Moving_CW_8','getpos'));
 
 Error in MHost2/Run_Experiment (line 293)
                         mh = mh.trial_function(mh);

@@ -38,6 +38,7 @@ classdef target < handle
 
                 temppos=targ.position;
                 mh.trial.targets.(targ.name).final_position=temppos;
+                pixpos=deg2pix(temppos,targ.degreestype,mh.screenparams);
                 
             else
                 if ~any(matches(varargin(:),'continue',IgnoreCase=true))
@@ -53,14 +54,18 @@ classdef target < handle
                         center=varargin(1);
                     end
                 end
-
+                
                 if isempty(targ.custompath_x)
-                    xyadd=[targ.speed*cosd(targ.direction), targ.speed*sind(targ.direction)];
-                    tempx=targ.position(1)+xyadd(1)*tim;
-                    tempy=targ.position(2)+xyadd(2)*tim;
+                    targpos=deg2pix(targ.position,targ.degreestype,mh.screenparams);
 
-                    temppos=[tempx tempy];
-                    mh.trial.targets.(targ.name).final_position=temppos;
+                    xyadd=deg2pix([targ.speed*cosd(targ.direction), targ.speed*sind(targ.direction)],'size',mh.screenparams);
+
+                    tempx=targpos(1)+xyadd(3)*tim;
+                    tempy=targpos(2)-xyadd(4)*tim;
+
+                    pixpos=[tempx tempy];
+                    mh.trial.targets.(targ.name).final_position=pix2deg(pixpos,targ.degreestype,mh.screenparams);
+
                 else
                     xf=@(mh,t,x) eval(targ.custompath_x);
                     yf=@(mh,t,y) eval(targ.custompath_y);
@@ -70,10 +75,10 @@ classdef target < handle
 
                     temppos=[tempx tempy];
                     mh.trial.targets.(targ.name).final_position=temppos;
+                    pixpos=deg2pix(temppos,targ.degreestype,mh.screenparams);
                 end
             end
             
-            pixpos=deg2pix(temppos,targ.degreestype,mh.screenparams);
 
             if any(matches(varargin(:),'center',IgnoreCase=true))
                 out=pixpos;

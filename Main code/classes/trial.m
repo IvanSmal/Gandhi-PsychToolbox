@@ -14,7 +14,7 @@ classdef trial < handle
 
         trellis_trial_number;
 
-        UserDefined =[]
+        userdefined =[]
 
         System_Properties
     end

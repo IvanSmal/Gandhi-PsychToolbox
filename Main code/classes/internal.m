@@ -66,6 +66,9 @@ classdef internal < handle
         graphicscommandbuffer=''; %graphics buffer. move to private later
         lastcommand = 1; %move to private later
 
+        %user definitions
+        userdefined;
+
     end
 
     properties (Access=private)
@@ -188,7 +191,7 @@ classdef internal < handle
                 xippmex('digout',3,1);
 
             elseif (mh.rew.rewon==1 &&...
-                    getsecs>mh.rew.rewstart+duration) || app.StopRewardButton.Value
+                    getsecs>(mh.rew.rewstart+duration+0.025)) || app.StopRewardButton.Value %the 0.15 is a calibration adjustment
                 xippmex('digout',3,0);
                 app.insToTxtbox(['reward t: ' num2str(getsecs-mh.rew.rewstart) 's']);
                 mh.rew.rewon=0;

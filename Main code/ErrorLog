@@ -378,4 +378,179 @@ Error in appdesigner.internal.service.AppManagementService/executeCallback (line
                 callback(appOrUserComponent, event);
 
 Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Replication factors must be a row vector of integers or integer scalars.
+Error using repmat
+Replication factors must be a row vector of integers or integer scalars.
+
+Error in MHost2/Run_Experiment (line 204)
+                        tlist=[tlist repmat(mh.ttypeslogic(i,1),1,cell2mat(mh.ttypeslogic(i,2)))];
+
+Error in MHost2/STARTButtonPushed (line 944)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using repmat
+Replication factors must be a row vector of integers or integer scalars.
+
+Error in MHost2/Run_Experiment (line 204)
+                        tlist=[tlist repmat(mh.ttypeslogic(i,1),1,cell2mat(mh.ttypeslogic(i,2)))];
+
+Error in MHost2/STARTButtonPushed (line 944)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using repmat
+Replication factors must be a row vector of integers or integer scalars.
+
+Error in MHost2/Run_Experiment (line 204)
+                        tlist=[tlist repmat(mh.ttypeslogic(i,1),1,cell2mat(mh.ttypeslogic(i,2)))];
+
+Error in MHost2/STARTButtonPushed (line 944)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using repmat
+Replication factors must be a row vector of integers or integer scalars.
+
+Error in MHost2/Run_Experiment (line 204)
+                        tlist=[tlist repmat(mh.ttypeslogic(i,1),1,cell2mat(mh.ttypeslogic(i,2)))];
+
+Error in MHost2/STARTButtonPushed (line 944)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using repmat
+Replication factors must be a row vector of integers or integer scalars.
+
+Error in MHost2/Run_Experiment (line 204)
+                        tlist=[tlist repmat(mh.ttypeslogic(i,1),1,cell2mat(mh.ttypeslogic(i,2)))];
+
+Error in MHost2/STARTButtonPushed (line 944)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "T1_Moving_in".
+Unrecognized field name "T1_Moving_in".
+
+Error in internal/gettarg (line 407)
+            temptarg=mh.targets.(targname);
+
+Error in MovingTargInward (line 7)
+    T1_Moving_in=mh.gettarg('T1_Moving_in');
+
+Error in MHost2/Run_Experiment (line 307)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 957)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "T1_Moving_in".
+
+Error in internal/gettarg (line 407)
+            temptarg=mh.targets.(targname);
+
+Error in MovingTargInward (line 7)
+    T1_Moving_in=mh.gettarg('T1_Moving_in');
+
+Error in MHost2/Run_Experiment (line 307)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 957)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "T1_Moving_in".
+
+Error in internal/gettarg (line 407)
+            temptarg=mh.targets.(targname);
+
+Error in MovingTargInward (line 7)
+    T1_Moving_in=mh.gettarg('T1_Moving_in');
+
+Error in MHost2/Run_Experiment (line 307)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 957)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "T1_Moving_in".
+
+Error in internal/gettarg (line 407)
+            temptarg=mh.targets.(targname);
+
+Error in MovingTargInward (line 7)
+    T1_Moving_in=mh.gettarg('T1_Moving_in');
+
+Error in MHost2/Run_Experiment (line 307)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 957)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "T1_Moving_in".
+
+Error in internal/gettarg (line 407)
+            temptarg=mh.targets.(targname);
+
+Error in MovingTargInward (line 7)
+    T1_Moving_in=mh.gettarg('T1_Moving_in');
+
+Error in MHost2/Run_Experiment (line 307)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 957)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Unrecognized field name "T1_Moving_in".
+
+Error in internal/gettarg (line 407)
+            temptarg=mh.targets.(targname);
+
+Error in MovingTargInward (line 7)
+    T1_Moving_in=mh.gettarg('T1_Moving_in');
+
+Error in MHost2/Run_Experiment (line 307)
+                        mh = mh.trial_function(mh);
+
+Error in MHost2/STARTButtonPushed (line 957)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
             newCallback = @(source, event)executeCallback(ams, ...

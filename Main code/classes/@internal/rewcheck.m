@@ -34,7 +34,9 @@ if mh.rew.rewon==1 &&...
 elseif (mh.rew.rewon==1 &&...
         getsecs>(mh.rew.rewstart+duration+0.025)) || forcestop || app.StopRewardButton.Value %the 0.25 is a calibration adjustment
     xippmex('digout',3,0);
-    app.insToTxtbox(['reward t: ' num2str(getsecs-mh.rew.rewstart) 's']);
+    if ~forcestop
+        app.insToTxtbox(['reward t: ' num2str(getsecs-mh.rew.rewstart) 's']);
+    end
     mh.rew.rewon=0;
     app.StopRewardButton.Value = 0;
     app.RewardButton.Value=0;

@@ -57,6 +57,8 @@ for i=1:size(in,1)
         out(i,:)=[theta r];
     end
 end
-out=rmmissing(out);
+if any(isempty(out)) || any(any(isnan(out)))
+    out=rmmissing(out);
+end
 end
 

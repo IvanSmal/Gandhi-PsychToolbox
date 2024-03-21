@@ -89,10 +89,12 @@ gr.gridlinesmatrix=[xlines fullx;fully ylines];
 % send ready signal to mh
 writeline(graphicsport,'isGraphicsReady=1;','0.0.0.0',2020);
 
-
+clc
+system('clear');
+disp('-----Graphics Handler-----')
 %% keep function alive
 while 1
-    pause(0.0001) %allow for callbacks to be checked
+    pause(0.00001) %allow for callbacks to be checked
     %% evaluate graphics buffer
     if ~isempty(gr.functionsbuffer) && gr.trialstarted
         gr.flipped=0;

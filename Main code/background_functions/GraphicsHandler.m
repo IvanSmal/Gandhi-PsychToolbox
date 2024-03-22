@@ -203,7 +203,7 @@ while 1
 
         Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
     elseif isempty(gr.functionsbuffer) && gr.trialstarted && ~gr.flipped
-        Screen('Flip',gr.window_monitor);
+        Screen('Flip',gr.window_monitor,[],[],2);
         Screen('Flip',gr.window_main);
         clear allargs
         gr.flipped=1;
@@ -222,7 +222,7 @@ while 1
         Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix,1,[.3 .3 .3]);
 
         Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
-        Screen('Flip',gr.window_monitor);
+        Screen('Flip',gr.window_monitor,[],[],2);
         Screen('Flip',gr.window_main);
     end
 end

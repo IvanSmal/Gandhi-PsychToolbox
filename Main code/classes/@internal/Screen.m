@@ -1,6 +1,6 @@
 function varargout = Screen(mh,varargin)
 
-currentcommand=jsonencode(varargin([1,3:end]));
+currentcommand=jsonencode(varargin(:));
 if ~strcmp(mh.cachedout,currentcommand) %check that it is not sending the same command
     mh.cachedout=currentcommand; %cache current command
     if ~matches(varargin{1},'clearbuffer','IgnoreCase',true) &&...
@@ -52,7 +52,9 @@ if ~strcmp(mh.cachedout,currentcommand) %check that it is not sending the same c
     end
 end
 if matches(varargin{1},'sendtogr','IgnoreCase',true) && ~isempty(mh.graphicscommandbuffer)
+    
     writeline(mh.graphicsport,[mh.graphicscommandbuffer{:}],'0.0.0.0',2021); %actually send the data
+    writeline(mh.graphicsport,'executegr.fliprequest=1;','0.0.0.0',2021);
     mh.graphicscommandbuffer='';
     mh.lastcommand=1;
     % writeline(mh.graphicsport,'executegr.functionsbuffer=[];','0.0.0.0',2021); %need to figure out how to asynch this

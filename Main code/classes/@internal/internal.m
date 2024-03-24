@@ -50,6 +50,7 @@ classdef internal < handle
         eccentricity_gain;
 
         %communicate with graphics
+        senttimestamp=0;
         graphicsport
         graphicssent=0
         cachedout = 'default'
@@ -57,7 +58,7 @@ classdef internal < handle
         lastcommand = 1; %move to private later
 
         %user definitions
-        userdefined;
+        userdefined=0;
 
     end
 

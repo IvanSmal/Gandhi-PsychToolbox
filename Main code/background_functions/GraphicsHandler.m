@@ -68,6 +68,12 @@ Screen('Flip', gr.window_main);
 
 Screen('FillOval', gr.window_monitor, [1 1 1], [0 0 10 10]);
 Screen('Flip', gr.window_monitor);
+try
+    Screen('TextSize', gr.window_monitor,30);
+    % Screen('DrawText', gr.window_monitor, gr.activestatename, 5, 5 , [255,255,255]);
+
+    Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 600, 5 , [255,255,255]);
+end
 
 %turn off mouse on monkey screen
 HideCursor(gr.window_main)
@@ -85,10 +91,10 @@ ylines = reshape(repmat(pixelsforlines(:,2),2)',1,[]);
 fullx=reshape(repmat([0 3000], length(ylines)/2,1)',1,[]);
 gr.gridlinesmatrix=[xlines fullx;fully ylines];
 
+delaycounter=[0,0];
 
 % send ready signal to mh
 writeline(graphicsport,'isGraphicsReady=1;','0.0.0.0',2020);
-
 clc
 system('clear');
 disp('-----Graphics Handler-----')
@@ -101,7 +107,6 @@ while 1
         args_uncut={};
         outs={};
         additionalinfo={};
-
         v = fieldnames(gr.functionsbuffer);
         for ii = 1 : length(v) %unwrap commands
             eval([v{ii} '= gr.functionsbuffer.' v{ii} ';']);
@@ -109,6 +114,7 @@ while 1
 
         commandcount=1;
         lastargcount=1;
+
         for iii = 1:length(args_uncut)
             if strcmp(args_uncut{iii},'endcommand')
                 % args_uncut(iii)=[];
@@ -163,49 +169,61 @@ while 1
                 else
                     Screen(args{:});
                 end
-                %% if output is requested
-            elseif ~isempty(outs)
-                a1=[];a2=[];a3=[];a4=[];a5=[];a6=[];a7=[];
-                evalstring=strcat('[',sprintf('%s,',outs{:}),']');
-
-                if length(args)>=2 %this needs to change to better logic
-                    args{2}=gr.window_main;
-                end
-
-                eval(strcat(evalstring,'=Screen(args{:});'));
-
-                outstr='';
-                for ii=1:length(outs)
-                    outstr=strcat(outstr,outs{ii},'=',string(eval(outs{ii})),';');
-                end
-                writeline(graphicsport,strcat('mh.graphicssent=0;', outstr),'0.0.0.0',2020)
             end
+
+                %% if output is requested
+            % elseif ~isempty(outs)
+            %     a1=[];a2=[];a3=[];a4=[];a5=[];a6=[];a7=[];
+            %     evalstring=strcat('[',sprintf('%s,',outs{:}),']');
+            % 
+            %     if length(args)>=2 %this needs to change to better logic
+            %         args{2}=gr.window_main;
+            %     end
+            % 
+            %     eval(strcat(evalstring,'=Screen(args{:});'));
+            % 
+            %     outstr='';
+            %     for ii=1:length(outs)
+            %         outstr=strcat(outstr,outs{ii},'=',string(eval(outs{ii})),';');
+            %     end
+            %     writeline(graphicsport,strcat('mh.graphicssent=0;', outstr),'0.0.0.0',2020)
+            % end
 
             %% movie logic
-            if (isstring(args{1}) || ischar(args{1})) && matches(args{1},'PlayMovie','IgnoreCase',true)
-                gr.movieplaying=1;
-                disp('movie playing')
-            elseif (isstring(args{1}) || ischar(args{1})) && matches(args{1},'CloseMovie','IgnoreCase',true)
-                gr.movieplaying=0;
-                disp('movie closed')
-            end
-            if gr.movieplaying==1
-                gr.texture=Screen('GetMovieImage', gr.window_main, gr.movie);
-                gr.monitortexture=Screen('MakeTexture', gr.window_monitor, gr.monitormovieplaceholder);
-                disp('got texture')
-            end
+            % if (isstring(args{1}) || ischar(args{1})) && matches(args{1},'PlayMovie','IgnoreCase',true)
+            %     gr.movieplaying=1;
+            %     disp('movie playing')
+            % elseif (isstring(args{1}) || ischar(args{1})) && matches(args{1},'CloseMovie','IgnoreCase',true)
+            %     gr.movieplaying=0;
+            %     disp('movie closed')
+            % end
+            % if gr.movieplaying==1
+            %     gr.texture=Screen('GetMovieImage', gr.window_main, gr.movie);
+            %     gr.monitortexture=Screen('MakeTexture', gr.window_monitor, gr.monitormovieplaceholder);
+            %     disp('got texture')
+            % end
+            clear args
         end
+
         Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
         Screen('TextSize', gr.window_monitor,30);
         Screen('DrawText', gr.window_monitor, gr.activestatename, 5, 5 , [255,255,255]);
         Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 600, 5 , [255,255,255]);
         Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix,1,[.3 .3 .3]);
-
         Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
-    elseif isempty(gr.functionsbuffer) && gr.trialstarted && ~gr.flipped
-        Screen('Flip',gr.window_monitor,[],[],2);
-        Screen('Flip',gr.window_main);
+
+    elseif isempty(gr.functionsbuffer) && gr.trialstarted && ~gr.flipped %|| diff(delaycounter)>0.033
+        tic
+        Screen('Flip',gr.window_monitor);
+
+        Screen('Flip',gr.window_main,0,0,0);
+        pause(0.01)
+
+        disp(toc)
+
         clear allargs
+        % gr.functionsbuffer=[];
+        gr.fliprequest=0;
         gr.flipped=1;
     end
     %% this is to show eye when trials are not running
@@ -217,13 +235,14 @@ while 1
         Screen('TextSize', gr.window_monitor,30);
         % Screen('DrawText', gr.window_monitor, gr.activestatename, 5, 5 , [255,255,255]);
         try
-        Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 600, 5 , [255,255,255]);
+            Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 600, 5 , [255,255,255]);
         end
         Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix,1,[.3 .3 .3]);
 
         Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
         Screen('Flip',gr.window_monitor,[],[],2);
         Screen('Flip',gr.window_main);
+        gr.functionsbuffer=[];
     end
 end
 %% callback function that does the graphics handling

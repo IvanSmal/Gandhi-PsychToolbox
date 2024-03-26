@@ -1,6 +1,7 @@
 function GraphicsHandler
 addpath('/opt/Trellis/Tools/xippmex');
 xippmex;
+vblhis=0;
 %% set up udp port
 graphicsport = udpport("LocalPort",2021);
 %% set up udp callback that listens for "Screen" commands
@@ -16,7 +17,7 @@ gr.flipped=0;
 gr.activestatename='null';
 
 %% set up the screens for experiments
-Screen('Preference', 'SkipSyncTests', 0);
+Screen('Preference', 'SkipSyncTests', 1);
 Screen('Preference', 'VisualDebugLevel', 3);
 
 % Clear the workspace and the screen
@@ -214,13 +215,12 @@ while 1
 
     elseif isempty(gr.functionsbuffer) && gr.trialstarted && ~gr.flipped %|| diff(delaycounter)>0.033
         tic
-        Screen('Flip',gr.window_monitor);
 
-        Screen('Flip',gr.window_main,0,0,0);
-        pause(0.01)
+        vbl=Screen('Flip',gr.window_main);
+        Screen('Flip',gr.window_monitor,[],[],2);
 
-        disp(toc)
-
+        disp(vbl-vblhis)
+        vblhis=vbl;
         clear allargs
         % gr.functionsbuffer=[];
         gr.fliprequest=0;

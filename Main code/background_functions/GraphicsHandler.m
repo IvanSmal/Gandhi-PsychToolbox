@@ -71,9 +71,8 @@ Screen('FillOval', gr.window_monitor, [1 1 1], [0 0 10 10]);
 Screen('Flip', gr.window_monitor);
 try
     Screen('TextSize', gr.window_monitor,30);
-    % Screen('DrawText', gr.window_monitor, gr.activestatename, 5, 5 , [255,255,255]);
-
     Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 600, 5 , [255,255,255]);
+    Screen('Flip', gr.window_monitor);
 end
 
 %turn off mouse on monkey screen
@@ -103,7 +102,7 @@ disp('-----Graphics Handler-----')
 while 1
     pause(0.00001) %allow for callbacks to be checked
     %% evaluate graphics buffer
-    if ~isempty(gr.functionsbuffer) && gr.trialstarted
+    if ~isempty(gr.functionsbuffer) && gr.trialstarted && gr.fliped
         gr.flipped=0;
         args_uncut={};
         outs={};
@@ -144,7 +143,7 @@ while 1
             if isempty(outs)
                 if length(args) >= 2 && (isstring(args{2}) || ischar(args{2}))
                     if length(args)==2 &&...
-                            matches(args{2},'window') &&...
+                            matches(args{2},'windowPtr') &&...
                             ~matches(args{1},'flip','IgnoreCase',true)
 
                         Screen(args{1},gr.window_main);
@@ -213,7 +212,7 @@ while 1
         Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix,1,[.3 .3 .3]);
         Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
 
-    elseif isempty(gr.functionsbuffer) && gr.trialstarted && ~gr.flipped %|| diff(delaycounter)>0.033
+    elseif gr.trialstarted && ~gr.flipped %|| diff(delaycounter)>0.033
         tic
 
         vbl=Screen('Flip',gr.window_main);

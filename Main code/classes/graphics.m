@@ -32,6 +32,9 @@ classdef graphics < handle
         lastarg;
         gridlinesmatrix;
         eyehistory;
+        fliptimes;
+        commandIDs;
+        commid_udp;
     end
 end
 

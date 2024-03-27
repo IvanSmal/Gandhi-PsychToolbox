@@ -4,6 +4,7 @@ classdef data
         cursor
         neural_data
         photodiode
+        graphics_fliptimes;
     end
 
     methods

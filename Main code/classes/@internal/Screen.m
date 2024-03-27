@@ -1,7 +1,7 @@
 function varargout = Screen(mh,varargin)
-
+    istarget=0;
 currentcommand=jsonencode(varargin(:));
-if ~strcmp(mh.cachedout,currentcommand) %check that it is not sending the same command
+if ~strcmp(mh.cachedout,currentcommand) && ~mh.holdbuffer %check that it is not sending the same command
     mh.cachedout=currentcommand; %cache current command
     if ~matches(varargin{1},'clearbuffer','IgnoreCase',true) &&...
             ~matches(varargin{1},'sendtogr','IgnoreCase',true) %check that user is not trying to clear the UDP buffer
@@ -16,6 +16,11 @@ if ~strcmp(mh.cachedout,currentcommand) %check that it is not sending the same c
                 end
             elseif isnumeric(varargin{i}) % if it's a number, make it a string
                 varval=mat2str(varargin{i});
+            elseif isobject(varargin{i})
+                istarget=1;
+                targname=varargin{i}.name;
+                varval=mat2str(mh.trialtarg(targname,'getpos'));
+                mh.trial.targets.(targname).moving_position=[mh.trial.targets.(targname).moving_position; pix2deg(varval)];
             else %if its a variable make the name a string
                 namecount=namecount+1;
                 varval=['''',string(inputname(namecount)),''''];
@@ -52,11 +57,17 @@ if ~strcmp(mh.cachedout,currentcommand) %check that it is not sending the same c
     end
 end
 if matches(varargin{1},'sendtogr','IgnoreCase',true) && ~isempty(mh.graphicscommandbuffer)
-    
-    writeline(mh.graphicsport,[mh.graphicscommandbuffer{:}],'0.0.0.0',2021); %actually send the data
-    writeline(mh.graphicsport,'executegr.fliprequest=1;','0.0.0.0',2021);
-    mh.graphicscommandbuffer='';
-    mh.lastcommand=1;
+    mh.holdbuffer = 1;
+        commandid=getsecs;
+        writeline(mh.graphicsport,join([[mh.graphicscommandbuffer{:}], ";commandID_udp=" ,num2str(commandid), ';']),'0.0.0.0',2021); %actually send the data
+        if istarget
+            mh.trial.targets.(targname).timestamp=[mh.trial.targets.(targname).timestamp commandid];
+            istarget=0;
+        end
+        writeline(mh.graphicsport,'executegr.fliprequest=1;','0.0.0.0',2021);
+        mh.graphicscommandbuffer='';
+        mh.lastcommand=1;
+        mh.holdbuffer = 0;
     % writeline(mh.graphicsport,'executegr.functionsbuffer=[];','0.0.0.0',2021); %need to figure out how to asynch this
     % parfeval(mh.parpool,@writeline,0,mh.graphicsport,'executegr.functionsbuffer=[];','0.0.0.0',2021);
 

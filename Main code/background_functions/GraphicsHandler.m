@@ -73,6 +73,7 @@ try
     Screen('TextSize', gr.window_monitor,30);
     Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 600, 5 , [255,255,255]);
     Screen('Flip', gr.window_monitor);
+catch
 end
 
 %turn off mouse on monkey screen
@@ -91,7 +92,6 @@ ylines = reshape(repmat(pixelsforlines(:,2),2)',1,[]);
 fullx=reshape(repmat([0 3000], length(ylines)/2,1)',1,[]);
 gr.gridlinesmatrix=[xlines fullx;fully ylines];
 
-delaycounter=[0,0];
 
 % send ready signal to mh
 writeline(graphicsport,'isGraphicsReady=1;','0.0.0.0',2020);
@@ -102,7 +102,7 @@ disp('-----Graphics Handler-----')
 while 1
     pause(0.00001) %allow for callbacks to be checked
     %% evaluate graphics buffer
-    if ~isempty(gr.functionsbuffer) && gr.trialstarted && gr.fliped
+    if ~isempty(gr.functionsbuffer) && gr.trialstarted && gr.flipped
         gr.flipped=0;
         args_uncut={};
         outs={};
@@ -154,9 +154,11 @@ while 1
                         Screen(args{1},gr.window_main,args{3:end});
 
                         if (isstring(args{1}) || ischar(args{1})) && matches(args{1},'DrawTexture','IgnoreCase',true)
-                            % args{3}=additionalinfo{1};
+                            args{3}=additionalinfo{1};
                             try
                                 Screen(args{1},gr.window_monitor,args{3:end});
+                            catch
+                                disp("Couldn't draw a texture on monitor-screen")
                             end
                         else
                             Screen(args{1},gr.window_monitor,args{3:end});
@@ -164,6 +166,8 @@ while 1
                     elseif length(args)>2 && matches(args{2},'monitoronly')
                         try
                             Screen(args{1},gr.window_monitor,args{3:end});
+                        catch
+                            disp("Couldn't draw something on monitor-screen")
                         end
                     end
                 else
@@ -211,13 +215,14 @@ while 1
         Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 600, 5 , [255,255,255]);
         Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix,1,[.3 .3 .3]);
         Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
+        Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
 
-    elseif gr.trialstarted && ~gr.flipped %|| diff(delaycounter)>0.033
-        tic
-
+    elseif gr.trialstarted && ~gr.flipped 
         vbl=Screen('Flip',gr.window_main);
+        gr.fliptimes=[gr.fliptimes getsecs];
+        gr.commandIDs=[gr.commandIDs gr.commid_udp];
         Screen('Flip',gr.window_monitor,[],[],2);
-
+        writeline(graphicsport,'mh.readyforflip=1;','0.0.0.0',2020);
         disp(vbl-vblhis)
         vblhis=vbl;
         clear allargs
@@ -227,18 +232,24 @@ while 1
     end
     %% this is to show eye when trials are not running
     if ~gr.trialstarted
+        writeline(graphicsport,'mh.readyforflip=1;','0.0.0.0',2020);
         try
             seteye;
+        catch
         end
         Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
         Screen('TextSize', gr.window_monitor,30);
-        % Screen('DrawText', gr.window_monitor, gr.activestatename, 5, 5 , [255,255,255]);
         try
             Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 600, 5 , [255,255,255]);
+        catch
         end
+        
         Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix,1,[.3 .3 .3]);
 
         Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
+        Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
+
+
         Screen('Flip',gr.window_monitor,[],[],2);
         Screen('Flip',gr.window_main);
         gr.functionsbuffer=[];
@@ -261,12 +272,14 @@ end
         args_udp={};
         outs_udp={};
         additionalinfo_udp={};
+        commandID_udp={};
         gr.lastarg=1;
         eval(graphicsport.UserData.in);
 
         gr.functionsbuffer(end+1).args_uncut=args_udp;
         gr.functionsbuffer(end+1).outs=outs_udp;
         gr.functionsbuffer(end+1).additionalinfo=additionalinfo_udp;
+        gr.commid_udp=commandID_udp;
     end
 %% set eye calibration
     function seteye

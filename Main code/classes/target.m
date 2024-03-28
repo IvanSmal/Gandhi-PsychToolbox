@@ -57,19 +57,19 @@ classdef target %< handle
                 end
                 
                 if isempty(targ.custompath_x)
-                    targpos=targ.position;
+                    targpos=deg2pix(targ.position,targ.degreestype,mh.screenparams);
 
-                    xyadd=[targ.speed*cosd(targ.direction), targ.speed*sind(targ.direction)];
+                    xyadd=deg2pix([targ.speed*cosd(targ.direction), targ.speed*sind(targ.direction)],'size',mh.screenparams);
 
-                    tempx=targpos(1)+xyadd(1)*tim;
-                    tempy=targpos(2)-xyadd(2)*tim;
+                    tempx=targpos(1)+xyadd(3)*tim;
+                    tempy=targpos(2)-xyadd(4)*tim;
 
-                    temppos=[tempx tempy];
+                    pixpos=[tempx tempy];
+                    temppos=pix2deg(pixpos,targ.degreestype,mh.screenparams);
                     mh.trial.targets.(targ.name).moving_position=...
                         [mh.trial.targets.(targ.name).moving_position; temppos];
                     mh.trial.targets.(targ.name).timestamp=...
                         [mh.trial.targets.(targ.name).timestamp getsecs];
-                    pixpos=deg2pix(temppos,targ.degreestype,mh.screenparams);
 
                 else
                     xf=@(mh,t,x) eval(targ.custompath_x);

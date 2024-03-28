@@ -51,13 +51,14 @@ classdef internal < handle
 
         %communicate with graphics
         senttimestamp=0;
-        graphicsport
+        graphicsport;
         graphicssent=0
         cachedout = 'default'
         graphicscommandbuffer=''; %graphics buffer. move to private later
         lastcommand = 1; %move to private later
         holdbuffer = 0;
         readyforflip=1;
+        commandID;
 
 
         %user definitions

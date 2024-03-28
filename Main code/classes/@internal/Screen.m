@@ -58,8 +58,8 @@ if ~strcmp(mh.cachedout,currentcommand) && ~mh.holdbuffer %check that it is not 
 end
 if matches(varargin{1},'sendtogr','IgnoreCase',true) && ~isempty(mh.graphicscommandbuffer)
     mh.holdbuffer = 1;
-    commandid=getsecs;
-    writeline(mh.graphicsport,join([[mh.graphicscommandbuffer{:}], ";commandID_udp=" ,num2str(commandid), ';']),'0.0.0.0',2021); %actually send the data
+
+    writeline(mh.graphicsport,join([[mh.graphicscommandbuffer{:}], ";commandID_udp=" ,num2str(mh.commandID), ';']),'0.0.0.0',2021); %actually send the data
 
     writeline(mh.graphicsport,'executegr.fliprequest=1;','0.0.0.0',2021);
     mh.graphicscommandbuffer='';

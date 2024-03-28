@@ -58,7 +58,7 @@ classdef internal < handle
         lastcommand = 1; %move to private later
         holdbuffer = 0;
         readyforflip=1;
-        commandID;
+        commandID=0;
 
 
         %user definitions

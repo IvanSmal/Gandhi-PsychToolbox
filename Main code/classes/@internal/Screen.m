@@ -5,7 +5,6 @@ if ~strcmp(mh.cachedout,currentcommand) && ~mh.holdbuffer %check that it is not 
     if ~matches(varargin{1},'clearbuffer','IgnoreCase',true) &&...
             ~matches(varargin{1},'sendtogr','IgnoreCase',true) %check that user is not trying to clear the UDP buffer
         str=string();
-        mh.commandID=getsecs;
         for i=1:length(varargin)
             namecount=0;
             if matches(class(varargin{i}),'char')
@@ -18,9 +17,10 @@ if ~strcmp(mh.cachedout,currentcommand) && ~mh.holdbuffer %check that it is not 
                 varval=mat2str(varargin{i});
             elseif isobject(varargin{i})
                 targname=varargin{i}.name;
-                varval=mat2str(mh.trialtarg(targname,'getpos'));
-                mh.trial.targets.(targname).moving_position=[mh.trial.targets.(targname).moving_position; pix2deg(varval)];
-                mh.commandID=mh.trial.targets.(targname).timestamp(end);
+                pos=mh.trialtarg(targname,'getpos');
+                varval=mat2str(pos);
+                % mh.trial.targets.(targname).moving_position=[mh.trial.targets.(targname).moving_position; pix2deg(pos)];
+                % mh.commandID=mh.trial.targets.(targname).timestamp(end);
             else %if its a variable make the name a string
                 namecount=namecount+1;
                 varval=['''',string(inputname(namecount)),''''];
@@ -58,6 +58,9 @@ if ~strcmp(mh.cachedout,currentcommand) && ~mh.holdbuffer %check that it is not 
 end
 if matches(varargin{1},'sendtogr','IgnoreCase',true) && ~isempty(mh.graphicscommandbuffer)
     mh.holdbuffer = 1;
+    if mh.commandID==0
+        mh.commandID=getsecs;
+    end
 
     writeline(mh.graphicsport,join([[mh.graphicscommandbuffer{:}], ";commandID_udp=" ,num2str(mh.commandID), ';']),'0.0.0.0',2021); %actually send the data
 
@@ -65,6 +68,7 @@ if matches(varargin{1},'sendtogr','IgnoreCase',true) && ~isempty(mh.graphicscomm
     mh.graphicscommandbuffer='';
     mh.lastcommand=1;
     mh.holdbuffer = 0;
+    mh.commandID=0;
     % writeline(mh.graphicsport,'executegr.functionsbuffer=[];','0.0.0.0',2021); %need to figure out how to asynch this
     % parfeval(mh.parpool,@writeline,0,mh.graphicsport,'executegr.functionsbuffer=[];','0.0.0.0',2021);
 

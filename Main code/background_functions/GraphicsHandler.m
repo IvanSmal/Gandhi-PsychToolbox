@@ -1,4 +1,5 @@
 function GraphicsHandler
+% opengl('save','hardware');
 addpath('/opt/Trellis/Tools/xippmex');
 xippmex;
 vblhis=0;
@@ -218,7 +219,9 @@ while 1
         Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
 
     elseif gr.trialstarted && ~gr.flipped 
-        vbl=Screen('Flip',gr.window_main);
+        
+        Screen('Flip',gr.window_main,[],[],1);
+        vbl=getsecs;
         gr.fliptimes=[gr.fliptimes getsecs];
         gr.commandIDs=[gr.commandIDs gr.commid_udp];
         Screen('Flip',gr.window_monitor,[],[],2);

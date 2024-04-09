@@ -17,5 +17,4 @@ end
 mh.diodeflip;
 mh.evalgraphics(['gr.activestatename =' '''' mh.activestatename '''' ';'])
 
-
 end

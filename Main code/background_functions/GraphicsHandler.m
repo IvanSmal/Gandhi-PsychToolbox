@@ -28,6 +28,9 @@ close all;
 % Here we call some default settings for setting up Psychtoolbox
 PsychDefaultSetup(2);
 
+% priority
+Priority(1);
+
 % Get the screen numbers
 gr.screens = Screen('Screens');
 

@@ -57,7 +57,7 @@ if ~strcmp(mh.cachedout,currentcommand) && ~mh.holdbuffer %check that it is not 
     end
 end
 if matches(varargin{1},'sendtogr','IgnoreCase',true) && ~isempty(mh.graphicscommandbuffer)
-    mh.holdbuffer = 1;
+    % mh.holdbuffer = 1;
     if mh.commandID==0
         mh.commandID=getsecs;
     end

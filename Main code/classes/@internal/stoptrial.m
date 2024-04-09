@@ -6,5 +6,6 @@ mh.trial.success=success;
 if success
     mh.sum_success=mh.sum_success+1;
 end
+mh.Screen('sendtogr')
 mh.evalgraphics('gr.trialstarted=0;');
 end

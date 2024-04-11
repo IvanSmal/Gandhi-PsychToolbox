@@ -4,7 +4,7 @@ addpath('/opt/Trellis/Tools/xippmex');
 xippmex;
 vblhis=0;
 %% set up udp port
-graphicsport = udpport("LocalPort",2021);
+graphicsport = udpport("LocalPort",2021, "timeout", 0.01);
 %% set up udp callback that listens for "Screen" commands
 homepath=genpath('/home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code');
 addpath(homepath);
@@ -29,7 +29,7 @@ close all;
 PsychDefaultSetup(2);
 
 % priority
-Priority(1);
+Priority(5);
 
 % Get the screen numbers
 gr.screens = Screen('Screens');
@@ -38,9 +38,9 @@ gr.screens = Screen('Screens');
 black = BlackIndex(1);
 
 % Open an on screen window
-PsychImaging('PrepareConfiguration');
-PsychImaging('AddTask', 'General', 'UseVirtualFramebuffer');
-PsychImaging('AddTask', 'General', 'FloatingPoint16Bit');
+% PsychImaging('PrepareConfiguration');
+% PsychImaging('AddTask', 'General', 'UseVirtualFramebuffer');
+% PsychImaging('AddTask', 'General', 'FloatingPoint16Bit');
 
 [gr.window_main, gr.windowRect] = PsychImaging('OpenWindow', 1, black);
 
@@ -55,7 +55,7 @@ PsychImaging('AddTask', 'General', 'FloatingPoint16Bit');
 monitor_rect=floor(gr.windowRect/2);
 
 PsychImaging('PrepareConfiguration');
-PsychImaging('AddTask', 'General', 'UseVirtualFramebuffer');
+% PsychImaging('AddTask', 'General', 'UseVirtualFramebuffer');
 PsychImaging('AddTask', 'General', 'UsePanelFitter', [gr.screenXpixels, gr.screenYpixels], 'Full');
 [gr.window_monitor, gr.monitor_rect]=PsychImaging('OpenWindow', 0, black,monitor_rect,[],[],[],[],[],kPsychGUIWindow);
 
@@ -107,6 +107,7 @@ while 1
     pause(0.00001) %allow for callbacks to be checked
     %% evaluate graphics buffer
     if ~isempty(gr.functionsbuffer) && gr.trialstarted && gr.flipped
+        flush(graphicsport);
         gr.flipped=0;
         args_uncut={};
         outs={};
@@ -115,6 +116,7 @@ while 1
         for ii = 1 : length(v) %unwrap commands
             eval([v{ii} '= gr.functionsbuffer.' v{ii} ';']);
         end
+        gr.functionsbuffer=[];
 
         commandcount=1;
         lastargcount=1;
@@ -210,8 +212,9 @@ while 1
             %     gr.monitortexture=Screen('MakeTexture', gr.window_monitor, gr.monitormovieplaceholder);
             %     disp('got texture')
             % end
-            clear args
+            clear args 
         end
+        clear args args_uncut  outs   additionalinfo
 
         Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
         Screen('TextSize', gr.window_monitor,30);
@@ -223,21 +226,24 @@ while 1
 
     elseif gr.trialstarted && ~gr.flipped 
         
-        Screen('Flip',gr.window_main,[],[],1);
-        vbl=getsecs;
+        vbl=Screen('Flip',gr.window_main);
         gr.fliptimes=[gr.fliptimes getsecs];
         gr.commandIDs=[gr.commandIDs gr.commid_udp];
-        Screen('Flip',gr.window_monitor,[],[],2);
+        Screen('Flip',gr.window_monitor,[],[],1);
         writeline(graphicsport,'mh.readyforflip=1;','0.0.0.0',2020);
-        disp(vbl-vblhis)
+        if vbl-vblhis>0.05
+            disp('stuttered')
+        end
         vblhis=vbl;
         clear allargs
-        % gr.functionsbuffer=[];
+        gr.functionsbuffer=[];
         gr.fliprequest=0;
         gr.flipped=1;
+        Screen('Close');
     end
     %% this is to show eye when trials are not running
     if ~gr.trialstarted
+        % disp('out of trial')
         writeline(graphicsport,'mh.readyforflip=1;','0.0.0.0',2020);
         try
             seteye;
@@ -256,36 +262,41 @@ while 1
         Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
 
 
-        Screen('Flip',gr.window_monitor,[],[],2);
+        Screen('Flip',gr.window_monitor);
         Screen('Flip',gr.window_main);
         gr.functionsbuffer=[];
+        Screen('Close');
     end
 end
 %% callback function that does the graphics handling
     function getCommands(graphicsport,~)
-        graphicsport.UserData.in=readline(graphicsport);
-        if contains(graphicsport.UserData.in,'SetEye','IgnoreCase',true)
-            seteye;
-        elseif contains(graphicsport.UserData.in,'execute','IgnoreCase',true)
-            rawexecute(graphicsport);
-        else
-            executeScreen(graphicsport);
+        try
+        command=readline(graphicsport);
+            if contains(command,'SetEye','IgnoreCase',true)
+                seteye;
+            elseif contains(command,'execute','IgnoreCase',true)
+                rawexecute(command);
+            else
+                executeScreen(command);
+            end
+        catch
         end
     end
 
 %% recive and execute Screen calls
-    function executeScreen(graphicsport)
+    function executeScreen(command)
         args_udp={};
         outs_udp={};
         additionalinfo_udp={};
         commandID_udp={};
         gr.lastarg=1;
-        eval(graphicsport.UserData.in);
+        eval(command);
 
         gr.functionsbuffer(end+1).args_uncut=args_udp;
         gr.functionsbuffer(end+1).outs=outs_udp;
         gr.functionsbuffer(end+1).additionalinfo=additionalinfo_udp;
         gr.commid_udp=commandID_udp;
+        flush(graphicsport);
     end
 %% set eye calibration
     function seteye
@@ -298,12 +309,11 @@ end
         ylines = reshape(repmat(pixelsforlines(:,2),2)',1,[]);
         fullx=reshape(repmat([0 3000], length(ylines)/2,1)',1,[]);
         gr.gridlinesmatrix=[xlines fullx;fully ylines];
-
     end
 %% execut raw stream
-    function rawexecute(graphicsport)
+    function rawexecute(command)
         gr;
-        eval(erase(graphicsport.UserData.in,'execute'))
+        eval(erase(command,'execute'))
     end
 end
 

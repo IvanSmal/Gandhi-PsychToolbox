@@ -24,7 +24,7 @@ mh.checkeye_counter(end)=radius>hypoteye;
 mh.checkeye_counter=circshift(mh.checkeye_counter,-1);
 out=floor(mean(mh.checkeye_counter));
 
-if out==1
+if out==1 && mh.trial.targets.(targ).speed == 0
     whereseye=mh.eye.getraweye;
     if isempty(mh.autocalibrationmatrix)
         mh.autocalibrationmatrix(1)=targpos(1);

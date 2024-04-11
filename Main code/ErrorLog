@@ -1,711 +1,77 @@
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
+Invalid or deleted object.
+Invalid or deleted object.
 
-Error in MovingTargetsParameters (line 26)
-mh.addtarg('T_Calibrate',...
+Error in internal/rewcheck (line 13)
+if app.RewardButton.Value
 
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
+Error in MHost2/Run_Experiment (line 414)
+                        mh.rewcheck(app);
 
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
+Error in MHost2/STARTButtonPushed (line 1031)
+            Run_Experiment(app,mh);
 
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
 
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.
 
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
+Error in internal/rewcheck (line 13)
+if app.RewardButton.Value
 
-Error in MovingTargetsParameters (line 26)
-mh.addtarg('T_Calibrate',...
+Error in MHost2/Run_Experiment (line 414)
+                        mh.rewcheck(app);
 
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
+Error in MHost2/STARTButtonPushed (line 1031)
+            Run_Experiment(app,mh);
 
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
 
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.
 
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
+Error in internal/rewcheck (line 13)
+if app.RewardButton.Value
 
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
+Error in MHost2/Run_Experiment (line 414)
+                        mh.rewcheck(app);
 
-Error in MovingTargetsParameters (line 26)
-mh.addtarg('T_Calibrate',...
+Error in MHost2/STARTButtonPushed (line 1031)
+            Run_Experiment(app,mh);
 
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
 
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.
 
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
+Error in internal/rewcheck (line 13)
+if app.RewardButton.Value
 
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
+Error in MHost2/Run_Experiment (line 414)
+                        mh.rewcheck(app);
 
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
+Error in MHost2/STARTButtonPushed (line 1031)
+            Run_Experiment(app,mh);
 
-Error in MovingTargetsParameters (line 26)
-mh.addtarg('T_Calibrate',...
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
 
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.
 
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
+Error in internal/rewcheck (line 13)
+if app.RewardButton.Value
 
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
+Error in MHost2/Run_Experiment (line 414)
+                        mh.rewcheck(app);
 
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
+Error in MHost2/STARTButtonPushed (line 1031)
+            Run_Experiment(app,mh);
 
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
 
-Error in MovingTargetsParameters (line 26)
-mh.addtarg('T_Calibrate',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters (line 26)
-mh.addtarg('T_Calibrate',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters (line 26)
-mh.addtarg('T_Calibrate',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters_ivan (line 26)
-mh.addtarg('T_Calibrate',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters_ivan (line 26)
-mh.addtarg('T_Calibrate',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters_ivan (line 26)
-mh.addtarg('T_Calibrate',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters_ivan (line 26)
-mh.addtarg('T_Calibrate',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters_ivan (line 26)
-mh.addtarg('T_Calibrate',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters_ivan (line 26)
-mh.addtarg('T_Calibrate',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters_ivan (line 26)
-mh.addtarg('T_Calibrate',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters (line 26)
-mh.addtarg('T_Calibrate',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters (line 26)
-mh.addtarg('T_Calibrate',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters (line 26)
-mh.addtarg('T_Calibrate',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters (line 26)
-mh.addtarg('T_Calibrate',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters (line 26)
-mh.addtarg('T_Calibrate',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters (line 26)
-mh.addtarg('T_Calibrate',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters (line 26)
-mh.addtarg('T_Calibrate',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters_ivan (line 26)
-mh.addtarg('T_Calibrate',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters_ivan (line 26)
-mh.addtarg('T_Calibrate',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters_ivan (line 26)
-mh.addtarg('T_Calibrate',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters_ivan (line 26)
-mh.addtarg('T_Calibrate',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters_ivan (line 26)
-mh.addtarg('T_Calibrate',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters_ivan (line 26)
-mh.addtarg('T_Calibrate',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters_ivan (line 26)
-mh.addtarg('T_Calibrate',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters_moveInCircle1 (line 16)
-mh.addtarg('T0',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters_moveInCircle1 (line 16)
-mh.addtarg('T0',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters_moveInCircle1 (line 16)
-mh.addtarg('T0',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters_moveInCircle1 (line 16)
-mh.addtarg('T0',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters_moveInCircle1 (line 16)
-mh.addtarg('T0',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters_moveInCircle1 (line 16)
-mh.addtarg('T0',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)Error using internal/addtarg
-Invalid default value for property 'moving_position' in class 'target':
-Unrecognized function or variable 'position'.
-
-Error in MovingTargetsParameters_moveInCircle1 (line 16)
-mh.addtarg('T0',...
-
-Error in run (line 91)
-evalin('caller', strcat(script, ';'));
-
-Error in MHost2/makeparams (line 582)
-            run(paramfile);
-
-Error in MHost2/startupFcn (line 856)
-                    app.makeparams
-
-Error in matlab.apps.AppBase/runStartupFcn (line 68)
-            ams.runStartupFcn(app, startfcn);
-
-Error in MHost2 (line 1493)
-            runStartupFcn(app, @startupFcn)
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...

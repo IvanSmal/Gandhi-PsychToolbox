@@ -7,7 +7,7 @@ classdef trial < handle
         trialnum = 0;
 
         state
-        data=data
+        data
         targets
         success
         intervals

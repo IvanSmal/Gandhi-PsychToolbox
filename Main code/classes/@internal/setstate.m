@@ -14,7 +14,7 @@ if ~strcmp(mh.activestatename,name)
     mh.activestatename = name;
 end
 
+mh.evalgraphics(['gr.activestatename =' '''' mh.activestatename '''' ';gr.state_history{end+1}=gr.activestatename']);
 mh.diodeflip;
-mh.evalgraphics(['gr.activestatename =' '''' mh.activestatename '''' ';'])
 
 end

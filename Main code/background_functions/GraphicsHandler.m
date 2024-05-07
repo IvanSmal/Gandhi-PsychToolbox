@@ -10,12 +10,12 @@ homepath=genpath('/home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code
 addpath(homepath);
 cd '/home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code'
 
-gr=graphics;
 configureCallback(graphicsport,"terminator",@getCommands);
 
 gr.eye=eyeinfo;
 gr.flipped=0;
 gr.activestatename='null';
+gr.state_history={};
 
 %% set up the screens for experiments
 Screen('Preference', 'SkipSyncTests', 1);
@@ -314,6 +314,16 @@ end
     function rawexecute(command)
         gr;
         eval(erase(command,'execute'))
+    end
+%%data save function
+    function dumpdata(gr,fname)
+        temptr=load(fname);
+        trname=fields(temptr);
+        temptr.(trname{:}).data.graphics_fliptimes=[num2str(gr.fliptimes) ; num2str(gr.commandIDs)];
+        temptr.(trname{:}).data.DiodeFlipStates=gr.state_history;
+        gr.commandIDs=[];gr.fliptimes=[];gr.state_history={};
+        eval([trname{1} '=temptr.(trname{:})']);
+        save(fname,trname{:})        
     end
 end
 

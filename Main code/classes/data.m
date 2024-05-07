@@ -5,6 +5,7 @@ classdef data
         neural_data
         photodiode
         graphics_fliptimes;
+        DiodeFlipStates;
     end
 
     methods

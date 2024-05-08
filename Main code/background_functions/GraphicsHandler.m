@@ -12,10 +12,9 @@ cd '/home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code'
 
 configureCallback(graphicsport,"terminator",@getCommands);
 
+%% initiate a bunch of gr stuff
+gr = graphics;
 gr.eye=eyeinfo;
-gr.flipped=0;
-gr.activestatename='null';
-gr.state_history={};
 
 %% set up the screens for experiments
 Screen('Preference', 'SkipSyncTests', 1);
@@ -216,6 +215,7 @@ while 1
         end
         clear args args_uncut  outs   additionalinfo
 
+    elseif gr.trialstarted && ~gr.flipped 
         Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
         Screen('TextSize', gr.window_monitor,30);
         Screen('DrawText', gr.window_monitor, gr.activestatename, 5, 5 , [255,255,255]);
@@ -223,8 +223,6 @@ while 1
         Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix,1,[.3 .3 .3]);
         Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
         Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
-
-    elseif gr.trialstarted && ~gr.flipped 
         
         vbl=Screen('Flip',gr.window_main);
         gr.fliptimes=[gr.fliptimes getsecs];
@@ -235,6 +233,13 @@ while 1
             disp('stuttered')
         end
         vblhis=vbl;
+
+        if ~strcmp(gr.state_history{end},gr.activestatename)
+            gr.state_history{end+1}=gr.activestatename;
+            gr.diode_color=abs(gr.diode_color-1); 
+            disp(join(["changed diode for state: " gr.activestatename]));
+        end
+
         clear allargs
         gr.functionsbuffer=[];
         gr.fliprequest=0;
@@ -316,14 +321,20 @@ end
         eval(erase(command,'execute'))
     end
 %%data save function
-    function dumpdata(gr,fname)
+    function dumpdata(fname)
+        gr;
+        temptr=[];
+        trname=[];
+        disp('trying to dump data')
+        fname=strtrim(fname);
         temptr=load(fname);
         trname=fields(temptr);
-        temptr.(trname{:}).data.graphics_fliptimes=[num2str(gr.fliptimes) ; num2str(gr.commandIDs)];
+        temptr.(trname{:}).data.graphics_fliptimes.fliptimes=num2str(gr.fliptimes);
+        temptr.(trname{:}).data.graphics_fliptimes.commandIDs = num2str(gr.commandIDs);
         temptr.(trname{:}).data.DiodeFlipStates=gr.state_history;
-        gr.commandIDs=[];gr.fliptimes=[];gr.state_history={};
-        eval([trname{1} '=temptr.(trname{:})']);
-        save(fname,trname{:})        
+        gr.commandIDs=[];gr.fliptimes=[];gr.state_history={'null'};
+        save(fname,'-struct','temptr');
+        disp(join(['saved ',trname{:}]))
     end
 end
 

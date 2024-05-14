@@ -14,6 +14,4 @@ if ~strcmp(mh.activestatename,name)
     mh.activestatename = name;
 end
 
-mh.evalgraphics(['gr.activestatename =' '''' mh.activestatename '''' ';']);
-
 end

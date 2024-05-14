@@ -242,7 +242,6 @@ while 1
 
         clear allargs
         gr.functionsbuffer=[];
-        gr.fliprequest=0;
         gr.flipped=1;
         Screen('Close');
     end
@@ -331,7 +330,7 @@ end
         trname=fields(temptr);
         temptr.(trname{:}).data.graphics_fliptimes.fliptimes=num2str(gr.fliptimes);
         temptr.(trname{:}).data.graphics_fliptimes.commandIDs = num2str(gr.commandIDs);
-        temptr.(trname{:}).data.DiodeFlipStates=gr.state_history;
+        temptr.(trname{:}).data.DiodeFlipStates={gr.state_history{2:end}};
         gr.commandIDs=[];gr.fliptimes=[];gr.state_history={'null'};
         save(fname,'-struct','temptr');
         disp(join(['saved ',trname{:}]))

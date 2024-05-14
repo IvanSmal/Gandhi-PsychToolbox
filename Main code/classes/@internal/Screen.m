@@ -63,9 +63,8 @@ if matches(varargin{1},'sendtogr','IgnoreCase',true) && ~isempty(mh.graphicscomm
     end
 
     % flush(mh.graphicsport);
+    mh.evalgraphics(['gr.activestatename =' '''' mh.activestatename '''' ';']);
     writeline(mh.graphicsport,join([[mh.graphicscommandbuffer{:}], ";commandID_udp=" ,num2str(mh.commandID), ';']),'0.0.0.0',2021); %actually send the data
-
-    writeline(mh.graphicsport,'executegr.fliprequest=1;','0.0.0.0',2021);
     mh.graphicscommandbuffer='';
     mh.lastcommand=1;
     mh.holdbuffer = 0;

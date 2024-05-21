@@ -38,8 +38,8 @@ if out==1 && mh.trial.targets.(targ).speed == 0
         mh.autocalibrationmatrix_buffer(idx,3)=targpos(2);
         mh.autocalibrationmatrix_buffer(idx,4)=whereseye(2);
     end
-    [~,uidx]=unique(mh.autocalibrationmatrix(:,[1,3]),'last','rows');
-    mh.autocalibrationmatrix=mh.autocalibrationmatrix(uidx,:);
+    [~,uidx]=unique(mh.autocalibrationmatrix_buffer(:,[1,3]),'last','rows');
+    mh.autocalibrationmatrix_buffer=mh.autocalibrationmatrix_buffer(uidx,:);
 end
 
 centerx=(targposSquare(3)+targposSquare(1))/2;

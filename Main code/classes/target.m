@@ -1,9 +1,10 @@
-classdef target < handle
+classdef target %< handle
     properties
         name
         size = [0 0 5 5]
         position = [0 0]
-        final_position 
+        timestamp=[];
+        moving_position=[];
         degreestype='cartesian'
         window = 200;
         color = [1 0 0]
@@ -37,7 +38,7 @@ classdef target < handle
             if targ.speed==0 && isempty(targ.custompath_x)
 
                 temppos=targ.position;
-                mh.trial.targets.(targ.name).final_position=temppos;
+                mh.trial.targets.(targ.name).moving_position=temppos;
                 pixpos=deg2pix(temppos,targ.degreestype,mh.screenparams);
                 
             else
@@ -56,15 +57,24 @@ classdef target < handle
                 end
                 
                 if isempty(targ.custompath_x)
-                    targpos=deg2pix(targ.position,targ.degreestype,mh.screenparams);
+                    targpos=targ.position;
+                    degtype=targ.degreestype;
+                    if strcmp(targ.degreestype,'pol') || strcmp(targ.degreestype,'polar') 
+                        [targpos(1),targpos(2)]=pol2cart(targpos(1),targpos(2));
+                        degtype='cart';
+                    end
 
-                    xyadd=deg2pix([targ.speed*cosd(targ.direction), targ.speed*sind(targ.direction)],'size',mh.screenparams);
+                    xyadd=[targ.speed*cosd(targ.direction), targ.speed*sind(targ.direction)];
 
-                    tempx=targpos(1)+xyadd(3)*tim;
-                    tempy=targpos(2)-xyadd(4)*tim;
+                    tempx=targpos(1)+xyadd(1)*tim;
+                    tempy=targpos(2)-xyadd(2)*tim;
 
-                    pixpos=[tempx tempy];
-                    mh.trial.targets.(targ.name).final_position=pix2deg(pixpos,targ.degreestype,mh.screenparams);
+                    temppos=[tempx tempy];
+                    mh.trial.targets.(targ.name).moving_position=...
+                        [mh.trial.targets.(targ.name).moving_position; temppos];
+                    mh.trial.targets.(targ.name).timestamp=...
+                        [mh.trial.targets.(targ.name).timestamp getsecs];
+                    pixpos=deg2pix(temppos,degtype,mh.screenparams);
 
                 else
                     xf=@(mh,t,x) eval(targ.custompath_x);
@@ -74,11 +84,13 @@ classdef target < handle
                     tempy=yf(mh,tim*targ.speed,targ.position(2));
 
                     temppos=[tempx tempy];
-                    mh.trial.targets.(targ.name).final_position=temppos;
+                    mh.trial.targets.(targ.name).moving_position=...
+                        [mh.trial.targets.(targ.name).moving_position; temppos];
+                    mh.trial.targets.(targ.name).timestamp=...
+                        [mh.trial.targets.(targ.name).timestamp getsecs];
                     pixpos=deg2pix(temppos,targ.degreestype,mh.screenparams);
                 end
             end
-            
 
             if any(matches(varargin(:),'center',IgnoreCase=true))
                 out=pixpos;

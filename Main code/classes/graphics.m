@@ -3,6 +3,7 @@ classdef graphics < handle
     %   Detailed explanation goes here
     
     properties
+        fliprequest = 0;
         screens
         window_main
         window_monitor
@@ -20,17 +21,20 @@ classdef graphics < handle
         texture
         diode_pos
         eye
-        flipped
-        activestatename
+        flipped = 0;
+        activestatename='null';
         user_defined
         target
-        movieplaying=0
+        movieplaying=0;
         diode_color=[0 0 0];
         functionsbuffer=[];
         trialstarted=0;
         lastarg;
         gridlinesmatrix;
         eyehistory;
+        fliptimes;
+        commandIDs;
+        commid_udp;
+        state_history={'null'};
     end
 end
-

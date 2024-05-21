@@ -21,11 +21,11 @@ classdef graphics < handle
         texture
         diode_pos
         eye
-        flipped
-        activestatename
+        flipped = 0;
+        activestatename='null';
         user_defined
         target
-        movieplaying=0
+        movieplaying=0;
         diode_color=[0 0 0];
         functionsbuffer=[];
         trialstarted=0;
@@ -35,6 +35,6 @@ classdef graphics < handle
         fliptimes;
         commandIDs;
         commid_udp;
+        state_history={'null'};
     end
 end
-

@@ -29,6 +29,7 @@ classdef internal < handle
         eye;
         targhistory=zeros(4,10);
         autocalibrationmatrix=[];
+        autocalibrationmatrix_buffer=[];
         screenparams
         
         %reward

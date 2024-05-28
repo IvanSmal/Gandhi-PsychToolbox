@@ -328,8 +328,8 @@ end
         fname=strtrim(fname);
         temptr=load(fname);
         trname=fields(temptr);
-        temptr.(trname{:}).data.graphics_fliptimes.fliptimes=num2str(gr.fliptimes);
-        temptr.(trname{:}).data.graphics_fliptimes.commandIDs = num2str(gr.commandIDs);
+        temptr.(trname{:}).data.graphics_fliptimes.fliptimes=gr.fliptimes;
+        temptr.(trname{:}).data.graphics_fliptimes.commandIDs = gr.commandIDs;
         temptr.(trname{:}).data.DiodeFlipStates={gr.state_history{2:end}};
         gr.commandIDs=[];gr.fliptimes=[];gr.state_history={'null'};
         save(fname,'-struct','temptr');

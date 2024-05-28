@@ -15,7 +15,7 @@ xreverse=0;
 for i=2:timelength
     rollxdice=randi(1000);
     if rollxdice>(prob*1000) && ~xissaccade
-        xpos(i)=xpos(i-1);
+        xpos(i)=xpos(i-1)+normrnd(0,0.01);
     else 
         xissaccade=1;
         if ~xreverse
@@ -32,4 +32,5 @@ for i=2:timelength
         end
     end
 end
+
 

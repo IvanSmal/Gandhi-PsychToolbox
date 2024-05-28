@@ -8,6 +8,7 @@ mh.autocalibrationmatrix_buffer = mh.autocalibrationmatrix;
 xippmex('digout', 4, 1)
 for i=1:200
     mh.evalgraphics(['gr.activestatename =' '''' mh.activestatename '''' ';gr.flipped=0;'])
+    writeline(mh.graphicsport,'trialstart','0.0.0.0',2023);
     mh.Screen('sendtogr')
     pause(0.001)
 end

@@ -23,9 +23,11 @@ function getCommands(rewardport,~)
     flush(rewardport,'input')
     rewamount=toc;
     clear sound
-    if identifier>0
+    if identifier==1
         disp(['manually rewarded for ' num2str(rewamount) ' seconds'])
         writeline(rewardport,['app.insToTxtbox("manual reward: ' num2str(rewamount) 's");'],'0.0.0.0',2020);
+    elseif identifier==2
+        exit
     else
         disp(['rewarded for ' num2str(rewamount) ' seconds'])
         writeline(rewardport,['app.insToTxtbox("reward: ' num2str(rewamount) 's");'],'0.0.0.0',2020);

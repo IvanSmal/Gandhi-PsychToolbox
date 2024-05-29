@@ -221,6 +221,7 @@ while 1
         Screen('DrawText', gr.window_monitor, gr.activestatename, 5, 5 , [255,255,255]);
         Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 600, 5 , [255,255,255]);
         Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix,1,[.3 .3 .3]);
+        Screen('FrameOval',gr.window_monitor,[.3 .3 .3],[deg2pix([0 0])-10 deg2pix([0 0])+10],3);
         Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
         Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
         
@@ -264,8 +265,7 @@ while 1
 
         Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
         Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
-
-
+        Screen('FrameOval',gr.window_monitor,[.3 .3 .3],[deg2pix([0 0])-10 deg2pix([0 0])+10],3);
         Screen('Flip',gr.window_monitor);
         Screen('Flip',gr.window_main);
         gr.functionsbuffer=[];

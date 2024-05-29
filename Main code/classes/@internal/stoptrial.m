@@ -18,6 +18,7 @@ end
 mh.Screen('sendtogr')
 for i=1:100
     mh.evalgraphics('gr.trialstarted=0;');
+    writeline(mh.graphicsport,'trialend','0.0.0.0',2023);
     pause(0.0001)
 end
 end

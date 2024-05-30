@@ -401,4 +401,80 @@ Error in appdesigner.internal.service.AppManagementService/executeCallback (line
                 callback(appOrUserComponent, event);
 
 Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...One or more output arguments not assigned during call to "xippmex".
+One or more output arguments not assigned during call to "xippmex".
+
+Error in internal/rewcheck (line 6)
+[~,~,events]=xippmex('digin');
+
+Error in MHost2/Run_Experiment (line 351)
+                        mh.rewcheck(app);
+
+Error in MHost2/STARTButtonPushed (line 1051)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...One or more output arguments not assigned during call to "xippmex".
+
+Error in internal/rewcheck (line 6)
+[~,~,events]=xippmex('digin');
+
+Error in MHost2/Run_Experiment (line 351)
+                        mh.rewcheck(app);
+
+Error in MHost2/STARTButtonPushed (line 1051)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...One or more output arguments not assigned during call to "xippmex".
+
+Error in internal/rewcheck (line 6)
+[~,~,events]=xippmex('digin');
+
+Error in MHost2/Run_Experiment (line 351)
+                        mh.rewcheck(app);
+
+Error in MHost2/STARTButtonPushed (line 1051)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...One or more output arguments not assigned during call to "xippmex".
+
+Error in internal/rewcheck (line 6)
+[~,~,events]=xippmex('digin');
+
+Error in MHost2/Run_Experiment (line 351)
+                        mh.rewcheck(app);
+
+Error in MHost2/STARTButtonPushed (line 1051)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...One or more output arguments not assigned during call to "xippmex".
+
+Error in internal/rewcheck (line 6)
+[~,~,events]=xippmex('digin');
+
+Error in MHost2/Run_Experiment (line 351)
+                        mh.rewcheck(app);
+
+Error in MHost2/STARTButtonPushed (line 1051)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
             newCallback = @(source, event)executeCallback(ams, ...

@@ -13,5 +13,4 @@ if ~strcmp(mh.activestatename,name)
     mh.activestatetime = mh.trial.state.(name).time(end);
     mh.activestatename = name;
 end
-
 end

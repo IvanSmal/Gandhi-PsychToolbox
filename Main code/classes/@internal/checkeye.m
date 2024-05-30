@@ -26,20 +26,20 @@ out=floor(mean(mh.checkeye_counter));
 
 if out==1 && mh.trial.targets.(targ).speed == 0
     whereseye=mh.eye.getraweye;
-    if isempty(mh.autocalibrationmatrix)
-        mh.autocalibrationmatrix(1)=targpos(1);
-        mh.autocalibrationmatrix(2)=whereseye(1);
-        mh.autocalibrationmatrix(3)=targpos(2);
-        mh.autocalibrationmatrix(4)=whereseye(2);
+    if isempty(mh.autocalibrationmatrix_buffer)
+        mh.autocalibrationmatrix_buffer(1)=targpos(1);
+        mh.autocalibrationmatrix_buffer(2)=whereseye(1);
+        mh.autocalibrationmatrix_buffer(3)=targpos(2);
+        mh.autocalibrationmatrix_buffer(4)=whereseye(2);
     else
         idx=size(mh.autocalibrationmatrix,1)+1;
-        mh.autocalibrationmatrix(idx,1)=targpos(1);
-        mh.autocalibrationmatrix(idx,2)=whereseye(1);
-        mh.autocalibrationmatrix(idx,3)=targpos(2);
-        mh.autocalibrationmatrix(idx,4)=whereseye(2);
+        mh.autocalibrationmatrix_buffer(idx,1)=targpos(1);
+        mh.autocalibrationmatrix_buffer(idx,2)=whereseye(1);
+        mh.autocalibrationmatrix_buffer(idx,3)=targpos(2);
+        mh.autocalibrationmatrix_buffer(idx,4)=whereseye(2);
     end
-    [~,uidx]=unique(mh.autocalibrationmatrix(:,[1,3]),'last','rows');
-    mh.autocalibrationmatrix=mh.autocalibrationmatrix(uidx,:);
+    [~,uidx]=unique(mh.autocalibrationmatrix_buffer(:,[1,3]),'last','rows');
+    mh.autocalibrationmatrix_buffer=mh.autocalibrationmatrix_buffer(uidx,:);
 end
 
 centerx=(targposSquare(3)+targposSquare(1))/2;

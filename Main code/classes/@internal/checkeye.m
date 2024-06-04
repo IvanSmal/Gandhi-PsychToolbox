@@ -1,26 +1,35 @@
 function out=checkeye(mh,targ,pos)
 if ~exist('pos','var') || isempty(pos)
-    targpos=mh.trialtarg(targ,'getpos','center');
-    targposSquare=mh.trialtarg(targ,'getpos');
+    if isempty(mh.trial.targets.(targ).moving_position)
+        targpos=mh.trialtarg(targ,'getpos','center');
+    elseif numel(mh.trial.targets.(targ).moving_position)<5
+        targpos=deg2pix(mh.trial.targets.(targ).moving_position(end,:),'cart',mh.screenparams);
+    elseif numel(mh.trial.targets.(targ).moving_position)>4
+        targpos=deg2pix(mh.trial.targets.(targ).moving_position(end-5:end,:),'cart',mh.screenparams);
+    end
 else
-    targetlocation = pos;
-    centerx=(targetlocation(3)+targetlocation(1))/2;
-    centery=(targetlocation(4)+targetlocation(2))/2;
+    centerx=(pos(3)+pos(1))/2;
+    centery=(pos(4)+pos(2))/2;
     targpos=[centerx centery];
-    targposSquare=pos;
 end
 
+%% add gain to window
+%"gain" might be an incorrect term here. Essentially, the gain value
+%determines how many extra degrees to add to the window based on how
+%eccentric the target is. So at gain "0.1", 0.1 degrees will be added to
+%the window per 1 degree of eccentricity. The window will not be multiplied
+%by 1.1
 degreesfromcenter=pix2deg(targpos,'cart',mh.screenparams);
-targfromcenter=hypot(degreesfromcenter(1),degreesfromcenter(2));
+targfromcenter=hypot(degreesfromcenter(1,end),degreesfromcenter(2,end));
 truegainvalue=targfromcenter*mh.eccentricity_gain;
-truegainpixels=deg2pix([truegainvalue truegainvalue],'size',mh.screenparams);
+truegainpixels=deg2pix([truegainvalue truegainvalue],'size',mh.screenparams); % pixels to add to window
 
 windowsize_all=deg2pix([mh.trial.targets.(targ).window mh.trial.targets.(targ).window],'size',mh.screenparams);
-radius=windowsize_all(3)+truegainpixels(3);
+radius=windowsize_all(3)+truegainpixels(3); %using index 3 because assumes a perfect circle so x and y values are the same. so 3 and 4 should be the same.
 howfareye=targpos-mh.eye.geteye;
-hypoteye=hypot(howfareye(1),howfareye(2));
+hypoteye=hypot(howfareye(:,1),howfareye(:,2));
 
-mh.checkeye_counter(end)=radius>hypoteye;
+mh.checkeye_counter(end)=any(radius>hypoteye);
 mh.checkeye_counter=circshift(mh.checkeye_counter,-1);
 out=floor(mean(mh.checkeye_counter));
 
@@ -42,8 +51,11 @@ if out==1 && mh.trial.targets.(targ).speed == 0
     mh.autocalibrationmatrix_buffer=mh.autocalibrationmatrix_buffer(uidx,:);
 end
 
-centerx=(targposSquare(3)+targposSquare(1))/2;
-centery=(targposSquare(4)+targposSquare(2))/2;
+centerx=targpos(:,1);
+centery=targpos(:,2);
 squarepos=round([centerx-radius centery-radius centerx+radius centery+radius]);
-mh.Screen('FrameOval','monitoronly',[1 0 0],squarepos);
+for i=1:size(centerx,1)
+    color(i,:)=[1/i 0 0];
+end
+mh.Screen('FrameOval','monitoronly',color,squarepos);
 end

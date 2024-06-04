@@ -1,17 +1,18 @@
 function out=checkeye(mh,targ,pos)
-if ~exist('pos','var') || isempty(pos)
+% if ~exist('pos','var') || isempty(pos)
     if isempty(mh.trial.targets.(targ).moving_position)
         targpos=mh.trialtarg(targ,'getpos','center');
-    elseif numel(mh.trial.targets.(targ).moving_position)<5
+    elseif numel(mh.trial.targets.(targ).moving_position(:,1))<51
         targpos=deg2pix(mh.trial.targets.(targ).moving_position(end,:),'cart',mh.screenparams);
-    elseif numel(mh.trial.targets.(targ).moving_position)>4
-        targpos=deg2pix(mh.trial.targets.(targ).moving_position(end-5:end,:),'cart',mh.screenparams);
+    elseif numel(mh.trial.targets.(targ).moving_position(:,1))>50
+        targpos=deg2pix(mh.trial.targets.(targ).moving_position(end-50:10:end,:),'cart',mh.screenparams);
     end
-else
-    centerx=(pos(3)+pos(1))/2;
-    centery=(pos(4)+pos(2))/2;
-    targpos=[centerx centery];
-end
+% else
+%     disp('here')
+%     centerx=(pos(3)+pos(1))/2;
+%     centery=(pos(4)+pos(2))/2;
+%     targpos=[centerx centery];
+% end
 
 %% add gain to window
 %"gain" might be an incorrect term here. Essentially, the gain value
@@ -20,7 +21,7 @@ end
 %the window per 1 degree of eccentricity. The window will not be multiplied
 %by 1.1
 degreesfromcenter=pix2deg(targpos,'cart',mh.screenparams);
-targfromcenter=hypot(degreesfromcenter(1,end),degreesfromcenter(2,end));
+targfromcenter=hypot(degreesfromcenter(end,1),degreesfromcenter(end,2));
 truegainvalue=targfromcenter*mh.eccentricity_gain;
 truegainpixels=deg2pix([truegainvalue truegainvalue],'size',mh.screenparams); % pixels to add to window
 
@@ -55,7 +56,7 @@ centerx=targpos(:,1);
 centery=targpos(:,2);
 squarepos=round([centerx-radius centery-radius centerx+radius centery+radius]);
 for i=1:size(centerx,1)
-    color(i,:)=[1/i 0 0];
+    color(size(centerx,1)-i+1,:)=[1-(i/10) 0 0];
 end
-mh.Screen('FrameOval','monitoronly',color,squarepos);
+mh.Screen('FrameOval','monitoronly',color',squarepos');
 end

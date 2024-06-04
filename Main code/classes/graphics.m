@@ -36,5 +36,6 @@ classdef graphics < handle
         commandIDs;
         commid_udp;
         state_history={'null'};
+        center_circle=[0 0 0 0];
     end
 end

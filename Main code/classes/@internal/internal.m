@@ -48,8 +48,9 @@ classdef internal < handle
         %collision stuff
         coltimer=0
 
-        %eccentricity gain
+        %eccentricity gain and target trails
         eccentricity_gain;
+        trailing_window_time;
 
         %communicate with graphics
         senttimestamp=0;

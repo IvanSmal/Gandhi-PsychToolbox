@@ -3,7 +3,7 @@ function out=checkeye(mh,targ,pos)
     if isempty(mh.trial.targets.(targ).moving_position)
         targpos=mh.trialtarg(targ,'getpos','center');
     elseif numel(mh.trial.targets.(targ).moving_position(:,1))==1
-        targpos=deg2pix(mh.trial.targets.(targ).moving_position(end,:),'cart',mh.screenparams);
+        targpos=deg2pix(mh.trial.targets.(targ).moving_position,'cart',mh.screenparams);
     else
         tbackwards=abs(mh.trial.targets.(targ).timestamp-mh.trial.targets.(targ).timestamp(end));
         firstidx=find(tbackwards<(mh.trailing_window_time/1000),1);
@@ -57,8 +57,9 @@ end
 centerx=targpos(:,1);
 centery=targpos(:,2);
 squarepos=round([centerx-radius centery-radius centerx+radius centery+radius]);
-for i=1:size(centerx,1)
-    color(size(centerx,1)-i+1,:)=[1 0 0];
-end
-mh.Screen('FrameOval','monitoronly',color',squarepos');
+% for i=1:size(centerx,1)
+%     color(size(centerx,1)-i+1,:)=[1 0 0];
+% end
+color=[1 0 0;1 0 0];
+mh.Screen('FrameOval','monitoronly',color',squarepos([1,end],:)');
 end

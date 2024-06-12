@@ -40,7 +40,7 @@ classdef target %< handle
                 temppos=targ.position;
                 degtype=targ.degreestype;
                 if strcmp(targ.degreestype,'pol') || strcmp(targ.degreestype,'polar') 
-                    [temppos(1),temppos(2)]=pol2cart(temppos(1),temppos(2));
+                    [temppos(1),temppos(2)]=pol2cart(deg2rad(temppos(1)),temppos(2));
                     degtype='cart';
                 end
                 mh.trial.targets.(targ.name).moving_position=temppos;
@@ -65,7 +65,7 @@ classdef target %< handle
                     targpos=targ.position;
                     degtype=targ.degreestype;
                     if strcmp(targ.degreestype,'pol') || strcmp(targ.degreestype,'polar') 
-                        [targpos(1),targpos(2)]=pol2cart(targpos(1),targpos(2));
+                        [targpos(1),targpos(2)]=pol2cart(deg2rad(targpos(1)),targpos(2));
                         degtype='cart';
                     end
 

@@ -60,6 +60,6 @@ squarepos=round([centerx-radius centery-radius centerx+radius centery+radius]);
 % for i=1:size(centerx,1)
 %     color(size(centerx,1)-i+1,:)=[1 0 0];
 % end
-color=[1 0 0;1 0 0];
-mh.Screen('FrameOval','monitoronly',color',squarepos([1,end],:)');
+color=[0.5 0 0;0.5 0 0];
+mh.Screen('FrameOval','monitoronly',color',squarepos([1,end],:)',5);
 end

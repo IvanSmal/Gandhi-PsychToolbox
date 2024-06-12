@@ -38,8 +38,13 @@ classdef target %< handle
             if targ.speed==0 && isempty(targ.custompath_x)
 
                 temppos=targ.position;
+                degtype=targ.degreestype;
+                if strcmp(targ.degreestype,'pol') || strcmp(targ.degreestype,'polar') 
+                    [temppos(1),temppos(2)]=pol2cart(deg2rad(temppos(1)),temppos(2));
+                    degtype='cart';
+                end
                 mh.trial.targets.(targ.name).moving_position=temppos;
-                pixpos=deg2pix(temppos,targ.degreestype,mh.screenparams);
+                pixpos=deg2pix(temppos,degtype,mh.screenparams);
                 
             else
                 if ~any(matches(varargin(:),'continue',IgnoreCase=true))
@@ -60,7 +65,7 @@ classdef target %< handle
                     targpos=targ.position;
                     degtype=targ.degreestype;
                     if strcmp(targ.degreestype,'pol') || strcmp(targ.degreestype,'polar') 
-                        [targpos(1),targpos(2)]=pol2cart(targpos(1),targpos(2));
+                        [targpos(1),targpos(2)]=pol2cart(deg2rad(targpos(1)),targpos(2));
                         degtype='cart';
                     end
 

@@ -221,7 +221,7 @@ while 1
         Screen('DrawText', gr.window_monitor, gr.activestatename, 5, 5 , [255,255,255]);
         Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 600, 5 , [255,255,255]);
         Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix,1,[.3 .3 .3]);
-        Screen('FrameOval',gr.window_monitor,[.3 .3 .3],gr.center_circle,3);
+        Screen('FrameOval',gr.window_monitor,[.2 .2 .2],gr.center_circle,3);
         Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
         Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
         
@@ -265,7 +265,7 @@ while 1
 
         Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
         Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
-        Screen('FrameOval',gr.window_monitor,[.3 .3 .3],gr.center_circle,3);
+        Screen('FrameOval',gr.window_monitor,[0.2 0.2 0.2]',gr.center_circle,3);
         Screen('Flip',gr.window_monitor);
         Screen('Flip',gr.window_main);
         gr.functionsbuffer=[];
@@ -313,7 +313,12 @@ end
         ylines = reshape(repmat(pixelsforlines(:,2),2)',1,[]);
         fullx=reshape(repmat([0 3000], length(ylines)/2,1)',1,[]);
         gr.gridlinesmatrix=[xlines fullx;fully ylines];
-        gr.center_circle=[deg2pix([0 0])-10 deg2pix([0 0])+10];
+        truezero=deg2pix([0 0]);
+        degadds=deg2pix([10 10;20 20; 30 30; 40 40; 50 50],'cart')-truezero;
+        degadds(:,2)=[];
+
+        gr.center_circle=[truezero-10 truezero+10;...
+            truezero-degadds truezero+degadds]';
     end
 %% execut raw stream
     function rawexecute(command)

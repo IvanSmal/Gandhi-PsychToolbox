@@ -15,4 +15,5 @@ end
 
 xippmex('digout', 4, 0);
 [~,~,events]=xippmex('digin');
+mh.stimmed=0;
 end

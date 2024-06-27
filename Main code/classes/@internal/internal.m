@@ -62,7 +62,10 @@ classdef internal < handle
         holdbuffer = 0;
         readyforflip=1;
         commandID=0;
-
+            
+        %stim stuff
+        stimmed=0;
+        stimflip=0;
 
         %user definitions
         userdefined=0;

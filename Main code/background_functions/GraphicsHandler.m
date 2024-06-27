@@ -1,14 +1,15 @@
 function GraphicsHandler
 % opengl('save','hardware');
-addpath('/opt/Trellis/Tools/xippmex');
+addpath(genpath('/opt/Trellis/Tools/xippmex'));
 xippmex;
 vblhis=0;
 %% set up udp port
 graphicsport = udpport("LocalPort",2021, "timeout", 0.01);
 %% set up udp callback that listens for "Screen" commands
-homepath=genpath('/home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code');
+homepath=genpath('/home/gandhi/Documents/MATLAB/Gandhi-PsychToolbox/Main code/background_functions');
 addpath(homepath);
-cd '/home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code'
+addpath(genpath('/home/gandhi/Documents/MATLAB/Gandhi-PsychToolbox/Main code'));
+cd '/home/gandhi/Documents/MATLAB/Gandhi-PsychToolbox/Main code'
 
 configureCallback(graphicsport,"terminator",@getCommands);
 

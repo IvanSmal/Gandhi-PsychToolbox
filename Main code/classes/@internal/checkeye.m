@@ -37,7 +37,7 @@ mh.checkeye_counter=circshift(mh.checkeye_counter,-1);
 out=floor(mean(mh.checkeye_counter));
 
 if out==1 && mh.trial.targets.(targ).speed == 0
-    whereseye=mh.eye.getraweye;
+    whereseye=mh.eye.geteye;
     if isempty(mh.autocalibrationmatrix_buffer)
         mh.autocalibrationmatrix_buffer(1)=targpos(1);
         mh.autocalibrationmatrix_buffer(2)=whereseye(1);

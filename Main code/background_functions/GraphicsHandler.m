@@ -44,7 +44,6 @@ black = BlackIndex(1);
 
 [gr.window_main, gr.windowRect] = PsychImaging('OpenWindow', 1, black);
 
-
 % Get the size of the on screen window
 [gr.screenXpixels, gr.screenYpixels] = Screen('WindowSize', gr.window_main);
 
@@ -226,10 +225,11 @@ while 1
         Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
         Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
         
+        Screen('Flip',gr.window_monitor,[],[],1);
         vbl=Screen('Flip',gr.window_main);
         gr.fliptimes=[gr.fliptimes getsecs];
         gr.commandIDs=[gr.commandIDs gr.commid_udp];
-        Screen('Flip',gr.window_monitor,[],[],1);
+
         writeline(graphicsport,'mh.readyforflip=1;','0.0.0.0',2020);
         if vbl-vblhis>0.05
             disp('stuttered')

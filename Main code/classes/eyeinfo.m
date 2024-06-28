@@ -22,8 +22,8 @@ classdef eyeinfo < handle
 
             % true_center=ini.GetValues('for deg2pix','true center');
 
-            obj.xoffset=deg2pix([ini.GetValues('eye calibration','xoffset') nan],'cart');
-            obj.yoffset=deg2pix([nan ini.GetValues('eye calibration','yoffset')],'cart');
+            obj.xoffset=ini.GetValues('eye calibration','xoffset');
+            obj.yoffset=ini.GetValues('eye calibration','yoffset');
         end
 
         function obj = set(obj,prop,val)

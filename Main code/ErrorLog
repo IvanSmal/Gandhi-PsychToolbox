@@ -1,0 +1,658 @@
+Invalid input argument of type 'double'. Input must be a structure or a Java or COM object.
+Error using fieldnames
+Invalid input argument of type 'double'. Input must be a structure or a Java or
+COM object.
+
+Error in MHost2/gettrialinfo (line 782)
+            targs=fieldnames(mh.trial.targets);
+
+Error in MHost2/Run_Experiment (line 374)
+                            app.gettrialinfo(mh)
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using fieldnames
+Invalid input argument of type 'double'. Input must be a structure or a Java or
+COM object.
+
+Error in MHost2/gettrialinfo (line 782)
+            targs=fieldnames(mh.trial.targets);
+
+Error in MHost2/Run_Experiment (line 374)
+                            app.gettrialinfo(mh)
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using fieldnames
+Invalid input argument of type 'double'. Input must be a structure or a Java or
+COM object.
+
+Error in MHost2/gettrialinfo (line 782)
+            targs=fieldnames(mh.trial.targets);
+
+Error in MHost2/Run_Experiment (line 374)
+                            app.gettrialinfo(mh)
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using fieldnames
+Invalid input argument of type 'double'. Input must be a structure or a Java or
+COM object.
+
+Error in MHost2/gettrialinfo (line 782)
+            targs=fieldnames(mh.trial.targets);
+
+Error in MHost2/Run_Experiment (line 374)
+                            app.gettrialinfo(mh)
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using fieldnames
+Invalid input argument of type 'double'. Input must be a structure or a Java or
+COM object.
+
+Error in MHost2/gettrialinfo (line 782)
+            targs=fieldnames(mh.trial.targets);
+
+Error in MHost2/Run_Experiment (line 374)
+                            app.gettrialinfo(mh)
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Invalid input argument of type 'double'. Input must be a structure or a Java or COM object.
+Error using fieldnames
+Invalid input argument of type 'double'. Input must be a structure or a Java or
+COM object.
+
+Error in MHost2/gettrialinfo (line 782)
+            targs=fieldnames(mh.trial.targets);
+
+Error in MHost2/Run_Experiment (line 374)
+                            app.gettrialinfo(mh)
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using fieldnames
+Invalid input argument of type 'double'. Input must be a structure or a Java or
+COM object.
+
+Error in MHost2/gettrialinfo (line 782)
+            targs=fieldnames(mh.trial.targets);
+
+Error in MHost2/Run_Experiment (line 374)
+                            app.gettrialinfo(mh)
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using fieldnames
+Invalid input argument of type 'double'. Input must be a structure or a Java or
+COM object.
+
+Error in MHost2/gettrialinfo (line 782)
+            targs=fieldnames(mh.trial.targets);
+
+Error in MHost2/Run_Experiment (line 374)
+                            app.gettrialinfo(mh)
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using fieldnames
+Invalid input argument of type 'double'. Input must be a structure or a Java or
+COM object.
+
+Error in MHost2/gettrialinfo (line 782)
+            targs=fieldnames(mh.trial.targets);
+
+Error in MHost2/Run_Experiment (line 374)
+                            app.gettrialinfo(mh)
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using fieldnames
+Invalid input argument of type 'double'. Input must be a structure or a Java or
+COM object.
+
+Error in MHost2/gettrialinfo (line 782)
+            targs=fieldnames(mh.trial.targets);
+
+Error in MHost2/Run_Experiment (line 374)
+                            app.gettrialinfo(mh)
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Invalid input argument of type 'double'. Input must be a structure or a Java or COM object.
+Error using fieldnames
+Invalid input argument of type 'double'. Input must be a structure or a Java or
+COM object.
+
+Error in MHost2/gettrialinfo (line 782)
+            targs=fieldnames(mh.trial.targets);
+
+Error in MHost2/Run_Experiment (line 374)
+                            app.gettrialinfo(mh)
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using fieldnames
+Invalid input argument of type 'double'. Input must be a structure or a Java or
+COM object.
+
+Error in MHost2/gettrialinfo (line 782)
+            targs=fieldnames(mh.trial.targets);
+
+Error in MHost2/Run_Experiment (line 374)
+                            app.gettrialinfo(mh)
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using fieldnames
+Invalid input argument of type 'double'. Input must be a structure or a Java or
+COM object.
+
+Error in MHost2/gettrialinfo (line 782)
+            targs=fieldnames(mh.trial.targets);
+
+Error in MHost2/Run_Experiment (line 374)
+                            app.gettrialinfo(mh)
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using fieldnames
+Invalid input argument of type 'double'. Input must be a structure or a Java or
+COM object.
+
+Error in MHost2/gettrialinfo (line 782)
+            targs=fieldnames(mh.trial.targets);
+
+Error in MHost2/Run_Experiment (line 374)
+                            app.gettrialinfo(mh)
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using fieldnames
+Invalid input argument of type 'double'. Input must be a structure or a Java or
+COM object.
+
+Error in MHost2/gettrialinfo (line 782)
+            targs=fieldnames(mh.trial.targets);
+
+Error in MHost2/Run_Experiment (line 374)
+                            app.gettrialinfo(mh)
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Invalid input argument of type 'double'. Input must be a structure or a Java or COM object.
+Error using fieldnames
+Invalid input argument of type 'double'. Input must be a structure or a Java or
+COM object.
+
+Error in MHost2/gettrialinfo (line 782)
+            targs=fieldnames(mh.trial.targets);
+
+Error in MHost2/Run_Experiment (line 374)
+                            app.gettrialinfo(mh)
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using fieldnames
+Invalid input argument of type 'double'. Input must be a structure or a Java or
+COM object.
+
+Error in MHost2/gettrialinfo (line 782)
+            targs=fieldnames(mh.trial.targets);
+
+Error in MHost2/Run_Experiment (line 374)
+                            app.gettrialinfo(mh)
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using fieldnames
+Invalid input argument of type 'double'. Input must be a structure or a Java or
+COM object.
+
+Error in MHost2/gettrialinfo (line 782)
+            targs=fieldnames(mh.trial.targets);
+
+Error in MHost2/Run_Experiment (line 374)
+                            app.gettrialinfo(mh)
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using fieldnames
+Invalid input argument of type 'double'. Input must be a structure or a Java or
+COM object.
+
+Error in MHost2/gettrialinfo (line 782)
+            targs=fieldnames(mh.trial.targets);
+
+Error in MHost2/Run_Experiment (line 374)
+                            app.gettrialinfo(mh)
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using fieldnames
+Invalid input argument of type 'double'. Input must be a structure or a Java or
+COM object.
+
+Error in MHost2/gettrialinfo (line 782)
+            targs=fieldnames(mh.trial.targets);
+
+Error in MHost2/Run_Experiment (line 374)
+                            app.gettrialinfo(mh)
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.
+Invalid or deleted object.
+
+Error in MHost2/Run_Experiment (line 369)
+                        [eyeandphotodiode_temp, ts]=xippmex('cont',app.chidx([1,2,4]),1000,'1ksps');
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.
+
+Error in MHost2/Run_Experiment (line 369)
+                        [eyeandphotodiode_temp, ts]=xippmex('cont',app.chidx([1,2,4]),1000,'1ksps');
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.
+
+Error in MHost2/Run_Experiment (line 369)
+                        [eyeandphotodiode_temp, ts]=xippmex('cont',app.chidx([1,2,4]),1000,'1ksps');
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.
+
+Error in MHost2/Run_Experiment (line 369)
+                        [eyeandphotodiode_temp, ts]=xippmex('cont',app.chidx([1,2,4]),1000,'1ksps');
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error setting property 'xoffset' of class 'eyeinfo'. Value must be a scalar.
+Error using eyeinfo (line 25)
+Error setting property 'xoffset' of class 'eyeinfo'. Value must be a scalar.
+
+Error in MHost2/Run_Experiment (line 326)
+                    mh.eye=eyeinfo;
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using eyeinfo (line 25)
+Error setting property 'xoffset' of class 'eyeinfo'. Value must be a scalar.
+
+Error in MHost2/Run_Experiment (line 326)
+                    mh.eye=eyeinfo;
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using eyeinfo (line 25)
+Error setting property 'xoffset' of class 'eyeinfo'. Value must be a scalar.
+
+Error in MHost2/Run_Experiment (line 326)
+                    mh.eye=eyeinfo;
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using eyeinfo (line 25)
+Error setting property 'xoffset' of class 'eyeinfo'. Value must be a scalar.
+
+Error in MHost2/Run_Experiment (line 326)
+                    mh.eye=eyeinfo;
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using eyeinfo (line 25)
+Error setting property 'xoffset' of class 'eyeinfo'. Value must be a scalar.
+
+Error in MHost2/Run_Experiment (line 326)
+                    mh.eye=eyeinfo;
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error setting property 'xoffset' of class 'eyeinfo'. Value must be a scalar.
+Error using eyeinfo (line 25)
+Error setting property 'xoffset' of class 'eyeinfo'. Value must be a scalar.
+
+Error in MHost2/Run_Experiment (line 326)
+                    mh.eye=eyeinfo;
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using eyeinfo (line 25)
+Error setting property 'xoffset' of class 'eyeinfo'. Value must be a scalar.
+
+Error in MHost2/Run_Experiment (line 326)
+                    mh.eye=eyeinfo;
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using eyeinfo (line 25)
+Error setting property 'xoffset' of class 'eyeinfo'. Value must be a scalar.
+
+Error in MHost2/Run_Experiment (line 326)
+                    mh.eye=eyeinfo;
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using eyeinfo (line 25)
+Error setting property 'xoffset' of class 'eyeinfo'. Value must be a scalar.
+
+Error in MHost2/Run_Experiment (line 326)
+                    mh.eye=eyeinfo;
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using eyeinfo (line 25)
+Error setting property 'xoffset' of class 'eyeinfo'. Value must be a scalar.
+
+Error in MHost2/Run_Experiment (line 326)
+                    mh.eye=eyeinfo;
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error setting property 'xoffset' of class 'eyeinfo'. Value must be a scalar.
+Error using eyeinfo (line 25)
+Error setting property 'xoffset' of class 'eyeinfo'. Value must be a scalar.
+
+Error in MHost2/Run_Experiment (line 326)
+                    mh.eye=eyeinfo;
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using eyeinfo (line 25)
+Error setting property 'xoffset' of class 'eyeinfo'. Value must be a scalar.
+
+Error in MHost2/Run_Experiment (line 326)
+                    mh.eye=eyeinfo;
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using eyeinfo (line 25)
+Error setting property 'xoffset' of class 'eyeinfo'. Value must be a scalar.
+
+Error in MHost2/Run_Experiment (line 326)
+                    mh.eye=eyeinfo;
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using eyeinfo (line 25)
+Error setting property 'xoffset' of class 'eyeinfo'. Value must be a scalar.
+
+Error in MHost2/Run_Experiment (line 326)
+                    mh.eye=eyeinfo;
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using eyeinfo (line 25)
+Error setting property 'xoffset' of class 'eyeinfo'. Value must be a scalar.
+
+Error in MHost2/Run_Experiment (line 326)
+                    mh.eye=eyeinfo;
+
+Error in MHost2/STARTButtonPushed (line 1111)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...'Value' must be a double scalar.
+Error using matlab.ui.control.internal.model.AbstractNumericComponent/set.Value (line 188)
+'Value' must be a double scalar.
+
+Error in MHost2/Run_Experiment (line 418)
+                        app.AutoCalibTrials.Value=mh.autocalibrationmatrix;
+
+Error in MHost2/STARTButtonPushed (line 1114)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using matlab.ui.control.internal.model.AbstractNumericComponent/set.Value (line 188)
+'Value' must be a double scalar.
+
+Error in MHost2/Run_Experiment (line 418)
+                        app.AutoCalibTrials.Value=mh.autocalibrationmatrix;
+
+Error in MHost2/STARTButtonPushed (line 1114)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using matlab.ui.control.internal.model.AbstractNumericComponent/set.Value (line 188)
+'Value' must be a double scalar.
+
+Error in MHost2/Run_Experiment (line 418)
+                        app.AutoCalibTrials.Value=mh.autocalibrationmatrix;
+
+Error in MHost2/STARTButtonPushed (line 1114)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using matlab.ui.control.internal.model.AbstractNumericComponent/set.Value (line 188)
+'Value' must be a double scalar.
+
+Error in MHost2/Run_Experiment (line 418)
+                        app.AutoCalibTrials.Value=mh.autocalibrationmatrix;
+
+Error in MHost2/STARTButtonPushed (line 1114)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using matlab.ui.control.internal.model.AbstractNumericComponent/set.Value (line 188)
+'Value' must be a double scalar.
+
+Error in MHost2/Run_Experiment (line 418)
+                        app.AutoCalibTrials.Value=mh.autocalibrationmatrix;
+
+Error in MHost2/STARTButtonPushed (line 1114)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...

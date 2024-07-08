@@ -6,6 +6,7 @@ classdef data
         photodiode
         graphics_fliptimes;
         DiodeFlipStates;
+        timestamps;
     end
 
     methods

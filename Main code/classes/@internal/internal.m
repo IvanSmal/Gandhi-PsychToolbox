@@ -30,7 +30,8 @@ classdef internal < handle
         targhistory=zeros(4,10);
         autocalibrationmatrix=[];
         autocalibrationmatrix_buffer=[];
-        screenparams
+        autocalibrationtrials=0;
+        screenparams;
         
         %reward
         rew = struct('rewon',0);

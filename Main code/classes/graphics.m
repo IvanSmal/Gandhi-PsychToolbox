@@ -9,13 +9,26 @@ classdef graphics < handle
         window_monitor
         windowRect
         monitor_rect
+        original_monitor_params;
+        winparams;
+        newsize;
+        circleadder=10;
+        newsize_true;
+        left_right=0;
+        fontsize=30;
+        up_down=0;
         screenXpixels
         screenYpixels
         width
         height
         xCenter
         yCenter
+        xlines
+        ylines
+        scalefactor = 1;
         monitortexture
+        toconvert
+        pixelsforlines
         monitormovieplaceholder
         movie
         texture

@@ -101,9 +101,11 @@ gr=makegridlines(gr);
 writeline(graphicsport,'isGraphicsReady=1;','0.0.0.0',2020);
 clc
 system('clear');
+warning('off')
 disp('-----Graphics Handler-----')
 %% keep function alive
 while 1
+    try % error catcher
     pause(0.00001) %allow for callbacks to be checked
     %% evaluate graphics buffer
     if ~isempty(gr.functionsbuffer) && gr.trialstarted && gr.flipped
@@ -273,6 +275,9 @@ while 1
         gr.functionsbuffer=[];
         Screen('Close');
     end
+    catch e
+        disp(e.message);
+    end
 end
 %% callback function that does the graphics handling
     function getCommands(graphicsport,~)
@@ -318,6 +323,7 @@ end
 %%data save function
     function dumpdata(fname)
         gr;
+        fnametosend=fname;
         temptr=[];
         trname=[];
         disp('trying to dump data')
@@ -330,6 +336,7 @@ end
         gr.commandIDs=[];gr.fliptimes=[];gr.state_history={'null'};
         save(fname,'-struct','temptr');
         disp(join(['saved ',trname{:}]))
+        writeline(graphicsport,join(['dumpdata("', fnametosend, '");']),'0.0.0.0',2022);
     end
 %%make grid lines function
     function gr=makegridlines(gr)

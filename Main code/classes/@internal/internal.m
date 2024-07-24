@@ -35,6 +35,8 @@ classdef internal < handle
         
         %reward
         rew = struct('rewon',0);
+        rewardport;
+        rewardcount=0;
 
         % For statechanges and diode flips
         activestatetime=[]

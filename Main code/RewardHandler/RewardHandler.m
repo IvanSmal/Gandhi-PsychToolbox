@@ -5,39 +5,85 @@ rewardport = udpport("LocalPort",2022);
 configureCallback(rewardport,"terminator",@getCommands);
 xippmex;
 system('clear');
+ini=IniConfig();
+warning('off')
+rewardcount=0;
 disp('-----Reward Handler-----');
 
-function getCommands(rewardport,~)
-    identifier=0;
-    duration=readline(rewardport);
-    duration = str2num(duration);
-    if length(duration) >1
-        identifier=duration(2);
-        duration=duration(1);
-    end
-    sound(sin(1:1e6),3000);
-    xippmex('digout',3,1);
-    tic;
-    pause(duration);
-    xippmex('digout',3,0);
-    flush(rewardport,'input')
-    rewamount=toc;
-    clear sound
-    if identifier==1
-        disp(['manually rewarded for ' num2str(rewamount) ' seconds'])
-        writeline(rewardport,['app.insToTxtbox("manual reward: ' num2str(rewamount) 's");'],'0.0.0.0',2020);
-    elseif identifier==2
-        exit
-    else
-        disp(['rewarded for ' num2str(rewamount) ' seconds'])
-        writeline(rewardport,['app.insToTxtbox("reward: ' num2str(rewamount) 's");'],'0.0.0.0',2020);
-    end
-    pause(0.02); %pause for a bit to not get double rewards
-end
 
 while 1 %keep it alive
+    try %% error catcher
+    ini.ReadFile('~/Documents/MATLAB/Gandhi-PsychToolbox/Main code/inis/ScreenParams.ini');
+    manreward=ini.GetValues('reward','reward');
+    [~,~,events]=xippmex('digin');
+    if ~isempty(events) && any([events.reason]==16) && any([events.sma4]>0);
+        try
+            sendreward(manreward,3);
+        end
+    end
+    [~,~,~]=xippmex('digin'); %clear digital buffer
     pause(0.00001)
+    catch e
+        disp(e.message)
+    end
 end
 
+    function getCommands(rewardport,~)
+        identifier=0;
+        duration=readline(rewardport);
+        try
+        if ~contains(duration,'dump')
+        duration = str2num(duration);
+        if length(duration) >1
+            identifier=duration(2);
+            duration=duration(1);
+        end        
+        sendreward(duration, identifier)
+        else
+            try 
+                eval(duration)
+            end
+        end
+        catch 
+
+        end
+    end
+
+    function sendreward(duration, identifier)
+        sound(sin(1:1e6),3000);
+        xippmex('digout',3,1);
+        tic;
+        pause(duration);
+        xippmex('digout',3,0);
+        flush(rewardport,'input')
+        rewamount=toc;
+        clear sound
+        if identifier==1
+            disp(['manually (gui) rewarded for ' num2str(rewamount) ' seconds'])
+            writeline(rewardport,['app.insToTxtbox("manual reward: ' num2str(rewamount) 's");'],'0.0.0.0',2024);
+        elseif identifier==2
+            exit
+        elseif identifier==3
+            disp(['manually (button) rewarded for ' num2str(rewamount) ' seconds'])
+            writeline(rewardport,['app.insToTxtbox("manual reward: ' num2str(rewamount) 's");'],'0.0.0.0',2024);
+        else
+            disp(['rewarded for ' num2str(rewamount) ' seconds'])
+            writeline(rewardport,['app.insToTxtbox("reward: ' num2str(rewamount) 's");'],'0.0.0.0',2024);
+        end
+        pause(0.02); %pause for a bit to not get double rewards
+        rewardcount=rewardcount+1;
+    end
+    function dumpdata(fname)
+        temptr=[];
+        trname=[];
+        disp('trying to dump data')
+        fname=strtrim(fname);
+        temptr=load(fname);
+        trname=fields(temptr);
+        temptr.(trname{:}).reward=temptr.(trname{:}).reward+rewardcount;
+        rewardcount=0;
+        save(fname,'-struct','temptr');
+        disp(join(['saved ',trname{:}]))
+    end
 end
 

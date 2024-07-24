@@ -4,7 +4,8 @@ classdef experiment
         subject_name
         DataDir
         parameter_file
-        TrellisDir
+        TrellisDir;
+        LastParameters;
         trial=struct(trial); % individual trial info e.g. which targets were actually used. this is the one that will actually iterate
     end
 

@@ -14,6 +14,6 @@ for i=1:100
 end
 
 xippmex('digout', 4, 0);
-[~,~,events]=xippmex('digin');
+% [~,~,events]=xippmex('digin');
 mh.stimmed=0;
 end

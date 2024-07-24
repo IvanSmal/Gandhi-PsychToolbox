@@ -655,4 +655,186 @@ Error in appdesigner.internal.service.AppManagementService/executeCallback (line
                 callback(appOrUserComponent, event);
 
 Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
-            newCallback = @(source, event)executeCallback(ams, ...
+            newCallback = @(source, event)executeCallback(ams, ...Usage:
+
+error = Eyelink('CheckRecording')
+Usage:
+
+[status =] Eyelink('SetAddress', ipaddress);
+Usage:
+
+[status =] Eyelink('SetAddress', ipaddress);
+Usage:
+
+[status =] Eyelink('SetAddress', ipaddress);
+Error using Eyelink
+Usage:
+
+[status =] Eyelink('SetAddress', ipaddress);
+
+Error in setupEyelink (line 26)
+    Eyelink('SetAddress','192.168.42.3');
+
+Error in MHost2/Run_Experiment (line 363)
+                    setupEyelink(app,0)
+
+Error in MHost2/STARTButtonPushed (line 1153)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using Eyelink
+Usage:
+
+[status =] Eyelink('SetAddress', ipaddress);
+
+Error in setupEyelink (line 26)
+    Eyelink('SetAddress','192.168.42.3');
+
+Error in MHost2/Run_Experiment (line 363)
+                    setupEyelink(app,0)
+
+Error in MHost2/STARTButtonPushed (line 1153)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using Eyelink
+Usage:
+
+[status =] Eyelink('SetAddress', ipaddress);
+
+Error in setupEyelink (line 26)
+    Eyelink('SetAddress','192.168.42.3');
+
+Error in MHost2/Run_Experiment (line 363)
+                    setupEyelink(app,0)
+
+Error in MHost2/STARTButtonPushed (line 1153)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using Eyelink
+Usage:
+
+[status =] Eyelink('SetAddress', ipaddress);
+
+Error in setupEyelink (line 26)
+    Eyelink('SetAddress','192.168.42.3');
+
+Error in MHost2/Run_Experiment (line 363)
+                    setupEyelink(app,0)
+
+Error in MHost2/STARTButtonPushed (line 1153)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using Eyelink
+Usage:
+
+[status =] Eyelink('SetAddress', ipaddress);
+
+Error in setupEyelink (line 26)
+    Eyelink('SetAddress','192.168.42.3');
+
+Error in MHost2/Run_Experiment (line 363)
+                    setupEyelink(app,0)
+
+Error in MHost2/STARTButtonPushed (line 1153)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Usage:
+
+[status =] Eyelink('SetAddress', ipaddress);
+Invalid or deleted object.
+Index exceeds the number of array elements. Index must not exceed 1.
+Index exceeds the number of array elements. Index must not exceed 1.
+
+Error in deg2pix (line 49)
+    out(i,2)=floor(centerXY(2)-((tand(desiredXY(2))*distanceFromScreen)/PixelSize(2)));
+
+Error in MHost2/Run_Experiment (line 334)
+                        truesize=deg2pix(tempsize,'size');
+
+Error in MHost2/STARTButtonPushed (line 1169)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Index exceeds the number of array elements. Index must not exceed 1.
+
+Error in deg2pix (line 49)
+    out(i,2)=floor(centerXY(2)-((tand(desiredXY(2))*distanceFromScreen)/PixelSize(2)));
+
+Error in MHost2/Run_Experiment (line 334)
+                        truesize=deg2pix(tempsize,'size');
+
+Error in MHost2/STARTButtonPushed (line 1169)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Index exceeds the number of array elements. Index must not exceed 1.
+
+Error in deg2pix (line 49)
+    out(i,2)=floor(centerXY(2)-((tand(desiredXY(2))*distanceFromScreen)/PixelSize(2)));
+
+Error in MHost2/Run_Experiment (line 334)
+                        truesize=deg2pix(tempsize,'size');
+
+Error in MHost2/STARTButtonPushed (line 1169)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Index exceeds the number of array elements. Index must not exceed 1.
+
+Error in deg2pix (line 49)
+    out(i,2)=floor(centerXY(2)-((tand(desiredXY(2))*distanceFromScreen)/PixelSize(2)));
+
+Error in MHost2/Run_Experiment (line 334)
+                        truesize=deg2pix(tempsize,'size');
+
+Error in MHost2/STARTButtonPushed (line 1169)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Index exceeds the number of array elements. Index must not exceed 1.
+
+Error in deg2pix (line 49)
+    out(i,2)=floor(centerXY(2)-((tand(desiredXY(2))*distanceFromScreen)/PixelSize(2)));
+
+Error in MHost2/Run_Experiment (line 334)
+                        truesize=deg2pix(tempsize,'size');
+
+Error in MHost2/STARTButtonPushed (line 1169)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.

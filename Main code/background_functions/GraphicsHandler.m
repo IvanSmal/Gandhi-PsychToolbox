@@ -219,6 +219,7 @@ while 1
         end
         clear args args_uncut  outs   additionalinfo
         gr.functionsbuffer=[];
+        Screen('DrawingFinished',gr.window_main)
         % vbl2=Screen('Flip',gr.window_main,[],1,1);
     elseif gr.trialstarted && ~gr.flipped 
         Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
@@ -231,24 +232,40 @@ while 1
         Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
 
         % Screen('AsyncFlipBegin',gr.window_monitor)
-        vbl=Screen('Flip',gr.window_main,[],[],[],1);
-        Screen('Flip',gr.window_monitor,[],[],1);
-        Screen('Close')
-        gr.fliptimes=[gr.fliptimes getsecs];
-        gr.commandIDs=[gr.commandIDs gr.commid_udp];
-
-        % writeline(graphicsport,'mh.readyforflip=1;','0.0.0.0',2020);
-        vbl-vblhis
-        if vbl-vblhis>0.05
-            disp('stuttered')
-        end
-        vblhis=vbl;
+        
+        vbl=Screen('AsyncFlipBegin',gr.window_main);
 
         if ~strcmp(gr.state_history{end},gr.activestatename)
             gr.state_history{end+1}=gr.activestatename;
             gr.diode_color=abs(gr.diode_color-1); 
             disp(join(["changed diode for state: " gr.activestatename]));
         end
+        gr.fliptimes=[gr.fliptimes getsecs];
+        gr.commandIDs=[gr.commandIDs gr.commid_udp];  
+
+        diditflip=Screen('AsyncFlipCheckEnd',gr.window_main);
+        flipmon=1;
+        while diditflip==0
+
+            diditflip=Screen('AsyncFlipCheckEnd',gr.window_main);
+            if flipmon
+                tic
+            Screen('AsyncFlipBegin',gr.window_monitor,[],2);
+            flipmon=0;
+            toc
+            end
+            % Screen('Close');  
+            % writeline(graphicsport,'mh.readyforflip=1;','0.0.0.0',2020);
+            % vbl-vblhis
+
+        end
+        vbl-vblhis
+            if vbl-vblhis>0.05
+                disp('stuttered')
+            end
+            vblhis=vbl;
+
+
 
         clear allargs
         

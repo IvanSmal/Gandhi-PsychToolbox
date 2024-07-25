@@ -22,6 +22,7 @@ while 1 %keep it alive
         end
     end
     [~,~,~]=xippmex('digin'); %clear digital buffer
+    xippmex('digout',3,0);
     pause(0.00001)
     catch e
         disp(e.message)
@@ -51,12 +52,16 @@ end
 
     function sendreward(duration, identifier)
         sound(sin(1:1e6),3000);
-        xippmex('digout',3,1);
+        tstart=getsecs;
+        tnow=getsecs;
         tic;
-        pause(duration);
+        while tnow<(tstart+duration)
+            xippmex('digout',3,1);
+            tnow=getsecs;
+        end
         xippmex('digout',3,0);
-        flush(rewardport,'input')
         rewamount=toc;
+        flush(rewardport,'input')
         clear sound
         if identifier==1
             disp(['manually (gui) rewarded for ' num2str(rewamount) ' seconds'])
@@ -71,7 +76,7 @@ end
             writeline(rewardport,['app.insToTxtbox("reward: ' num2str(rewamount) 's");'],'0.0.0.0',2024);
         end
         pause(0.02); %pause for a bit to not get double rewards
-        rewardcount=rewardcount+1;
+        rewardcount=rewardcount+rewamount;
     end
     function dumpdata(fname)
         temptr=[];

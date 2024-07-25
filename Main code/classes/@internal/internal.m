@@ -34,6 +34,7 @@ classdef internal < handle
         
         %reward
         rew = struct('rewon',0);
+        rewardport;
 
         % For statechanges and diode flips
         activestatetime=[]
@@ -62,6 +63,7 @@ classdef internal < handle
         holdbuffer = 0;
         readyforflip=1;
         commandID=0;
+        lastsenttime=0;
 
 
         %user definitions

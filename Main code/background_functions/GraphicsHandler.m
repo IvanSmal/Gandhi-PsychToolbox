@@ -27,8 +27,10 @@ close all;
 % Here we call some default settings for setting up Psychtoolbox
 PsychDefaultSetup(2);
 
+Screen('Resolution',1,1920,1080,120); %set resolutions
+
 % priority
-Priority(5);
+% Priority(90);
 
 % Get the screen numbers
 gr.screens = Screen('Screens');
@@ -37,8 +39,9 @@ gr.screens = Screen('Screens');
 black = BlackIndex(1);
 
 % Open an on screen window
-% PsychImaging('PrepareConfiguration');
-% PsychImaging('AddTask', 'General', 'UseVirtualFramebuffer');
+PsychImaging('PrepareConfiguration');
+% PsychImaging('AddTask', 'General', 'UseFineGrainedTiming');
+PsychImaging('AddTask', 'General', 'UseVirtualFramebuffer');
 % PsychImaging('AddTask', 'General', 'FloatingPoint16Bit');
 
 [gr.window_main, gr.windowRect] = PsychImaging('OpenWindow', 1, black);
@@ -106,6 +109,7 @@ while 1
     pause(0.00001) %allow for callbacks to be checked
     %% evaluate graphics buffer
     if ~isempty(gr.functionsbuffer) && gr.trialstarted && gr.flipped
+        
         flush(graphicsport);
         gr.flipped=0;
         args_uncut={};
@@ -214,7 +218,8 @@ while 1
             clear args 
         end
         clear args args_uncut  outs   additionalinfo
-
+        gr.functionsbuffer=[];
+        % vbl2=Screen('Flip',gr.window_main,[],1,1);
     elseif gr.trialstarted && ~gr.flipped 
         Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
         Screen('TextSize', gr.window_monitor,30);
@@ -224,12 +229,16 @@ while 1
         Screen('FrameOval',gr.window_monitor,[.2 .2 .2],gr.center_circle,3);
         Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
         Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
-        
-        vbl=Screen('Flip',gr.window_main);
+
+        % Screen('AsyncFlipBegin',gr.window_monitor)
+        vbl=Screen('Flip',gr.window_main,[],[],[],1);
+        Screen('Flip',gr.window_monitor,[],[],1);
+        Screen('Close')
         gr.fliptimes=[gr.fliptimes getsecs];
         gr.commandIDs=[gr.commandIDs gr.commid_udp];
-        Screen('Flip',gr.window_monitor,[],[],1);
-        writeline(graphicsport,'mh.readyforflip=1;','0.0.0.0',2020);
+
+        % writeline(graphicsport,'mh.readyforflip=1;','0.0.0.0',2020);
+        vbl-vblhis
         if vbl-vblhis>0.05
             disp('stuttered')
         end
@@ -242,9 +251,9 @@ while 1
         end
 
         clear allargs
-        gr.functionsbuffer=[];
+        
         gr.flipped=1;
-        Screen('Close');
+   
     end
     %% this is to show eye when trials are not running
     if ~gr.trialstarted
@@ -269,7 +278,7 @@ while 1
         Screen('Flip',gr.window_monitor);
         Screen('Flip',gr.window_main);
         gr.functionsbuffer=[];
-        Screen('Close');
+   
     end
 end
 %% callback function that does the graphics handling

@@ -30,7 +30,7 @@ PsychDefaultSetup(2);
 Screen('Resolution',1,1920,1080,120); %set resolutions
 
 % priority
-% Priority(90);
+Priority(90);
 
 % Get the screen numbers
 gr.screens = Screen('Screens');
@@ -75,6 +75,10 @@ Screen('Flip', gr.window_main);
 
 Screen('FillOval', gr.window_monitor, [1 1 1], [0 0 10 10]);
 Screen('Flip', gr.window_monitor);
+
+% other
+fliptime=0.033;
+
 try
     Screen('TextSize', gr.window_monitor,30);
     Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 600, 5 , [255,255,255]);
@@ -109,31 +113,11 @@ while 1
     pause(0.00001) %allow for callbacks to be checked
     %% evaluate graphics buffer
     if ~isempty(gr.functionsbuffer) && gr.trialstarted && gr.flipped
-        
-        flush(graphicsport);
-        gr.flipped=0;
-        args_uncut={};
-        outs={};
-        additionalinfo={};
-        v = fieldnames(gr.functionsbuffer);
-        for ii = 1 : length(v) %unwrap commands
-            eval([v{ii} '= gr.functionsbuffer.' v{ii} ';']);
-        end
-        gr.functionsbuffer=[];
-
-        commandcount=1;
-        lastargcount=1;
-
-        for iii = 1:length(args_uncut)
-            if strcmp(args_uncut{iii},'endcommand')
-                % args_uncut(iii)=[];
-                allargs{commandcount}=args_uncut(lastargcount:iii-1);
-                commandcount=commandcount+1;
-                lastargcount=iii+1;
-            end
+        if ~exist('allargs','var')
+        [additionalinfo,allargs,outs]=parsecommands(gr);
         end
 
-        for i=1:length(allargs)
+        for i=1:length(allargs) %drawing satarts here
             args=allargs{i};
             %% check if user wants to set a graphics parameter
             if length(args)>2 &&...
@@ -184,17 +168,17 @@ while 1
                 end
             end
 
-                %% if output is requested
+            %% if output is requested
             % elseif ~isempty(outs)
             %     a1=[];a2=[];a3=[];a4=[];a5=[];a6=[];a7=[];
             %     evalstring=strcat('[',sprintf('%s,',outs{:}),']');
-            % 
+            %
             %     if length(args)>=2 %this needs to change to better logic
             %         args{2}=gr.window_main;
             %     end
-            % 
+            %
             %     eval(strcat(evalstring,'=Screen(args{:});'));
-            % 
+            %
             %     outstr='';
             %     for ii=1:length(outs)
             %         outstr=strcat(outstr,outs{ii},'=',string(eval(outs{ii})),';');
@@ -215,62 +199,71 @@ while 1
             %     gr.monitortexture=Screen('MakeTexture', gr.window_monitor, gr.monitormovieplaceholder);
             %     disp('got texture')
             % end
-            clear args 
+            clear args
         end
         clear args args_uncut  outs   additionalinfo
         gr.functionsbuffer=[];
-        Screen('DrawingFinished',gr.window_main)
-        % vbl2=Screen('Flip',gr.window_main,[],1,1);
-    elseif gr.trialstarted && ~gr.flipped 
+        Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
+        if fliptime>0.01
+        vbl=Screen('AsyncFlipBegin',gr.window_main);
+        diditflip=0;
+        flipmon=1;
+        while diditflip==0
+            diditflip=Screen('AsyncFlipCheckEnd',gr.window_main);
+            Screen('DrawingFinished',gr.window_main);
+            try
+                [additionalinfo,allargs,outs]=parsecommands(gr);
+            end
+            % pause(0.0001)
+        end
+        end
+        fliptime=diditflip-vbl
+        vblhis=vbl;
+    elseif gr.trialstarted && ~gr.flipped
         Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
         Screen('TextSize', gr.window_monitor,30);
         Screen('DrawText', gr.window_monitor, gr.activestatename, 5, 5 , [255,255,255]);
         Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 600, 5 , [255,255,255]);
         Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix,1,[.3 .3 .3]);
         Screen('FrameOval',gr.window_monitor,[.2 .2 .2],gr.center_circle,3);
-        Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
         Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
 
         % Screen('AsyncFlipBegin',gr.window_monitor)
-        
-        vbl=Screen('AsyncFlipBegin',gr.window_main);
+
+        Screen('AsyncFlipBegin',gr.window_main);
 
         if ~strcmp(gr.state_history{end},gr.activestatename)
             gr.state_history{end+1}=gr.activestatename;
-            gr.diode_color=abs(gr.diode_color-1); 
+            gr.diode_color=abs(gr.diode_color-1);
             disp(join(["changed diode for state: " gr.activestatename]));
         end
         gr.fliptimes=[gr.fliptimes getsecs];
-        gr.commandIDs=[gr.commandIDs gr.commid_udp];  
+        gr.commandIDs=[gr.commandIDs gr.commid_udp];
 
-        diditflip=Screen('AsyncFlipCheckEnd',gr.window_main);
-        flipmon=1;
-        while diditflip==0
+        Screen('Flip',gr.window_monitor,[],[],2);
 
-            diditflip=Screen('AsyncFlipCheckEnd',gr.window_main);
-            if flipmon
-                tic
-            Screen('AsyncFlipBegin',gr.window_monitor,[],2);
-            flipmon=0;
-            toc
-            end
-            % Screen('Close');  
-            % writeline(graphicsport,'mh.readyforflip=1;','0.0.0.0',2020);
-            % vbl-vblhis
-
-        end
-        vbl-vblhis
-            if vbl-vblhis>0.05
-                disp('stuttered')
-            end
-            vblhis=vbl;
-
-
+        % diditflip=0;
+        % flipmon=1;
+        % while diditflip==0
+        %     tic
+        %     diditflip=Screen('AsyncFlipCheckEnd',gr.window_main);
+        %     % diditflip=Screen('AsyncFlipCheckEnd',gr.window_main);
+        %     % if flipmon
+        %     %     tic
+        %     % Screen('AsyncFlipBegin',gr.window_monitor,[],2);
+        %     % flipmon=0;
+        %     % toc
+        %     % end
+        %     % Screen('Close');
+        %     % writeline(graphicsport,'mh.readyforflip=1;','0.0.0.0',2020);
+        %     % vbl-vblhis
+        %     toc
+        % end
 
         clear allargs
-        
+
         gr.flipped=1;
-   
+
     end
     %% this is to show eye when trials are not running
     if ~gr.trialstarted
@@ -286,7 +279,7 @@ while 1
             Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 600, 5 , [255,255,255]);
         catch
         end
-        
+
         Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix,1,[.3 .3 .3]);
 
         Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
@@ -295,13 +288,13 @@ while 1
         Screen('Flip',gr.window_monitor);
         Screen('Flip',gr.window_main);
         gr.functionsbuffer=[];
-   
+
     end
 end
 %% callback function that does the graphics handling
     function getCommands(graphicsport,~)
         try
-        command=readline(graphicsport);
+            command=readline(graphicsport);
             if contains(command,'SetEye','IgnoreCase',true)
                 seteye;
             elseif contains(command,'execute','IgnoreCase',true)
@@ -366,6 +359,31 @@ end
         gr.commandIDs=[];gr.fliptimes=[];gr.state_history={'null'};
         save(fname,'-struct','temptr');
         disp(join(['saved ',trname{:}]))
+    end
+%%parse the commands without drawing'
+    function [additionalinfo,allargs,outs]=parsecommands(gr)
+        flush(graphicsport);
+        gr.flipped=0;
+        args_uncut={};
+        outs={};
+        additionalinfo={};
+        v = fieldnames(gr.functionsbuffer);
+        for ii = 1 : length(v) %unwrap commands
+            eval([v{ii} '= gr.functionsbuffer.' v{ii} ';']);
+        end
+        gr.functionsbuffer=[];
+
+        commandcount=1;
+        lastargcount=1;
+
+        for iii = 1:length(args_uncut)
+            if strcmp(args_uncut{iii},'endcommand')
+                % args_uncut(iii)=[];
+                allargs{commandcount}=args_uncut(lastargcount:iii-1);
+                commandcount=commandcount+1;
+                lastargcount=iii+1;
+            end
+        end
     end
 end
 

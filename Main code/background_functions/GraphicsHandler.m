@@ -30,7 +30,7 @@ PsychDefaultSetup(2);
 Screen('Resolution',1,1920,1080,120); %set resolutions
 
 % priority
-% Priority(90);
+Priority(70);
 
 % Get the screen numbers
 gr.screens = Screen('Screens');

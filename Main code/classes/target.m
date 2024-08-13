@@ -108,8 +108,8 @@ classdef target %< handle
         end
 
         function out=squarepos(targ,temppos)
-            hwidth=targ.size(3)-targ.size(1);
-            hheight=targ.size(4)-targ.size(2);
+            hwidth=ceil(targ.size(3)-targ.size(1)/2);
+            hheight=ceil(targ.size(4)-targ.size(2)/2);
 
 
             out=[temppos(1)-hwidth,...

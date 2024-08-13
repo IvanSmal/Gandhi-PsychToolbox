@@ -1,5 +1,5 @@
 function varargout = Screen(mh,varargin)
-% if (getsecs-mh.lastsenttime)>0.1
+% if (getsecs-mh.lastsenttime)>0.007
 currentcommand=jsonencode(varargin(:));
 if ~strcmp(mh.cachedout,currentcommand) && ~mh.holdbuffer %check that it is not sending the same command
     mh.cachedout=currentcommand; %cache current command
@@ -67,14 +67,14 @@ if matches(varargin{1},'sendtogr','IgnoreCase',true) && ~isempty(mh.graphicscomm
     mh.evalgraphics(['gr.activestatename =' '''' mh.activestatename '''' ';']);
     writeline(mh.graphicsport,['app.state =' '''' mh.activestatename '''' ';'],'0.0.0.0',2023);
     writeline(mh.graphicsport,join([[mh.graphicscommandbuffer{:}], ";commandID_udp=" ,num2str(mh.commandID), ';']),'0.0.0.0',2021); %actually send the data
+    mh.lastsenttime=getsecs;
     mh.graphicscommandbuffer='';
     mh.lastcommand=1;
     mh.holdbuffer = 0;
     mh.commandID=0;
     % writeline(mh.graphicsport,'executegr.functionsbuffer=[];','0.0.0.0',2021); %need to figure out how to asynch this
     % parfeval(mh.parpool,@writeline,0,mh.graphicsport,'executegr.functionsbuffer=[];','0.0.0.0',2021);
-
-    mh.lastsenttime=getsecs;    
+    
 end
 % end
 end

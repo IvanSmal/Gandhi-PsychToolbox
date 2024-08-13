@@ -3,6 +3,7 @@ classdef graphics < handle
     %   Detailed explanation goes here
     
     properties
+        screenparams;
         fliprequest = 0;
         screens
         window_main

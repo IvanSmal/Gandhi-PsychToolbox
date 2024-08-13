@@ -15,6 +15,9 @@ cd '/home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code'
 % configureCallback(graphicsport,"terminator",@getCommands);
 
 %% initiate a bunch of gr stuff
+gr.screenparams= IniConfig();
+gr.screenparams.ReadFile('inis/ScreenParams.ini');
+bgcolor=gr.screenparams.GetValues('screen info','background');
 gr = graphics;
 gr.eye=eyeinfo;
 
@@ -46,7 +49,7 @@ PsychImaging('PrepareConfiguration');
 PsychImaging('AddTask', 'General', 'UseVirtualFramebuffer');
 % PsychImaging('AddTask', 'General', 'FloatingPoint16Bit');
 
-[gr.window_main, gr.windowRect] = PsychImaging('OpenWindow', 1, [0 0 0]);
+[gr.window_main, gr.windowRect] = PsychImaging('OpenWindow', 1, bgcolor);
 
 
 % Get the size of the on screen window
@@ -61,7 +64,7 @@ monitor_rect=floor(gr.windowRect/2);
 PsychImaging('PrepareConfiguration');
 % PsychImaging('AddTask', 'General', 'UseVirtualFramebuffer');
 PsychImaging('AddTask', 'General', 'UsePanelFitter', [gr.screenXpixels, gr.screenYpixels], 'Full');
-[gr.window_monitor, gr.monitor_rect]=PsychImaging('OpenWindow', 0, [0 0 0],monitor_rect,[],[],[],[],[],kPsychGUIWindow);
+[gr.window_monitor, gr.monitor_rect]=PsychImaging('OpenWindow', 0, bgcolor,monitor_rect,[],[],[],[],[],kPsychGUIWindow);
 
 % Get the centre coordinate of the window
 [gr.xCenter, gr.yCenter] = RectCenter(gr.windowRect);
@@ -112,79 +115,78 @@ system('clear');
 disp('-----Graphics Handler-----')
 
 seteye
-monitorflipped=0
+% monitorflipped=0
 %% keep function alive
 while 1
     % pause(0.00001) %allow for callbacks to be checked
     getCommands(graphicsport)
     %% evaluate graphics buffer
-    while gr.trialstarted %&& ~isempty(gr.functionsbuffer)
-        if ~monitorflipped
-            Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
-            Screen('TextSize', gr.window_monitor,30);
-            Screen('DrawText', gr.window_monitor, gr.activestatename, 5, 5 , [255,255,255]);
-            Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 600, 5 , [255,255,255]);
-            Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix,1,[.3 .3 .3]);
-            Screen('FrameOval',gr.window_monitor,[.2 .2 .2],gr.center_circle,3);
-            Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
-            monitorfliprequest=1;
-        end
+    runonce=0;
+    flipcount=0;
+    vbl=0;
+    while gr.trialstarted
+        if ~isempty(gr.functionsbuffer)
+            runonce=runonce+1;
+            if runonce==1
+                Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
+                Screen('TextSize', gr.window_monitor,30);
+                Screen('DrawText', gr.window_monitor, gr.activestatename, 5, 5 , [255,255,255]);
+                Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 600, 5 , [255,255,255]);
+                Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix,1,[.3 .3 .3]);
+                Screen('FrameOval',gr.window_monitor,[.2 .2 .2],gr.center_circle,3);
+                Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
+            end
 
-        if ~strcmp(gr.state_history{end},gr.activestatename)
-            gr.state_history{end+1}=gr.activestatename;
-            gr.diode_color=abs(gr.diode_color-1);
-            disp(join(["changed diode for state: " gr.activestatename]));
-        end
-        gr.fliptimes=[gr.fliptimes getsecs];
-        gr.commandIDs=[gr.commandIDs gr.commid_udp];
+            if ~strcmp(gr.state_history{end},gr.activestatename)
+                gr.state_history{end+1}=gr.activestatename;
+                gr.diode_color=abs(gr.diode_color-1);
+                disp(join(["changed diode for state: " gr.activestatename]));
+            end
+            gr.fliptimes=[gr.fliptimes getsecs];
+            gr.commandIDs=[gr.commandIDs gr.commid_udp];
 
-        % 
-
-        % clear allargs
-
-        flipped=0;
-        if ~exist('allargs','var')
-            while ~exist('allargs','var')
-                getCommands(graphicsport)
-                try
-                    [additionalinfo,allargs,outs]=parsecommands(gr);
+            if ~exist('allargs','var')
+                while ~exist('allargs','var')
+                    getCommands(graphicsport)
+                    try
+                        [additionalinfo,allargs,outs]=parsecommands(gr);
+                    end
                 end
+            else
+
+                DrawScreen(gr,additionalinfo,allargs,outs)
+
+                clear additionalinfo allargs outs
+
+                Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
+                % toc
+                % tic
+
+
+                fliptime=vbl-vblhis;
+                vblhis=vbl;
+                if flipcount>2
+                    Screen('Flip',gr.window_monitor,[],[],2);
+                    runonce=0;
+                    flipcount=0;
+                end
+                vbl=getsecs;
+                Screen('Flip',gr.window_main,[],[],1);
+                flipcount=flipcount+1;
+
+                getCommands(graphicsport)
+
+                % Screen('Close')
+
+
+                flipped=1;
             end
         else
-            DrawScreen(gr,additionalinfo,allargs,outs)
-    
-            clear additionalinfo allargs outs
-    
-            Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
-            % toc
-            % tic
-            
-            vbl=Screen('Flip',gr.window_main);
-
             getCommands(graphicsport)
-
-            % Screen('Close')
-            fliptime=vblhis-vbl
-            vblhis=vbl;
-            flipped=1;
-            monitorfliprequest=1;
         end
-        if monitorfliprequest
-            Screen('AsyncFlipBegin',gr.window_monitor);
-            monitorflipped=0;
-            monitorfliprequest=0;
-            monitorflipcheck=0;
-        end
-
-        monitorflipcheck=Screen('AsyncFlipCheckEnd',gr.window_monitor);
-        if monitorflipcheck~=0
-            monitorflipped=1;
-        end
-
-
     end
     %% this is to show eye when trials are not running
-    if ~gr.trialstarted
+    while ~gr.trialstarted
         getCommands(graphicsport)
         % disp('out of trial')
         writeline(graphicsport,'mh.readyforflip=1;','0.0.0.0',2020);
@@ -227,7 +229,7 @@ end
 
 %% recive and execute Screen calls
     function executeScreen(command)
-        
+
         args_udp={};
         outs_udp={};
         additionalinfo_udp={};
@@ -240,7 +242,7 @@ end
         gr.functionsbuffer(end+1).additionalinfo=additionalinfo_udp;
         gr.commid_udp=commandID_udp;
         flush(graphicsport);
-    
+
     end
 %% set eye calibration
     function seteye

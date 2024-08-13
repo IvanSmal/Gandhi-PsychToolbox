@@ -13,17 +13,17 @@ disp('-----Reward Handler-----');
 
 while 1 %keep it alive
     try %% error catcher
-    ini.ReadFile('~/Documents/MATLAB/Gandhi-PsychToolbox/Main code/inis/ScreenParams.ini');
-    manreward=ini.GetValues('reward','reward');
-    [~,~,events]=xippmex('digin');
-    if ~isempty(events) && any([events.reason]==16) && any([events.sma4]>0);
-        try
-            sendreward(manreward,3);
+        ini.ReadFile('~/Documents/MATLAB/Gandhi-PsychToolbox/Main code/inis/ScreenParams.ini');
+        manreward=ini.GetValues('reward','reward');
+        [~,~,events]=xippmex('digin');
+        if ~isempty(events) && any([events.reason]==16) && any([events.sma4]>0)
+            try
+                sendreward(manreward,3);
+            end
         end
-    end
-    [~,~,~]=xippmex('digin'); %clear digital buffer
-    xippmex('digout',3,0);
-    pause(0.00001)
+        [~,~,~]=xippmex('digin'); %clear digital buffer
+        xippmex('digout',3,0);
+        pause(0.00001)
     catch e
         disp(e.message)
     end
@@ -33,30 +33,32 @@ end
         identifier=0;
         duration=readline(rewardport);
         try
-        if ~contains(duration,'dump')
-        duration = str2num(duration);
-        if length(duration) >1
-            identifier=duration(2);
-            duration=duration(1);
-        end        
-        sendreward(duration, identifier)
-        else
-            try 
-                eval(duration)
+            if ~contains(duration,'dump')
+                duration = str2num(duration);
+                if length(duration) >1
+                    identifier=duration(2);
+                    duration=duration(1);
+                end
+                sendreward(duration, identifier)
+            else
+                try
+                    eval(duration)
+                end
             end
-        end
-        catch 
+        catch
 
         end
     end
 
     function sendreward(duration, identifier)
-        sound(sin(1:1e6),3000);
+        makesound(duration)
         tstart=getsecs;
         tnow=getsecs;
         tic;
+        xippmex('digout',3,1);
         while tnow<(tstart+duration)
-            xippmex('digout',3,1);
+            % xippmex('digout',3,1);
+            pause(0.001)
             tnow=getsecs;
         end
         xippmex('digout',3,0);
@@ -75,6 +77,7 @@ end
             disp(['rewarded for ' num2str(rewamount) ' seconds'])
             writeline(rewardport,['app.insToTxtbox("reward: ' num2str(rewamount) 's");'],'0.0.0.0',2024);
         end
+        writeline(rewardport,['app.TotalrewardmsEditField.Value= app.TotalrewardmsEditField.Value +' num2str(rewamount) ';'],'0.0.0.0',2024);
         pause(0.02); %pause for a bit to not get double rewards
         rewardcount=rewardcount+rewamount;
     end
@@ -90,5 +93,20 @@ end
         save(fname,'-struct','temptr');
         disp(join(['saved ',trname{:}]))
     end
+    function makesound(dur)
+        %MAKESOUND Summary of this function goes here
+        %   Detailed explanation goes here
+        %% generate command string
+        commid=num2str(randi(100));
+        tp='1';
+        hz='600';
+        amp='1';
+
+        commstring=join(['GenerateSound_udp(app,',commid,',', tp,',', num2str(dur),',', amp,',', hz,');']);
+        %% send the thing using the reward port
+        writeline(rewardport,commstring,'0.0.0.0',2025);
+    end
 end
+
+
 

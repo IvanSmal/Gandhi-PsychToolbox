@@ -839,3 +839,140 @@ Error in appdesigner.internal.service.AppManagementService/executeCallback (line
 Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
             newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.
 Invalid or deleted object.
+Invalid or deleted object.
+Invalid or deleted object.
+Invalid or deleted object.
+Dimensions of arrays being concatenated are not consistent.
+Error using vertcat
+Dimensions of arrays being concatenated are not consistent.
+
+Error in MHost2/Run_Experiment (line 324)
+                        eval(['temp=[' ttable{i,2} '];']); % I have no idea why I do it this way but if i change it it breaks
+
+Error in MHost2/STARTButtonPushed (line 1164)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using vertcat
+Dimensions of arrays being concatenated are not consistent.
+
+Error in MHost2/Run_Experiment (line 324)
+                        eval(['temp=[' ttable{i,2} '];']); % I have no idea why I do it this way but if i change it it breaks
+
+Error in MHost2/STARTButtonPushed (line 1164)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using vertcat
+Dimensions of arrays being concatenated are not consistent.
+
+Error in MHost2/Run_Experiment (line 324)
+                        eval(['temp=[' ttable{i,2} '];']); % I have no idea why I do it this way but if i change it it breaks
+
+Error in MHost2/STARTButtonPushed (line 1164)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Error using vertcat
+Dimensions of arrays being concatenated are not consistent.
+
+Error in MHost2/Run_Experiment (line 324)
+                        eval(['temp=[' ttable{i,2} '];']); % I have no idea why I do it this way but if i change it it breaks
+
+Error in MHost2/STARTButtonPushed (line 1164)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.
+Invalid or deleted object.
+Invalid or deleted object.
+Invalid or deleted object.
+
+Error in MHost2/savestate (line 162)
+            app.checkForDataDirectory
+
+Error in MHost2/Run_Experiment (line 531)
+                app.savestate(e,1); %check this. it's a mess
+
+Error in MHost2/STARTButtonPushed (line 1182)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.
+
+Error in MHost2/savestate (line 162)
+            app.checkForDataDirectory
+
+Error in MHost2/Run_Experiment (line 531)
+                app.savestate(e,1); %check this. it's a mess
+
+Error in MHost2/STARTButtonPushed (line 1182)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.
+
+Error in MHost2/savestate (line 162)
+            app.checkForDataDirectory
+
+Error in MHost2/Run_Experiment (line 531)
+                app.savestate(e,1); %check this. it's a mess
+
+Error in MHost2/STARTButtonPushed (line 1182)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.
+
+Error in MHost2/savestate (line 162)
+            app.checkForDataDirectory
+
+Error in MHost2/Run_Experiment (line 531)
+                app.savestate(e,1); %check this. it's a mess
+
+Error in MHost2/STARTButtonPushed (line 1182)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.
+
+Error in MHost2/savestate (line 162)
+            app.checkForDataDirectory
+
+Error in MHost2/Run_Experiment (line 531)
+                app.savestate(e,1); %check this. it's a mess
+
+Error in MHost2/STARTButtonPushed (line 1182)
+            Run_Experiment(app,mh);
+
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 172)
+                callback(appOrUserComponent, event);
+
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
+            newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.
+Invalid or deleted object.
+Invalid or deleted object.

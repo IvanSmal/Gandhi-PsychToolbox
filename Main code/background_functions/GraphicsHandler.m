@@ -1,6 +1,6 @@
 function GraphicsHandler
 % opengl('save','hardware');
-addpath('/opt/Trellis/Tools/xippmex');
+addpath(genpath('/opt/Trellis/Tools/xippmex'));
 xippmex;
 vblhis=0;
 vbl=0;
@@ -8,9 +8,10 @@ warning ('off','all');
 %% set up udp port
 graphicsport = udpport("LocalPort",2021, "timeout", 0.02);
 %% set up udp callback that listens for "Screen" commands
-homepath=genpath('/home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code');
+homepath=genpath('/home/gandhi/Documents/MATLAB/Gandhi-PsychToolbox/Main code/background_functions');
 addpath(homepath);
-cd '/home/gandhilab/Documents/MATLAB/Gandhi-Psychtoolbox/Main code'
+addpath(genpath('/home/gandhi/Documents/MATLAB/Gandhi-PsychToolbox/Main code'));
+cd '/home/gandhi/Documents/MATLAB/Gandhi-PsychToolbox/Main code'
 
 % configureCallback(graphicsport,"terminator",@getCommands);
 
@@ -51,7 +52,6 @@ PsychImaging('AddTask', 'General', 'UseVirtualFramebuffer');
 
 [gr.window_main, gr.windowRect] = PsychImaging('OpenWindow', 1, bgcolor);
 
-
 % Get the size of the on screen window
 [gr.screenXpixels, gr.screenYpixels] = Screen('WindowSize', gr.window_main);
 
@@ -64,7 +64,13 @@ monitor_rect=floor(gr.windowRect/2);
 PsychImaging('PrepareConfiguration');
 % PsychImaging('AddTask', 'General', 'UseVirtualFramebuffer');
 PsychImaging('AddTask', 'General', 'UsePanelFitter', [gr.screenXpixels, gr.screenYpixels], 'Full');
-[gr.window_monitor, gr.monitor_rect]=PsychImaging('OpenWindow', 0, bgcolor,monitor_rect,[],[],[],[],[],kPsychGUIWindow);
+
+[gr.window_monitor, gr.monitor_rect]=PsychImaging('OpenWindow', 0, black,monitor_rect,[],[],[],[],[],kPsychGUIWindow);
+gr.original_monitor_params=Screen('PanelFitter', gr.window_monitor);
+gr.winparams=gr.original_monitor_params;
+gr.newsize=Screen('GlobalRect',gr.window_monitor);
+gr.newsize_true(1)=gr.newsize(3)-gr.newsize(1);
+gr.newsize_true(2)=gr.newsize(4)-gr.newsize(2);
 
 % Get the centre coordinate of the window
 [gr.xCenter, gr.yCenter] = RectCenter(gr.windowRect);
@@ -85,7 +91,7 @@ Screen('Flip', gr.window_monitor);
 fliptime=0.033;
 
 try
-    Screen('TextSize', gr.window_monitor,30);
+    Screen('TextSize', gr.window_monitor,gr.fontsize);
     Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 600, 5 , [255,255,255]);
     Screen('Flip', gr.window_monitor);
 catch
@@ -98,20 +104,16 @@ HideCursor(gr.window_main)
 gr.monitormovieplaceholder=imread("assets/MoviePlaceholder.jpg");
 
 %set up grid params
-toconvert(:,1)=-40:10:40;
-toconvert(:,2)=-40:10:40;
-pixelsforlines=deg2pix(toconvert,'cart');
-xlines=reshape(repmat(pixelsforlines(:,1),2)',1,[]);
-fully=reshape(repmat([0 1080], length(xlines)/2,1)',1,[]);
-ylines = reshape(repmat(pixelsforlines(:,2),2)',1,[]);
-fullx=reshape(repmat([0 3000], length(ylines)/2,1)',1,[]);
-gr.gridlinesmatrix=[xlines fullx;fully ylines];
+gr.toconvert(:,1)=-40:10:40;
+gr.toconvert(:,2)=-40:10:40;
+gr=makegridlines(gr);
 
 
 % send ready signal to mh
 writeline(graphicsport,'isGraphicsReady=1;','0.0.0.0',2020);
 clc
 system('clear');
+warning('off')
 disp('-----Graphics Handler-----')
 
 seteye
@@ -398,6 +400,44 @@ end
         gr.functionsbuffer=[];
         Screen('DrawingFinished',gr.window_main);
     end
+%%make grid lines function
+    function gr=makegridlines(gr)
+        gr.pixelsforlines=deg2pix(gr.toconvert,'cart');
+        gr.xlines=reshape(repmat(gr.pixelsforlines(:,1),2)',1,[]);
+        fully=reshape(repmat([0 1080], length(gr.xlines)/2,1)',1,[]);
+        gr.ylines = reshape(repmat(gr.pixelsforlines(:,2),2)',1,[]);
+        fullx=reshape(repmat([0 3000], length(gr.ylines)/2,1)',1,[]);
+        gr.gridlinesmatrix=[gr.xlines fullx;fully gr.ylines];
+        truezero=deg2pix([0 0]);
+        circdegrees=(1:gr.circleadder:90)-1;
+        degadds=deg2pix(repmat(circdegrees',1,2),'cart')-truezero;
+        degadds(:,2)=[];
+
+        gr.center_circle=[truezero-10 truezero+10;...
+            truezero-degadds truezero+degadds]';
+    end
+%%set grid
+    function gr=setgrid(gr)
+        Screen('TextSize', gr.window_monitor,gr.fontsize);
+        try
+            Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 960, 5 , [255,255,255]);
+            for i=1:length(gr.toconvert(:,1))
+                Screen('DrawText', gr.window_monitor, num2str(gr.toconvert(i,1)), gr.pixelsforlines(i,1),...
+                    gr.pixelsforlines(ceil(length(gr.toconvert(:,1))/2),2), [.5,.5,.5]);
+                Screen('DrawText', gr.window_monitor, num2str(gr.toconvert(i,2)),...
+                    gr.pixelsforlines(ceil(length(gr.toconvert(:,1))/2),1), gr.pixelsforlines(i,2),  [.5,.5,.5]);
+            end
+        catch
+        end
+
+
+        Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix,1,[.3 .3 .3]);
+        Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
+        Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
+        Screen('FrameOval',gr.window_monitor,[0.2 0.2 0.2]',gr.center_circle,3);
+
+    end
+
 end
 
 

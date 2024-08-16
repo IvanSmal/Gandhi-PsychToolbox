@@ -13,4 +13,7 @@ if ~strcmp(mh.activestatename,name)
     mh.activestatetime = mh.trial.state.(name).time(end);
     mh.activestatename = name;
 end
+
+writeline(mh.graphicsport, name, 'localhost', 2024 )
+disp(name)
 end

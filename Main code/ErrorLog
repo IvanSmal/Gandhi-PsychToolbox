@@ -726,3 +726,72 @@ Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,req
             newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.
 Invalid or deleted object.
 Invalid or deleted object.
+CircularMovementParameters not found.
+CircularMovementParameters not found.
+CircularMovementParameters not found.
+Error using run
+CircularMovementParameters not found.
+
+Error in MHost2/makeparams (line 666)
+            run(paramfile);
+
+Error in MHost2/startupFcn (line 1015)
+                    app.makeparams
+
+Error in matlab.apps.AppBase/runStartupFcn (line 68)
+            ams.runStartupFcn(app, startfcn);
+
+Error in MHost2 (line 1921)
+            runStartupFcn(app, @startupFcn)Error using run
+CircularMovementParameters not found.
+
+Error in MHost2/makeparams (line 666)
+            run(paramfile);
+
+Error in MHost2/startupFcn (line 1015)
+                    app.makeparams
+
+Error in matlab.apps.AppBase/runStartupFcn (line 68)
+            ams.runStartupFcn(app, startfcn);
+
+Error in MHost2 (line 1921)
+            runStartupFcn(app, @startupFcn)Error using run
+CircularMovementParameters not found.
+
+Error in MHost2/makeparams (line 666)
+            run(paramfile);
+
+Error in MHost2/startupFcn (line 1015)
+                    app.makeparams
+
+Error in matlab.apps.AppBase/runStartupFcn (line 68)
+            ams.runStartupFcn(app, startfcn);
+
+Error in MHost2 (line 1921)
+            runStartupFcn(app, @startupFcn)Error using run
+CircularMovementParameters not found.
+
+Error in MHost2/makeparams (line 666)
+            run(paramfile);
+
+Error in MHost2/startupFcn (line 1015)
+                    app.makeparams
+
+Error in matlab.apps.AppBase/runStartupFcn (line 68)
+            ams.runStartupFcn(app, startfcn);
+
+Error in MHost2 (line 1921)
+            runStartupFcn(app, @startupFcn)Error using run
+CircularMovementParameters not found.
+
+Error in MHost2/makeparams (line 666)
+            run(paramfile);
+
+Error in MHost2/startupFcn (line 1015)
+                    app.makeparams
+
+Error in matlab.apps.AppBase/runStartupFcn (line 68)
+            ams.runStartupFcn(app, startfcn);
+
+Error in MHost2 (line 1921)
+            runStartupFcn(app, @startupFcn)

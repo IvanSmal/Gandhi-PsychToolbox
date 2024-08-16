@@ -8,10 +8,10 @@ warning ('off','all');
 %% set up udp port
 graphicsport = udpport("LocalPort",2021, "timeout", 0.02);
 %% set up udp callback that listens for "Screen" commands
-homepath=genpath('/home/gandhi/Documents/MATLAB/Gandhi-PsychToolbox/Main code/background_functions');
+homepath=genpath('/home/gandhilab/Documents/MATLAB/GandhiToolboxMERGER/Gandhi-PsychToolbox/Main code/background_functions');
 addpath(homepath);
-addpath(genpath('/home/gandhi/Documents/MATLAB/Gandhi-PsychToolbox/Main code'));
-cd '/home/gandhi/Documents/MATLAB/Gandhi-PsychToolbox/Main code'
+addpath(genpath('/home/gandhilab/Documents/MATLAB/GandhiToolboxMERGER/Gandhi-PsychToolbox/Main code'));
+cd '/home/gandhilab/Documents/MATLAB/GandhiToolboxMERGER/Gandhi-PsychToolbox/Main code'
 
 % configureCallback(graphicsport,"terminator",@getCommands);
 

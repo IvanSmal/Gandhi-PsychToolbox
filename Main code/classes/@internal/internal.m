@@ -65,6 +65,7 @@ classdef internal < handle
         holdbuffer = 0;
         readyforflip=1;
         commandID=0;
+        lastsenttime=0;
             
         %stim stuff
         stimmed=0;

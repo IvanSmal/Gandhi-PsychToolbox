@@ -130,13 +130,8 @@ while 1
         if ~isempty(gr.functionsbuffer)
             runonce=runonce+1;
             if runonce==1
+                setgrid(gr);
                 Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
-                Screen('TextSize', gr.window_monitor,30);
-                Screen('DrawText', gr.window_monitor, gr.activestatename, 5, 5 , [255,255,255]);
-                Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 600, 5 , [255,255,255]);
-                Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix,1,[.3 .3 .3]);
-                Screen('FrameOval',gr.window_monitor,[.2 .2 .2],gr.center_circle,3);
-                Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
             end
 
             if ~strcmp(gr.state_history{end},gr.activestatename)
@@ -147,7 +142,7 @@ while 1
             gr.fliptimes=[gr.fliptimes getsecs];
             gr.commandIDs=[gr.commandIDs gr.commid_udp];
 
-            if ~exist('allargs','var')
+            if ~exist('allargs','var') %I know the while loop makes this redundant. While loop was added later and I didn't want to mess with what works
                 while ~exist('allargs','var')
                     getCommands(graphicsport)
                     try
@@ -155,15 +150,11 @@ while 1
                     end
                 end
             else
-
                 DrawScreen(gr,additionalinfo,allargs,outs)
 
                 clear additionalinfo allargs outs
 
                 Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
-                % toc
-                % tic
-
 
                 fliptime=vbl-vblhis;
                 vblhis=vbl;
@@ -178,9 +169,6 @@ while 1
 
                 getCommands(graphicsport)
 
-                % Screen('Close')
-
-
                 flipped=1;
             end
         else
@@ -190,28 +178,32 @@ while 1
     %% this is to show eye when trials are not running
     while ~gr.trialstarted
         getCommands(graphicsport)
-        % disp('out of trial')
         writeline(graphicsport,'mh.readyforflip=1;','0.0.0.0',2020);
+        gr=makegridlines(gr);
         try
             seteye;
         catch
         end
+        setgrid(gr);
         Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
-        Screen('TextSize', gr.window_monitor,30);
-        try
-            Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 600, 5 , [255,255,255]);
-        catch
-        end
 
-        Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix,1,[.3 .3 .3]);
+        gr.newsize=Screen('GlobalRect',gr.window_monitor);
+        gr.newsize_true(1)=gr.newsize(3)-gr.newsize(1);
+        gr.newsize_true(2)=gr.newsize(4)-gr.newsize(2);
+        gr.winparams=Screen('PanelFitter', gr.window_monitor);
+        gr.winparams(1:4)=ceil(gr.winparams(1:4)*gr.scalefactor);
+        gr.scalefactor=1;
+        gr.winparams([1,3])=ceil(gr.winparams([1,3])+gr.left_right);
+        gr.left_right=0;
+        gr.winparams([2,4])=ceil(gr.winparams([2,4])+gr.up_down);
+        gr.up_down=0;
+        Screen('PanelFitter', gr.window_monitor, gr.winparams);
 
-        Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
-        Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
-        Screen('FrameOval',gr.window_monitor,[0.2 0.2 0.2]',gr.center_circle,3);
         Screen('Flip',gr.window_monitor);
         Screen('Flip',gr.window_main);
-        gr.functionsbuffer=[];
 
+        gr.functionsbuffer=[];
+        Screen('Close');
     end
 end
 %% callback function that does the graphics handling

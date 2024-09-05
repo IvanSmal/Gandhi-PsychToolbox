@@ -1,23 +1,20 @@
 function GraphicsHandler
 % opengl('save','hardware');
-addpath(genpath('/opt/Trellis/Tools/xippmex'));
+filepaths_path='/home/gandhi/Documents/MATLAB/Gandhi-PsychToolboxMERGER/Gandhi-PsychToolbox/Main code/inis/FilePaths.ini';
+filepaths_ini=IniConfig();
+filepaths_ini.ReadFile(filepaths_path);
+addpath(genpath(filepaths_ini.GetValues('paths','home')));
+addpath(genpath(filepaths_ini.GetValues('paths','xippmex')));
 xippmex;
 vblhis=0;
 vbl=0;
 warning ('off','all');
 %% set up udp port
 graphicsport = udpport("LocalPort",2021, "timeout", 0.02);
-%% set up udp callback that listens for "Screen" commands
-homepath=genpath('/home/gandhilab/Documents/MATLAB/GandhiToolboxMERGER/Gandhi-PsychToolbox/Main code/background_functions');
-addpath(homepath);
-addpath(genpath('/home/gandhilab/Documents/MATLAB/GandhiToolboxMERGER/Gandhi-PsychToolbox/Main code'));
-cd '/home/gandhilab/Documents/MATLAB/GandhiToolboxMERGER/Gandhi-PsychToolbox/Main code'
-
-% configureCallback(graphicsport,"terminator",@getCommands);
 
 %% initiate a bunch of gr stuff
 gr.screenparams= IniConfig();
-gr.screenparams.ReadFile('inis/ScreenParams.ini');
+gr.screenparams.ReadFile(filepaths_ini.GetValues('paths','ini_screen'));
 bgcolor=gr.screenparams.GetValues('screen info','background');
 gr = graphics;
 gr.eye=eyeinfo;
@@ -33,7 +30,7 @@ close all;
 % Here we call some default settings for setting up Psychtoolbox
 PsychDefaultSetup(2);
 
-Screen('Resolution',1,1920,1080,120); %set resolutions
+% Screen('Resolution',1,1920,1080,120); %set resolutions
 
 % priority
 Priority(90);
@@ -65,7 +62,8 @@ PsychImaging('PrepareConfiguration');
 % PsychImaging('AddTask', 'General', 'UseVirtualFramebuffer');
 PsychImaging('AddTask', 'General', 'UsePanelFitter', [gr.screenXpixels, gr.screenYpixels], 'Full');
 
-[gr.window_monitor, gr.monitor_rect]=PsychImaging('OpenWindow', 0, black,monitor_rect,[],[],[],[],[],kPsychGUIWindow);
+[gr.window_monitor, gr.monitor_rect]=PsychImaging('OpenWindow', 0, bgcolor,monitor_rect,[],[],[],[],[],kPsychGUIWindow);
+
 gr.original_monitor_params=Screen('PanelFitter', gr.window_monitor);
 gr.winparams=gr.original_monitor_params;
 gr.newsize=Screen('GlobalRect',gr.window_monitor);
@@ -110,7 +108,6 @@ gr=makegridlines(gr);
 
 
 % send ready signal to mh
-writeline(graphicsport,'isGraphicsReady=1;','0.0.0.0',2020);
 clc
 system('clear');
 warning('off')
@@ -177,6 +174,9 @@ while 1
     end
     %% this is to show eye when trials are not running
     while ~gr.trialstarted
+        % send ready signal to mh
+        writeline(graphicsport,'isGraphicsReady=1;','0.0.0.0',2020);
+
         getCommands(graphicsport)
         writeline(graphicsport,'mh.readyforflip=1;','0.0.0.0',2020);
         gr=makegridlines(gr);

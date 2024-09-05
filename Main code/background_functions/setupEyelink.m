@@ -10,14 +10,14 @@ if first
     end
 end
 try
-rec=Eyelink('CheckRecording');
-if rec ~=0
+status=Eyelink('CurrentMode');
+if status ~=4
     app.EyeLinkLamp.Color=[1,1,0];
     if app.checkEyeLink
     insToTxtbox(app,'Eyelink not in "record" mode')
     app.checkEyeLink=0;
     end
-elseif rec ==0
+elseif status ==4
     app.checkEyeLink=1;
     app.EyeLinkLamp.Color=[0,1,0];
 end

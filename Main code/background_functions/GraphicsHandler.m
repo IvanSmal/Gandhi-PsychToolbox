@@ -1,10 +1,10 @@
 function GraphicsHandler
 % opengl('save','hardware');
-filepaths_path='/home/gandhi/Documents/MATLAB/Gandhi-PsychToolboxMERGER/Gandhi-PsychToolbox/Main code/inis/FilePaths.ini';
+filepaths_path='/home/gandhilab/Documents/MATLAB/GandhiToolboxMERGER/Gandhi-PsychToolbox/Main code/inis/FilePaths.ini';
 filepaths_ini=IniConfig();
 filepaths_ini.ReadFile(filepaths_path);
 addpath(genpath(filepaths_ini.GetValues('paths','home')));
-addpath(genpath(filepaths_ini.GetValues('paths','xippmex')));
+addpath(filepaths_ini.GetValues('paths','xippmex'));
 xippmex;
 vblhis=0;
 vbl=0;

@@ -13,7 +13,7 @@ disp('-----Reward Handler-----');
 
 while 1 %keep it alive
     try %% error catcher
-        ini.ReadFile('~/Documents/MATLAB/Gandhi-PsychToolbox/Main code/inis/ScreenParams.ini');
+        ini.ReadFile('/home/gandhilab/Documents/MATLAB/GandhiToolboxMERGER/Gandhi-PsychToolbox/Main code/inis/ScreenParams.ini');
         manreward=ini.GetValues('reward','reward');
         [~,~,events]=xippmex('digin');
         if ~isempty(events) && any([events.reason]==16) && any([events.sma4]>0)
@@ -28,7 +28,6 @@ while 1 %keep it alive
         disp(e.message)
     end
 end
-
     function getCommands(rewardport,~)
         identifier=0;
         duration=readline(rewardport);

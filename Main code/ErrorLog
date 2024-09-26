@@ -1914,3 +1914,510 @@ Error in appdesigner.internal.service.AppManagementService/executeCallback (line
 Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 62)
             newCallback = @(source, event)executeCallback(ams, ...Invalid or deleted object.
 Invalid or deleted object.
+Invalid or deleted object.
+Invalid or deleted object.
+Invalid or deleted object.
+Invalid or deleted object.
+Invalid or deleted object.
+Invalid or deleted object.
+Unable to find file or directory '/home/gandhilab/Documents/Monkey/Thor/Data/20240924_Thor_temp/e.mat'.
+Error using load
+Unable to find file or directory
+'/home/gandhilab/Documents/Monkey/Thor/Data/20240924_Thor_temp/e.mat'.
+
+Error in MHost2/Run_Experiment (line 201)
+                        load(fullfile(checkdirstr,'e.mat'),'e');
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/STARTButtonPushed (line 1186)
+            Run_Experiment(app,mh);
+            ^^^^^^^^^^^^^^^^^^^^^^
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 165)
+                callback(appOrUserComponent, event);
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 60)
+            newCallback = @(source, event)executeCallback(ams, ...
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^Error using load
+Unable to find file or directory
+'/home/gandhilab/Documents/Monkey/Thor/Data/20240924_Thor_temp/e.mat'.
+
+Error in MHost2/Run_Experiment (line 201)
+                        load(fullfile(checkdirstr,'e.mat'),'e');
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/STARTButtonPushed (line 1186)
+            Run_Experiment(app,mh);
+            ^^^^^^^^^^^^^^^^^^^^^^
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 165)
+                callback(appOrUserComponent, event);
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 60)
+            newCallback = @(source, event)executeCallback(ams, ...
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^Error using load
+Unable to find file or directory
+'/home/gandhilab/Documents/Monkey/Thor/Data/20240924_Thor_temp/e.mat'.
+
+Error in MHost2/Run_Experiment (line 201)
+                        load(fullfile(checkdirstr,'e.mat'),'e');
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/STARTButtonPushed (line 1186)
+            Run_Experiment(app,mh);
+            ^^^^^^^^^^^^^^^^^^^^^^
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 165)
+                callback(appOrUserComponent, event);
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 60)
+            newCallback = @(source, event)executeCallback(ams, ...
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^Error using load
+Unable to find file or directory
+'/home/gandhilab/Documents/Monkey/Thor/Data/20240924_Thor_temp/e.mat'.
+
+Error in MHost2/Run_Experiment (line 201)
+                        load(fullfile(checkdirstr,'e.mat'),'e');
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/STARTButtonPushed (line 1186)
+            Run_Experiment(app,mh);
+            ^^^^^^^^^^^^^^^^^^^^^^
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 165)
+                callback(appOrUserComponent, event);
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 60)
+            newCallback = @(source, event)executeCallback(ams, ...
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^Undefined function 'getxposition' for input arguments of type 'internal'.
+Error using eval
+Undefined function 'getxposition' for input arguments of type 'internal'.
+
+Error in target>@(mh,t,x)eval(targ.custompath_x) (line 85)
+                    xf=@(mh,t,x) eval(targ.custompath_x);
+                                 ^^^^^^^^^^^^^^^^^^^^^^^
+Error in target/getpos (line 88)
+                    tempx=xf(mh,tim*targ.speed,targ.position(1));
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in internal/trialtarg (line 2)
+out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in CCW_8deg (line 62)
+    mh.Screen('FillOval', 'windowPtr', mh.trialtarg('T1_Moving_CCW_8','getcolor'),mh.trialtarg('T1_Moving_CCW_8','getpos'));
+                                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/Run_Experiment (line 415)
+                        mh = mh.trial_function(mh);
+                             ^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/STARTButtonPushed (line 1186)
+            Run_Experiment(app,mh);
+            ^^^^^^^^^^^^^^^^^^^^^^
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 165)
+                callback(appOrUserComponent, event);
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 60)
+            newCallback = @(source, event)executeCallback(ams, ...
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^Error using eval
+Undefined function 'getxposition' for input arguments of type 'internal'.
+
+Error in target>@(mh,t,x)eval(targ.custompath_x) (line 85)
+                    xf=@(mh,t,x) eval(targ.custompath_x);
+                                 ^^^^^^^^^^^^^^^^^^^^^^^
+Error in target/getpos (line 88)
+                    tempx=xf(mh,tim*targ.speed,targ.position(1));
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in internal/trialtarg (line 2)
+out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in CCW_8deg (line 62)
+    mh.Screen('FillOval', 'windowPtr', mh.trialtarg('T1_Moving_CCW_8','getcolor'),mh.trialtarg('T1_Moving_CCW_8','getpos'));
+                                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/Run_Experiment (line 415)
+                        mh = mh.trial_function(mh);
+                             ^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/STARTButtonPushed (line 1186)
+            Run_Experiment(app,mh);
+            ^^^^^^^^^^^^^^^^^^^^^^
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 165)
+                callback(appOrUserComponent, event);
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 60)
+            newCallback = @(source, event)executeCallback(ams, ...
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^Error using eval
+Undefined function 'getxposition' for input arguments of type 'internal'.
+
+Error in target>@(mh,t,x)eval(targ.custompath_x) (line 85)
+                    xf=@(mh,t,x) eval(targ.custompath_x);
+                                 ^^^^^^^^^^^^^^^^^^^^^^^
+Error in target/getpos (line 88)
+                    tempx=xf(mh,tim*targ.speed,targ.position(1));
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in internal/trialtarg (line 2)
+out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in CCW_8deg (line 62)
+    mh.Screen('FillOval', 'windowPtr', mh.trialtarg('T1_Moving_CCW_8','getcolor'),mh.trialtarg('T1_Moving_CCW_8','getpos'));
+                                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/Run_Experiment (line 415)
+                        mh = mh.trial_function(mh);
+                             ^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/STARTButtonPushed (line 1186)
+            Run_Experiment(app,mh);
+            ^^^^^^^^^^^^^^^^^^^^^^
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 165)
+                callback(appOrUserComponent, event);
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 60)
+            newCallback = @(source, event)executeCallback(ams, ...
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^Error using eval
+Undefined function 'getxposition' for input arguments of type 'internal'.
+
+Error in target>@(mh,t,x)eval(targ.custompath_x) (line 85)
+                    xf=@(mh,t,x) eval(targ.custompath_x);
+                                 ^^^^^^^^^^^^^^^^^^^^^^^
+Error in target/getpos (line 88)
+                    tempx=xf(mh,tim*targ.speed,targ.position(1));
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in internal/trialtarg (line 2)
+out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in CCW_8deg (line 62)
+    mh.Screen('FillOval', 'windowPtr', mh.trialtarg('T1_Moving_CCW_8','getcolor'),mh.trialtarg('T1_Moving_CCW_8','getpos'));
+                                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/Run_Experiment (line 415)
+                        mh = mh.trial_function(mh);
+                             ^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/STARTButtonPushed (line 1186)
+            Run_Experiment(app,mh);
+            ^^^^^^^^^^^^^^^^^^^^^^
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 165)
+                callback(appOrUserComponent, event);
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 60)
+            newCallback = @(source, event)executeCallback(ams, ...
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^Error using eval
+Undefined function 'getxposition' for input arguments of type 'internal'.
+
+Error in target>@(mh,t,x)eval(targ.custompath_x) (line 85)
+                    xf=@(mh,t,x) eval(targ.custompath_x);
+                                 ^^^^^^^^^^^^^^^^^^^^^^^
+Error in target/getpos (line 88)
+                    tempx=xf(mh,tim*targ.speed,targ.position(1));
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in internal/trialtarg (line 2)
+out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in CCW_8deg (line 62)
+    mh.Screen('FillOval', 'windowPtr', mh.trialtarg('T1_Moving_CCW_8','getcolor'),mh.trialtarg('T1_Moving_CCW_8','getpos'));
+                                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/Run_Experiment (line 415)
+                        mh = mh.trial_function(mh);
+                             ^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/STARTButtonPushed (line 1186)
+            Run_Experiment(app,mh);
+            ^^^^^^^^^^^^^^^^^^^^^^
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 165)
+                callback(appOrUserComponent, event);
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 60)
+            newCallback = @(source, event)executeCallback(ams, ...
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^Error using eval
+Undefined function 'getxposition' for input arguments of type 'internal'.
+
+Error in target>@(mh,t,x)eval(targ.custompath_x) (line 85)
+                    xf=@(mh,t,x) eval(targ.custompath_x);
+                                 ^^^^^^^^^^^^^^^^^^^^^^^
+Error in target/getpos (line 88)
+                    tempx=xf(mh,tim*targ.speed,targ.position(1));
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in internal/trialtarg (line 2)
+out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in CCW_8deg (line 62)
+    mh.Screen('FillOval', 'windowPtr', mh.trialtarg('T1_Moving_CCW_8','getcolor'),mh.trialtarg('T1_Moving_CCW_8','getpos'));
+                                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/Run_Experiment (line 415)
+                        mh = mh.trial_function(mh);
+                             ^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/STARTButtonPushed (line 1186)
+            Run_Experiment(app,mh);
+            ^^^^^^^^^^^^^^^^^^^^^^
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 165)
+                callback(appOrUserComponent, event);
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 60)
+            newCallback = @(source, event)executeCallback(ams, ...
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^Error using eval
+Undefined function 'getxposition' for input arguments of type 'internal'.
+
+Error in target>@(mh,t,x)eval(targ.custompath_x) (line 85)
+                    xf=@(mh,t,x) eval(targ.custompath_x);
+                                 ^^^^^^^^^^^^^^^^^^^^^^^
+Error in target/getpos (line 88)
+                    tempx=xf(mh,tim*targ.speed,targ.position(1));
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in internal/trialtarg (line 2)
+out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in CCW_8deg (line 62)
+    mh.Screen('FillOval', 'windowPtr', mh.trialtarg('T1_Moving_CCW_8','getcolor'),mh.trialtarg('T1_Moving_CCW_8','getpos'));
+                                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/Run_Experiment (line 415)
+                        mh = mh.trial_function(mh);
+                             ^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/STARTButtonPushed (line 1186)
+            Run_Experiment(app,mh);
+            ^^^^^^^^^^^^^^^^^^^^^^
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 165)
+                callback(appOrUserComponent, event);
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 60)
+            newCallback = @(source, event)executeCallback(ams, ...
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^Error using eval
+Undefined function 'getxposition' for input arguments of type 'internal'.
+
+Error in target>@(mh,t,x)eval(targ.custompath_x) (line 85)
+                    xf=@(mh,t,x) eval(targ.custompath_x);
+                                 ^^^^^^^^^^^^^^^^^^^^^^^
+Error in target/getpos (line 88)
+                    tempx=xf(mh,tim*targ.speed,targ.position(1));
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in internal/trialtarg (line 2)
+out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in CCW_8deg (line 62)
+    mh.Screen('FillOval', 'windowPtr', mh.trialtarg('T1_Moving_CCW_8','getcolor'),mh.trialtarg('T1_Moving_CCW_8','getpos'));
+                                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/Run_Experiment (line 415)
+                        mh = mh.trial_function(mh);
+                             ^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/STARTButtonPushed (line 1186)
+            Run_Experiment(app,mh);
+            ^^^^^^^^^^^^^^^^^^^^^^
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 165)
+                callback(appOrUserComponent, event);
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 60)
+            newCallback = @(source, event)executeCallback(ams, ...
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^Dot indexing is not supported for variables of this type.
+Dot indexing is not supported for variables of this type.
+
+Error in internal/trialtarg (line 2)
+out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in CCW_8deg (line 61)
+    mh.Screen('FillOval', 'windowPtr', mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/Run_Experiment (line 415)
+                        mh = mh.trial_function(mh);
+                             ^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/STARTButtonPushed (line 1186)
+            Run_Experiment(app,mh);
+            ^^^^^^^^^^^^^^^^^^^^^^
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 165)
+                callback(appOrUserComponent, event);
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 60)
+            newCallback = @(source, event)executeCallback(ams, ...
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^Dot indexing is not supported for variables of this type.
+
+Error in internal/trialtarg (line 2)
+out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in CCW_8deg (line 61)
+    mh.Screen('FillOval', 'windowPtr', mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/Run_Experiment (line 415)
+                        mh = mh.trial_function(mh);
+                             ^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/STARTButtonPushed (line 1186)
+            Run_Experiment(app,mh);
+            ^^^^^^^^^^^^^^^^^^^^^^
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 165)
+                callback(appOrUserComponent, event);
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 60)
+            newCallback = @(source, event)executeCallback(ams, ...
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^Dot indexing is not supported for variables of this type.
+
+Error in internal/trialtarg (line 2)
+out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in CCW_8deg (line 61)
+    mh.Screen('FillOval', 'windowPtr', mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/Run_Experiment (line 415)
+                        mh = mh.trial_function(mh);
+                             ^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/STARTButtonPushed (line 1186)
+            Run_Experiment(app,mh);
+            ^^^^^^^^^^^^^^^^^^^^^^
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 165)
+                callback(appOrUserComponent, event);
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 60)
+            newCallback = @(source, event)executeCallback(ams, ...
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^Dot indexing is not supported for variables of this type.
+
+Error in internal/trialtarg (line 2)
+out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in CCW_8deg (line 61)
+    mh.Screen('FillOval', 'windowPtr', mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/Run_Experiment (line 415)
+                        mh = mh.trial_function(mh);
+                             ^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/STARTButtonPushed (line 1186)
+            Run_Experiment(app,mh);
+            ^^^^^^^^^^^^^^^^^^^^^^
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 165)
+                callback(appOrUserComponent, event);
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 60)
+            newCallback = @(source, event)executeCallback(ams, ...
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^Dot indexing is not supported for variables of this type.
+
+Error in internal/trialtarg (line 2)
+out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in CCW_8deg (line 61)
+    mh.Screen('FillOval', 'windowPtr', mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/Run_Experiment (line 415)
+                        mh = mh.trial_function(mh);
+                             ^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/STARTButtonPushed (line 1186)
+            Run_Experiment(app,mh);
+            ^^^^^^^^^^^^^^^^^^^^^^
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 165)
+                callback(appOrUserComponent, event);
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 60)
+            newCallback = @(source, event)executeCallback(ams, ...
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^Dot indexing is not supported for variables of this type.
+
+Error in internal/trialtarg (line 2)
+out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in CCW_8deg (line 61)
+    mh.Screen('FillOval', 'windowPtr', mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/Run_Experiment (line 415)
+                        mh = mh.trial_function(mh);
+                             ^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/STARTButtonPushed (line 1186)
+            Run_Experiment(app,mh);
+            ^^^^^^^^^^^^^^^^^^^^^^
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 165)
+                callback(appOrUserComponent, event);
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 60)
+            newCallback = @(source, event)executeCallback(ams, ...
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^Dot indexing is not supported for variables of this type.
+Dot indexing is not supported for variables of this type.
+
+Error in internal/trialtarg (line 2)
+out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in CCW_8deg (line 61)
+    mh.Screen('FillOval', 'windowPtr', mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/Run_Experiment (line 415)
+                        mh = mh.trial_function(mh);
+                             ^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/STARTButtonPushed (line 1186)
+            Run_Experiment(app,mh);
+            ^^^^^^^^^^^^^^^^^^^^^^
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 165)
+                callback(appOrUserComponent, event);
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 60)
+            newCallback = @(source, event)executeCallback(ams, ...
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^Dot indexing is not supported for variables of this type.
+
+Error in internal/trialtarg (line 2)
+out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in CCW_8deg (line 61)
+    mh.Screen('FillOval', 'windowPtr', mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/Run_Experiment (line 415)
+                        mh = mh.trial_function(mh);
+                             ^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/STARTButtonPushed (line 1186)
+            Run_Experiment(app,mh);
+            ^^^^^^^^^^^^^^^^^^^^^^
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 165)
+                callback(appOrUserComponent, event);
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 60)
+            newCallback = @(source, event)executeCallback(ams, ...
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^Dot indexing is not supported for variables of this type.
+
+Error in internal/trialtarg (line 2)
+out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in CCW_8deg (line 61)
+    mh.Screen('FillOval', 'windowPtr', mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/Run_Experiment (line 415)
+                        mh = mh.trial_function(mh);
+                             ^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/STARTButtonPushed (line 1186)
+            Run_Experiment(app,mh);
+            ^^^^^^^^^^^^^^^^^^^^^^
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 165)
+                callback(appOrUserComponent, event);
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 60)
+            newCallback = @(source, event)executeCallback(ams, ...
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^Dot indexing is not supported for variables of this type.
+
+Error in internal/trialtarg (line 2)
+out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in CCW_8deg (line 61)
+    mh.Screen('FillOval', 'windowPtr', mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/Run_Experiment (line 415)
+                        mh = mh.trial_function(mh);
+                             ^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/STARTButtonPushed (line 1186)
+            Run_Experiment(app,mh);
+            ^^^^^^^^^^^^^^^^^^^^^^
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 165)
+                callback(appOrUserComponent, event);
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 60)
+            newCallback = @(source, event)executeCallback(ams, ...
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^Dot indexing is not supported for variables of this type.
+
+Error in internal/trialtarg (line 2)
+out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in CCW_8deg (line 61)
+    mh.Screen('FillOval', 'windowPtr', mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/Run_Experiment (line 415)
+                        mh = mh.trial_function(mh);
+                             ^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/STARTButtonPushed (line 1186)
+            Run_Experiment(app,mh);
+            ^^^^^^^^^^^^^^^^^^^^^^
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 165)
+                callback(appOrUserComponent, event);
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 60)
+            newCallback = @(source, event)executeCallback(ams, ...
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^Dot indexing is not supported for variables of this type.
+
+Error in internal/trialtarg (line 2)
+out=obj.trial.targets.(name).(arg)(obj,varargin{:});
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in CCW_8deg (line 61)
+    mh.Screen('FillOval', 'windowPtr', mh.trialtarg('T0','getcolor') , mh.trialtarg('T0','getpos'));
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/Run_Experiment (line 415)
+                        mh = mh.trial_function(mh);
+                             ^^^^^^^^^^^^^^^^^^^^^
+Error in MHost2/STARTButtonPushed (line 1186)
+            Run_Experiment(app,mh);
+            ^^^^^^^^^^^^^^^^^^^^^^
+Error in appdesigner.internal.service.AppManagementService/executeCallback (line 165)
+                callback(appOrUserComponent, event);
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 60)
+            newCallback = @(source, event)executeCallback(ams, ...
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^

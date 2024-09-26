@@ -1,6 +1,6 @@
 function GraphicsHandler
 % opengl('save','hardware');
-filepaths_path='/home/gandhilab/Documents/MATLAB/GandhiToolboxMERGER/Gandhi-PsychToolbox/Main code/inis/FilePaths.ini';
+filepaths_path=[pwd '/inis/FilePaths.ini'];
 filepaths_ini=IniConfig();
 filepaths_ini.ReadFile(filepaths_path);
 addpath(genpath(filepaths_ini.GetValues('paths','home')));

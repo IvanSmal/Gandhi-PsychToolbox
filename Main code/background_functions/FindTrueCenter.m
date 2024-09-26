@@ -16,7 +16,7 @@ PsychDefaultSetup(2);
 % Get the screen numbers
 in.screens = Screen('Screens');
 
-if in.screens < 2
+if in.screens < 1
     errordlg('Only found 1 screen')
     return
 else

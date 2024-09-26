@@ -17,6 +17,7 @@ classdef trial < handle
         userdefined =[]
 
         System_Properties
+        reward
     end
 
     methods

@@ -44,7 +44,7 @@ for i=1:size(in,1)
         errordlg('please specify either ''cart'' or ''pol''')
         return
     end
-
+    
     out(i,1)=floor(centerXY(1)+((tand(desiredXY(1))*distanceFromScreen)/PixelSize(1)));
     out(i,2)=floor(centerXY(2)-((tand(desiredXY(2))*distanceFromScreen)/PixelSize(2)));
 

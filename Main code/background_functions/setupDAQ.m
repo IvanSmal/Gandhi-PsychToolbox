@@ -1,7 +1,10 @@
 function dq=setupDAQ(app)
 c=0;
 dq = xippmex;
+app.XippmexLamp.Color=[0,1,0];
 while dq == 0
+    dq = xippmex;
+    app.XippmexLamp.Color=[1,0,0];
     insToTxtbox(app, 'could not connect to the DAQ. Retrying')
     pause(5)
     c=c+1;

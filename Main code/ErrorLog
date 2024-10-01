@@ -2420,4 +2420,4 @@ Error in appdesigner.internal.service.AppManagementService/executeCallback (line
                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Error in matlab.apps.AppBase>@(source,event)executeCallback(ams,app,callback,requiresEventData,event) (line 60)
             newCallback = @(source, event)executeCallback(ams, ...
-                                          ^^^^^^^^^^^^^^^^^^^^^^^^
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^Invalid or deleted object.

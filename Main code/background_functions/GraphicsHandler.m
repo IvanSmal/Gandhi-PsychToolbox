@@ -1,6 +1,8 @@
 function GraphicsHandler
 % opengl('save','hardware');
-filepaths_path=[pwd '/inis/FilePaths.ini'];
+pathhere=pwd;
+pathhere=pathhere(1:end-21);
+filepaths_path=[pathhere '/inis/FilePaths.ini'];
 filepaths_ini=IniConfig();
 filepaths_ini.ReadFile(filepaths_path);
 addpath(genpath(filepaths_ini.GetValues('paths','home')));

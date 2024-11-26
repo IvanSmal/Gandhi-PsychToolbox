@@ -15,6 +15,14 @@ classdef target %< handle
         custompath_y
         image
         texture
+        prevx;
+        prevy;
+        prevxt=0;
+        prevyt=0;
+        xdir=1;
+        ydir=1;
+        xang=1;
+        yang=1;
     end
     methods
         function t=target(varargin)

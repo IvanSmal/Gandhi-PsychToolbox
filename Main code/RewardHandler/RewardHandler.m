@@ -1,6 +1,5 @@
 function RewardHandler
 
-system('gnome-terminal --title="reward handler"');
 rewardport = udpport("LocalPort",2022);
 configureCallback(rewardport,"terminator",@getCommands);
 xippmex;

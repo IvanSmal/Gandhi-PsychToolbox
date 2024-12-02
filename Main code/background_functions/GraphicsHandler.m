@@ -153,23 +153,26 @@ while 1
                         end
                     end
                 else
+                    Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
                     DrawScreen(gr,additionalinfo,allargs,outs)
 
                     clear additionalinfo allargs outs
 
-                    Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
-
                     fliptime=vbl-vblhis;
                     vblhis=vbl;
-                    if flipcount>2
+
+                    vbl=getsecs;
+                    Screen('Flip',gr.window_main,[],[],1);
+                    flipcount=flipcount+1;
+
+
+                    if flipcount>3
+                        Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
                         Screen('Flip',gr.window_monitor,[],[],2);
                         updategui(gr);
                         runonce=0;
                         flipcount=0;
                     end
-                    vbl=getsecs;
-                    Screen('Flip',gr.window_main,[],[],1);
-                    flipcount=flipcount+1;
 
                     getCommands(graphicsport)
 
@@ -440,8 +443,6 @@ end
 
 
         Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix,1,[.3 .3 .3]);
-        Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
-        Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
         Screen('FrameOval',gr.window_monitor,[0.2 0.2 0.2]',gr.center_circle,3);
     end
 

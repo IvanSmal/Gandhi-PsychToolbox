@@ -76,7 +76,7 @@ end
             disp(['rewarded for ' num2str(rewamount) ' seconds'])
             writeline(rewardport,['app.insToTxtbox("reward: ' num2str(rewamount) 's");'],'0.0.0.0',2024);
         end
-        writeline(rewardport,['app.TotalrewardmsEditField.Value= app.TotalrewardmsEditField.Value +' num2str(rewamount) ';'],'0.0.0.0',2024);
+        writeline(rewardport,['app.TotalrewardsEditField.Value= app.TotalrewardsEditField.Value +' num2str(rewamount) ';'],'0.0.0.0',2024);
         pause(0.02); %pause for a bit to not get double rewards
         rewardcount=rewardcount+rewamount;
     end

@@ -2,6 +2,7 @@ classdef experiment
     
     properties
         subject_name
+        Date=string(datetime());
         DataDir
         parameter_file
         TrellisDir;

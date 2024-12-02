@@ -74,6 +74,10 @@ classdef internal < handle
         %user definitions
         userdefined=0;
 
+        %live parameter tables
+        targtable;
+        intervaltable;
+
     end
 
     properties (Access=private)

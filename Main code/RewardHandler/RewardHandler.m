@@ -12,7 +12,7 @@ disp('-----Reward Handler-----');
 
 while 1 %keep it alive
     try %% error catcher
-        ini.ReadFile('/home/gandhilab/Documents/MATLAB/GandhiToolboxMERGER/Gandhi-PsychToolbox/Main code/inis/ScreenParams.ini');
+        ini.ReadFile('/home/gandhi/Documents/MATLAB/Gandhi-PsychToolboxMERGER/Gandhi-PsychToolbox/Main code/inis/ScreenParams.ini');
         manreward=ini.GetValues('reward','reward');
         [~,~,events]=xippmex('digin');
         if ~isempty(events) && any([events.reason]==16) && any([events.sma4]>0)

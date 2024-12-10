@@ -67,6 +67,8 @@ end
             disp(['manually (gui) rewarded for ' num2str(rewamount) ' seconds'])
             writeline(rewardport,['app.insToTxtbox("manual reward: ' num2str(rewamount) 's");'],'0.0.0.0',2024);
         elseif identifier==2
+            close all force
+            clear all force
             exit
         elseif identifier==3
             disp(['manually (button) rewarded for ' num2str(rewamount) ' seconds'])

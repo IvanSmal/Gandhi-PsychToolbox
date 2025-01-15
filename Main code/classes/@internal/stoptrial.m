@@ -17,7 +17,9 @@ mh.trial.success=success;
 if success
     mh.sum_success=mh.sum_success+1;
     mh.repeatfailed=0;
+    mh.repeatfailedcounter=0;
 else
     mh.repeatfailed=1;
+    mh.repeatfailedcounter=mh.repeatfailedcounter+1;
 end
 end

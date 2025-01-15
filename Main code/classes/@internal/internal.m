@@ -20,6 +20,8 @@ classdef internal < handle
         trial_function
         sum_success=0;
         repeatfailed=0;
+        maxfailrepeat=0;
+        repeatfailedcounter=0;
 
         %diode properties
         diode_pos = [0,1300 ,50, 1350];

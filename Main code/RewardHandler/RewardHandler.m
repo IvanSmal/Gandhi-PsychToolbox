@@ -25,6 +25,7 @@ while 1 %keep it alive
         pause(0.00001)
     catch e
         disp(e.message)
+        pause(0.5)
     end
 end
     function getCommands(rewardport,~)
@@ -67,9 +68,14 @@ end
             disp(['manually (gui) rewarded for ' num2str(rewamount) ' seconds'])
             writeline(rewardport,['app.insToTxtbox("manual reward: ' num2str(rewamount) 's");'],'0.0.0.0',2024);
         elseif identifier==2
-            close all force
-            clear all force
-            exit
+            % close all force
+            % clear all force
+            stillalive=1;
+            while stillalive
+                disp('trying to quit')
+                quit force
+                pause(0.01)
+            end
         elseif identifier==3
             disp(['manually (button) rewarded for ' num2str(rewamount) ' seconds'])
             writeline(rewardport,['app.insToTxtbox("manual reward: ' num2str(rewamount) 's");'],'0.0.0.0',2024);

@@ -25,6 +25,9 @@ gr.eye=eyeinfo;
 Screen('Preference', 'SkipSyncTests', 1);
 Screen('Preference', 'VisualDebugLevel', 3);
 
+%set the resolution
+Screen('Resolution',1,1920,1080,120)
+
 % Clear the workspace and the screen
 sca;
 close all;

@@ -16,7 +16,7 @@ classdef eyeinfo < handle
         function obj=eyeinfo
             ini = IniConfig();
             ini.ReadFile('inis/ScreenParams.ini');
-
+        try
             obj.xgain=ini.GetValues('eye calibration','xgain');
             obj.ygain=ini.GetValues('eye calibration','ygain');
 
@@ -24,6 +24,28 @@ classdef eyeinfo < handle
 
             obj.xoffset=ini.GetValues('eye calibration','xoffset');
             obj.yoffset=ini.GetValues('eye calibration','yoffset');
+        catch
+            failcount=0;
+            while failcount < 3
+                try
+                    obj.xgain=ini.GetValues('eye calibration','xgain');
+                    obj.ygain=ini.GetValues('eye calibration','ygain');
+        
+                    % true_center=ini.GetValues('for deg2pix','true center');
+        
+                    obj.xoffset=ini.GetValues('eye calibration','xoffset');
+                    obj.yoffset=ini.GetValues('eye calibration','yoffset');
+                    failcount=10000;
+                catch
+                    failcount = failcount +1;
+                end
+            end
+            if failcount < 100
+                inipath=which('ScreenParams.ini');
+                waitfor(msgbox(['Something is wrong with the eye calibration parameters. Review the text file for strange inputs under the [eye calibration] section and restart the app. Path to file: ' inipath]))
+                quit
+            end
+        end
         end
 
         function obj = set(obj,prop,val)

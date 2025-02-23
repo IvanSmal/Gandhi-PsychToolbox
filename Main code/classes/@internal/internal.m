@@ -1,4 +1,4 @@
-classdef internal < handle
+classdef internal < matlab.mixin.Copyable
     %INTERNAL Summary of this class goes here
     %   Detailed explanation goes here
 

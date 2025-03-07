@@ -1,5 +1,5 @@
 function RewardHandler
-
+%
 rewardport = udpport("LocalPort",2022);
 configureCallback(rewardport,"terminator",@getCommands);
 xippmex;

@@ -81,5 +81,9 @@ classdef graphics < handle
         %% Miscellaneous
         user_defined                % User-defined custom data
         target                      % Target information
+
+        %% extra
+        actualFlipCount
+        actualCommandCount
     end
 end

@@ -85,5 +85,6 @@ classdef graphics < handle
         %% extra
         actualFlipCount
         actualCommandCount
+        stateCount
     end
 end

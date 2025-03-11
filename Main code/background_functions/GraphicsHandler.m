@@ -26,7 +26,7 @@ Screen('Preference', 'SkipSyncTests', 1);
 Screen('Preference', 'VisualDebugLevel', 3);
 
 %set the resolution
-Screen('Resolution',1,1920,1080,120)
+%Screen('Resolution',1,1920,1080,120)
 
 % Clear the workspace and the screen
 sca;
@@ -124,138 +124,104 @@ disp('-----Graphics Handler-----')
 seteye
 % monitorflipped=0
 %% keep function alive
-% Initialize variables outside the loop
-runonce = 0;
-flipcount = 0;
-flipped = 0;
-allargs = [];
-additionalinfo = [];
-outs = [];
-vblhis = 0;
-lastState = '';
+while 1
+    try %error handler
+        % pause(0.00001) %allow for callbacks to be checked
+        getCommands(graphicsport)
+        %% evaluate graphics buffer
+        runonce=0;
+        flipcount=0;
+        vbl=0;
+        while gr.trialstarted
+            if ~isempty(gr.functionsbuffer)
+                runonce=runonce+1;
+                if runonce==1
+                    setgrid(gr);
+                    Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
+                end
 
-% Preallocate arrays with estimated sizes
-estimatedTrialLength = 1000; % Adjust based on typical trial length
-if isempty(gr.fliptimes)
-    gr.fliptimes = zeros(1, estimatedTrialLength);
-    gr.actualFlipCount = 0;
-end
-if isempty(gr.commandIDs)
-    gr.commandIDs = zeros(1, estimatedTrialLength);
-    gr.actualCommandCount = 0;
-end
-if isempty(gr.state_history)
-    gr.state_history = cell(1, 100); % Assuming fewer state changes
-    gr.state_history{1} = ''; % Initialize first state
-    gr.stateCount = 1;
-end
+                if ~strcmp(gr.state_history{end},gr.activestatename)
+                    gr.state_history{end+1}=gr.activestatename;
+                    gr.diode_color=abs(gr.diode_color-1);
+                    disp(join(["changed diode for state: " gr.activestatename]));
+                end
+                gr.fliptimes=[gr.fliptimes getsecs];
+                gr.commandIDs=[gr.commandIDs gr.commid_udp];
 
-% Cache function handles for better performance
-getSecsFunc = @getsecs;
-getCommandsFunc = @(port) getCommands(port);
+                if ~exist('allargs','var') %I know the while loop makes this redundant. While loop was added later and I didn't want to mess with what works
+                    while ~exist('allargs','var')
+                        getCommands(graphicsport)
+                        try
+                            [additionalinfo,allargs,outs]=parsecommands(gr);
+                        end
+                    end
+                else
+                    Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
+                    DrawScreen(gr,additionalinfo,allargs,outs)
 
-% Main loop
-while gr.trialstarted
-    if ~isempty(gr.functionsbuffer)
-        runonce = runonce + 1;
-        
-        % First-time initialization
-        if runonce == 1
-            setgrid(gr);
-            Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10, [255,255,255]);
-        end
-        
-        % State change detection (use cached last state)
-        currentState = gr.activestatename;
-        if isempty(lastState)
-            lastState = gr.state_history{gr.stateCount};
-        end
-        
-        if ~strcmp(lastState, currentState)
-            % Update state history with preallocation
-            gr.stateCount = gr.stateCount + 1;
-            if gr.stateCount > length(gr.state_history)
-                % Double capacity if needed
-                gr.state_history{2*length(gr.state_history)} = '';
+                    clear additionalinfo allargs outs
+
+                    fliptime=vbl-vblhis;
+                    vblhis=vbl;
+
+                    vbl=getsecs;
+                    Screen('Flip',gr.window_main,[],[],1);
+                    flipcount=flipcount+1;
+
+
+                    if flipcount>3
+                        Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
+                        Screen('Flip',gr.window_monitor,[],[],2);
+                        updategui(gr);
+                        runonce=0;
+                        flipcount=0;
+                    end
+
+                    getCommands(graphicsport)
+
+                    flipped=1;
+                end
+            else
+                getCommands(graphicsport)
             end
-            gr.state_history{gr.stateCount} = currentState;
-            lastState = currentState;
-            
-            % Toggle diode using bitwise XOR (faster than subtraction)
-            gr.diode_color = bitxor(gr.diode_color, 1);
-            
-            % Create message string once before display
-            stateMsg = ['changed diode for state: ', currentState];
-            disp(stateMsg);
         end
-        
-        % Update flip times and command IDs with preallocation
-        currentTime = getSecsFunc();
-        gr.actualFlipCount = gr.actualFlipCount + 1;
-        if gr.actualFlipCount > length(gr.fliptimes)
-            % Expand array if needed
-            gr.fliptimes = [gr.fliptimes, zeros(1, estimatedTrialLength)];
-            gr.commandIDs = [gr.commandIDs, zeros(1, estimatedTrialLength)];
-        end
-        gr.fliptimes(gr.actualFlipCount) = currentTime;
-        gr.commandIDs(gr.actualFlipCount) = gr.commid_udp;
-        
-        % Command processing
-        if isempty(allargs)
-            % Get commands once, avoid nested loop
-            getCommandsFunc(graphicsport);
-            
+        %% this is to show eye when trials are not running
+        while ~gr.trialstarted
+            % send ready signal to mh
+            writeline(graphicsport,'isGraphicsReady=1;','0.0.0.0',2020);
+
+            getCommands(graphicsport)
+            writeline(graphicsport,'mh.readyforflip=1;','0.0.0.0',2020);
+            gr=makegridlines(gr);
             try
-                [additionalinfo, allargs, outs] = parsecommands(gr);
+                seteye;
             catch
-                % Just continue if parse fails
-                additionalinfo = [];
-                allargs = [];
-                outs = [];
             end
-        else
-            % Drawing phase
-            Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
-            DrawScreen(gr, additionalinfo, allargs, outs);
-            
-            % Reset variables instead of clear (faster)
-            additionalinfo = [];
-            allargs = [];
-            outs = [];
-            
-            % Screen flip with timing
-            fliptime = vbl - vblhis
-            vblhis = vbl;
-            Screen('Flip', gr.window_main, [], [], 1);
-            
-            flipcount = flipcount + 1;
-            
-            % Monitor updates (less frequent)
-            if flipcount > 3
-                Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
-                Screen('Flip', gr.window_monitor, [], [], 2);
-                updategui(gr);
-                runonce = 0;
-                flipcount = 0;
-            end
-            
-            getCommandsFunc(graphicsport);
-            flipped = 1;
-        end
-    else
-        % Just check for new commands if buffer is empty
-        getCommandsFunc(graphicsport);
-        pause(0.001); % Small pause to prevent CPU hogging
-    end
-end
+            setgrid(gr);
+            Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
 
-% Cleanup after trial - trim arrays to actual size used
-if gr.actualFlipCount > 0
-    gr.fliptimes = gr.fliptimes(1:gr.actualFlipCount);
-    gr.commandIDs = gr.commandIDs(1:gr.actualFlipCount);
-end
-if gr.stateCount > 0
-    gr.state_history = gr.state_history(1:gr.stateCount);
+            gr.newsize=Screen('GlobalRect',gr.window_monitor);
+            gr.newsize_true(1)=gr.newsize(3)-gr.newsize(1);
+            gr.newsize_true(2)=gr.newsize(4)-gr.newsize(2);
+            gr.winparams=Screen('PanelFitter', gr.window_monitor);
+            gr.winparams(1:4)=ceil(gr.winparams(1:4)*gr.scalefactor);
+            gr.scalefactor=1;
+            gr.winparams([1,3])=ceil(gr.winparams([1,3])+gr.left_right);
+            gr.left_right=0;
+            gr.winparams([2,4])=ceil(gr.winparams([2,4])+gr.up_down);
+            gr.up_down=0;
+            Screen('PanelFitter', gr.window_monitor, gr.winparams);
+
+            Screen('Flip',gr.window_monitor);
+            Screen('Flip',gr.window_main);
+            updategui(gr);
+
+            gr.functionsbuffer=[];
+            Screen('Close');
+        end
+    catch e
+        disp(e.message)
+    end
 end
 %% callback function that does the graphics handling
     function getCommands(graphicsport,~)

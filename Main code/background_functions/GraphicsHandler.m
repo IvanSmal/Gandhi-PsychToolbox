@@ -164,10 +164,9 @@ while 1
                     fliptime=vbl-vblhis;
                     vblhis=vbl;
 
-                    vbl=getsecs;
-                    Screen('Flip',gr.window_main,[],[],1);
+                    % vbl=getsecs;
+                    vbl = Screen('Flip',gr.window_main);
                     flipcount=flipcount+1;
-
 
                     if flipcount>3
                         Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);

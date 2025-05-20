@@ -16,6 +16,7 @@ classdef eyeinfo < handle
         function obj=eyeinfo
             ini = IniConfig();
             ini.ReadFile('inis/ScreenParams.ini');
+
         try
             obj.xgain=ini.GetValues('eye calibration','xgain');
             obj.ygain=ini.GetValues('eye calibration','ygain');
@@ -26,7 +27,7 @@ classdef eyeinfo < handle
             obj.yoffset=ini.GetValues('eye calibration','yoffset');
         catch
             failcount=0;
-            while failcount < 3
+            while failcount < 50
                 try
                     obj.xgain=ini.GetValues('eye calibration','xgain');
                     obj.ygain=ini.GetValues('eye calibration','ygain');

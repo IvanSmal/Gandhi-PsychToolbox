@@ -286,9 +286,9 @@ end
     function dumpdata(fname)
         gr;
         temptr=[];
-        trname=[];
-        disp('trying to dump data')
+        trname=[];        
         fname=strtrim(fname);
+        disp(['trying to dump data to' fname]);
         temptr=load(fname);
         trname=fields(temptr);
         temptr.(trname{:}).data.graphics_fliptimes.fliptimes=gr.fliptimes;

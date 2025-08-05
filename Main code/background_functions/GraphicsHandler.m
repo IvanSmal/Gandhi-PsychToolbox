@@ -123,6 +123,10 @@ disp('-----Graphics Handler-----')
 
 seteye
 % monitorflipped=0
+%% TESTING MOVIE LOGIC
+gr.movie = Screen('OpenMovie', gr.window_monitor, '/home/gandhi/Documents/MATLAB/Gandhi-PsychToolboxMERGER/Gandhi-PsychToolbox/Main code/assets/movie.mp4');
+disp('loaded movie')
+% Screen('PlayMovie', gr.movie, 1);
 %% keep function alive
 while 1
     try %error handler
@@ -166,12 +170,17 @@ while 1
 
                     vbl=getsecs;
                     Screen('Flip',gr.window_main,[],[],1);
+                    if ~isempty(gr.texture)
+                        if  gr.texture >= 0
+                        Screen('Close',gr.texture)
+                        end
+                    end
                     flipcount=flipcount+1;
 
 
                     if flipcount>3
                         Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
-                        Screen('Flip',gr.window_monitor,[],[],2);
+                        Screen('Flip',gr.window_monitor,[],[],1);
                         updategui(gr);
                         runonce=0;
                         flipcount=0;
@@ -217,7 +226,7 @@ while 1
             updategui(gr);
 
             gr.functionsbuffer=[];
-            Screen('Close');
+            % Screen('Close');
         end
     catch e
         disp(e.message)
@@ -286,9 +295,9 @@ end
     function dumpdata(fname)
         gr;
         temptr=[];
-        trname=[];        
+        trname=[];
+        disp('trying to dump data')
         fname=strtrim(fname);
-        disp(['trying to dump data to' fname]);
         temptr=load(fname);
         trname=fields(temptr);
         temptr.(trname{:}).data.graphics_fliptimes.fliptimes=gr.fliptimes;
@@ -372,7 +381,36 @@ end
                         end
                     end
                 else
-                    Screen(args{:});
+
+                    %% movie logic
+                    if (isstring(args{1}) || ischar(args{1})) && matches(args{1},'PlayMovie','IgnoreCase',true)
+                        if ~gr.movieplaying
+                            % Screen('PlayMovie', gr.movie, 0);
+                            % Screen('SetMovieTimeIndex', gr.movie, 1)
+                            Screen('PlayMovie', gr.movie, 1);
+                            Screen('SetMovieTimeIndex', gr.movie, 0)
+                            disp('movie playing')
+                            gr.movieplaying=1;
+                        end
+                        gr.movie
+                        gr.texture=Screen('GetMovieImage', gr.window_main, gr.movie);
+                        if ~isempty(gr.texture) && gr.texture >= 0
+                        Screen('DrawTexture', gr.window_main, gr.texture);
+                        end
+                        % gr.monitortexture=Screen('MakeTexture', gr.window_monitor, gr.monitormovieplaceholder);
+                        % Screen('DrawTexture', gr.window_monitor, gr.monitortexture);
+                    elseif (isstring(args{1}) || ischar(args{1})) && matches(args{1},'CloseMovie','IgnoreCase',true)
+                        gr.movieplaying=0;
+                        disp('movie closed')
+                        Screen('Close',gr.texture)
+                        Screen('PlayMovie', gr.movie, 0);
+                        % Screen('CloseMovie', gr.movie);
+                    end
+
+                    if ~(isstring(args{1}) || ischar(args{1})) && matches(args{1},'PlayMovie','IgnoreCase',true) &&...
+                            ~(isstring(args{1}) || ischar(args{1})) && matches(args{1},'CloseMovie','IgnoreCase',true)
+                        Screen(args{:});
+                    end
                 end
             end
 
@@ -394,19 +432,6 @@ end
             %     writeline(graphicsport,strcat('mh.graphicssent=0;', outstr),'0.0.0.0',2020)
             % end
 
-            %% movie logic
-            % if (isstring(args{1}) || ischar(args{1})) && matches(args{1},'PlayMovie','IgnoreCase',true)
-            %     gr.movieplaying=1;
-            %     disp('movie playing')
-            % elseif (isstring(args{1}) || ischar(args{1})) && matches(args{1},'CloseMovie','IgnoreCase',true)
-            %     gr.movieplaying=0;
-            %     disp('movie closed')
-            % end
-            % if gr.movieplaying==1
-            %     gr.texture=Screen('GetMovieImage', gr.window_main, gr.movie);
-            %     gr.monitortexture=Screen('MakeTexture', gr.window_monitor, gr.monitormovieplaceholder);
-            %     disp('got texture')
-            % end
             clear args
         end
         clear args args_uncut  outs   additionalinfo

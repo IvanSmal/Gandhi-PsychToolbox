@@ -31,7 +31,7 @@ function RewardHandler
     
     while 1 % keep it alive
         try % error catcher
-            ini.ReadFile('/home/gandhilab/Documents/MATLAB/GandhiToolboxMERGER/Gandhi-PsychToolbox/Main code/inis/ScreenParams.ini');
+            ini.ReadFile('/home/gandhi/Documents/MATLAB/Gandhi-PsychToolboxMERGER/Gandhi-PsychToolbox/Main code/inis/ScreenParams.ini');
             manreward = ini.GetValues('reward', 'reward');
             [~, ~, events] = xippmex('digin');
             if ~isempty(events) && any([events.reason] == 16) && any([events.sma4] > 0)
@@ -40,9 +40,15 @@ function RewardHandler
                 catch e
                     disp(['Error in sendreward: ' e.message]);
                 end
+            elseif ~isempty(events) && any([events.reason] == 40) && any([events.sma3] > 0)
+                try
+                    xippmex('digout', 3, 0);
+                catch e
+                    disp(['Error in stopping reward: ' e.message]);
+                end
             end
             [~, ~, ~] = xippmex('digin'); % clear digital buffer
-            xippmex('digout', 3, 0);
+            
             pause(0.00001)
         catch e
             disp(['Main loop error: ' e.message]);
@@ -82,6 +88,14 @@ function RewardHandler
             tic;
             xippmex('digout', 3, 1);
             while tnow < (tstart + duration)
+                [~, ~, events] = xippmex('digin');
+                if ~isempty(events) && all([events.sma3] == 0)
+                    try
+                        xippmex('digout', 3, 1);
+                    catch e
+                        disp(['Error in stopping reward: ' e.message]);
+                    end
+                end
                 pause(0.001)
                 tnow = getsecs;
             end

@@ -124,7 +124,7 @@ disp('-----Graphics Handler-----')
 seteye
 % monitorflipped=0
 %% TESTING MOVIE LOGIC
-gr.movie = Screen('OpenMovie', gr.window_monitor, '/home/gandhi/Documents/MATLAB/Gandhi-PsychToolboxMERGER/Gandhi-PsychToolbox/Main code/assets/movie.mp4');
+gr.movie = Screen('OpenMovie', gr.window_monitor, '/home/gandhilab/Documents/MATLAB/GandhiToolboxMERGER/Gandhi-PsychToolbox/Main code/assets/movie.mp4');
 disp('loaded movie')
 % Screen('PlayMovie', gr.movie, 1);
 %% keep function alive

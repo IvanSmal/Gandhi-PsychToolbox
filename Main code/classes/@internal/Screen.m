@@ -1,28 +1,29 @@
 function varargout = Screen(mh, varargin)
 % Create a simpler hash for comparison
 try
-    % Faster hashing approach using typecast for numeric operations
-    hashValues = zeros(1, length(varargin), 'double');
-    for i = 1:length(varargin)
-        if isnumeric(varargin{i})
-            % Use direct sum on vectorized data without double conversion
-            hashValues(i) = sum(varargin{i}(:));
-        elseif ischar(varargin{i})
-            % Avoid double conversion for character arrays
-            hashValues(i) = sum(uint8(varargin{i}));
-        elseif isstring(varargin{i})
-            % Convert string to char first for faster processing
-            hashValues(i) = sum(uint8(char(varargin{i})));
-        elseif isobject(varargin{i})
-            hashValues(i) = i * 1000; % Simple object identifier
-        else
-            hashValues(i) = i;
-        end
-    end
-    cmd_hash = sprintf('%d', sum(hashValues));
-catch
-    % Fallback if hashing fails
-    cmd_hash = sprintf('%d', randi(1000000));
+%     % Faster hashing approach using typecast for numeric operations
+%     hashValues = zeros(1, length(varargin), 'double');
+%     for i = 1:length(varargin)
+%         if isnumeric(varargin{i})
+%             % Use direct sum on vectorized data without double conversion
+%             hashValues(i) = sum(varargin{i}(:));
+%         elseif ischar(varargin{i})
+%             % Avoid double conversion for character arrays
+%             hashValues(i) = sum(uint8(varargin{i}));
+%         elseif isstring(varargin{i})
+%             % Convert string to char first for faster processing
+%             hashValues(i) = sum(uint8(char(varargin{i})));
+%         elseif isobject(varargin{i})
+%             hashValues(i) = i * 1000; % Simple object identifier
+%         else
+%             hashValues(i) = i;
+%         end
+%     end
+%     cmd_hash = sprintf('%d', sum(hashValues));
+% catch
+    % commented out hashing above because i think it caused issues. all
+    % commands should have unique hash now
+    cmd_hash = sprintf('%d', randi(10000000));
 end
 
 % Fast path for cached output

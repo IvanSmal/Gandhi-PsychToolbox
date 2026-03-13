@@ -12,7 +12,7 @@ for i=1:50
     % mh.evalgraphics(['gr.activestatename =' '''' mh.activestatename '''' ';gr.flipped=0;'])
     % writeline(mh.graphicsport,'trialstart','0.0.0.0',2023);
     mh.Screen('sendtogr')
-    if justonce==1;
+    if justonce==1
     mh.makesound('sine',850,1,0.3);
     end
     pause(0.001)

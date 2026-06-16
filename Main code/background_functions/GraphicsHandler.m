@@ -11,8 +11,11 @@ xippmex;
 vblhis=0;
 vbl=0;
 warning ('off','all');
+
 %% set up udp port
-graphicsport = udpport("LocalPort",2021, "timeout", 0.02);
+% GraphicsHandler listens on 2021 (local) and sends back to MHost2 on 2020.
+% Both processes run on the same machine so remote IP is 127.0.0.1.
+graphicsport = matlabUDP_gandhi('open', '127.0.0.2', '127.0.0.1', 2020);
 
 %% initiate a bunch of gr stuff
 gr.screenparams= IniConfig();
@@ -122,15 +125,9 @@ warning('off')
 disp('-----Graphics Handler-----')
 
 seteye
-% monitorflipped=0
-%% TESTING MOVIE LOGIC
-% gr.movie = Screen('OpenMovie', gr.window_monitor, '/home/gandhilab/Documents/MATLAB/GandhiToolboxMERGER/Gandhi-PsychToolbox/Main code/assets/movie.mp4');
-% disp('loaded movie')
-% Screen('PlayMovie', gr.movie, 1);
 %% keep function alive
 while 1
     try %error handler
-        % pause(0.00001) %allow for callbacks to be checked
         getCommands(graphicsport)
         %% evaluate graphics buffer
         runonce=0;
@@ -196,11 +193,10 @@ while 1
         end
         %% this is to show eye when trials are not running
         while ~gr.trialstarted
-            % send ready signal to mh
-            writeline(graphicsport,'isGraphicsReady=1;','0.0.0.0',2020);
-
+            % send ready signal to mh on port 2020
+            matlabUDP_gandhi('send', graphicsport, 'isGraphicsReady=1;');
             getCommands(graphicsport)
-            writeline(graphicsport,'mh.readyforflip=1;','0.0.0.0',2020);
+            matlabUDP_gandhi('send', graphicsport, 'mh.readyforflip=1;');
             gr=makegridlines(gr);
             try
                 seteye;
@@ -232,10 +228,15 @@ while 1
         disp(e.message)
     end
 end
-%% callback function that does the graphics handling
+
+%% Receive one pending command and dispatch it.
+%  matlabUDP_gandhi('receive') is non-blocking: returns '' if nothing waiting.
     function getCommands(graphicsport,~)
         try
-            command=readline(graphicsport);
+            command = matlabUDP_gandhi('receive', graphicsport);
+            if isempty(command)
+                return
+            end
             if contains(command,'SetEye','IgnoreCase',true)
                 seteye;
             elseif contains(command,'execute','IgnoreCase',true)
@@ -247,7 +248,7 @@ end
         end
     end
 
-%% recive and execute Screen calls
+%% receive and execute Screen calls
     function executeScreen(command)
 
         args_udp={};
@@ -261,9 +262,10 @@ end
         gr.functionsbuffer(end+1).outs=outs_udp;
         gr.functionsbuffer(end+1).additionalinfo=additionalinfo_udp;
         gr.commid_udp=commandID_udp;
-        flush(graphicsport);
+        udpDrain(graphicsport);   % discard any queued datagrams (replaces flush)
 
     end
+
 %% set eye calibration
     function seteye
         try
@@ -286,12 +288,15 @@ end
             disp(e.message)
         end
     end
-%% execut raw stream
+
+%% execute raw stream
     function rawexecute(command)
         gr;
+        graphicsport;  % bring socket index into eval scope
         eval(erase(command,'execute'))
     end
-%%data save function
+
+%% data save function
     function dumpdata(fname)
         gr;
         temptr=[];
@@ -307,9 +312,10 @@ end
         save(fname,'-struct','temptr');
         disp(join(['saved ',trname{:}]))
     end
-%%parse the commands without drawing'
+
+%% parse the commands without drawing
     function [additionalinfo,allargs,outs]=parsecommands(gr)
-        flush(graphicsport);
+        udpDrain(graphicsport);   % discard any queued datagrams (replaces flush)
         gr.flipped=0;
         args_uncut={};
         outs={};
@@ -334,7 +340,7 @@ end
     end
 
     function DrawScreen(gr,additionalinfo,allargs,outs)
-        for i=1:length(allargs) %drawing satarts here
+        for i=1:length(allargs) %drawing starts here
             args=allargs{i};
             %% check if user wants to set a graphics parameter
             if length(args)>2 &&...
@@ -385,8 +391,6 @@ end
                     %% movie logic
                     if (isstring(args{1}) || ischar(args{1})) && matches(args{1},'PlayMovie','IgnoreCase',true)
                         if ~gr.movieplaying
-                            % Screen('PlayMovie', gr.movie, 0);
-                            % Screen('SetMovieTimeIndex', gr.movie, 1)
                             Screen('PlayMovie', gr.movie, 1);
                             Screen('SetMovieTimeIndex', gr.movie, 0)
                             disp('movie playing')
@@ -397,14 +401,11 @@ end
                         if ~isempty(gr.texture) && gr.texture >= 0
                         Screen('DrawTexture', gr.window_main, gr.texture);
                         end
-                        % gr.monitortexture=Screen('MakeTexture', gr.window_monitor, gr.monitormovieplaceholder);
-                        % Screen('DrawTexture', gr.window_monitor, gr.monitortexture);
                     elseif (isstring(args{1}) || ischar(args{1})) && matches(args{1},'CloseMovie','IgnoreCase',true)
                         gr.movieplaying=0;
                         disp('movie closed')
                         Screen('Close',gr.texture)
                         Screen('PlayMovie', gr.movie, 0);
-                        % Screen('CloseMovie', gr.movie);
                     end
 
                     if ~(isstring(args{1}) || ischar(args{1})) && matches(args{1},'PlayMovie','IgnoreCase',true) &&...
@@ -414,31 +415,14 @@ end
                 end
             end
 
-            %% if output is requested
-            % elseif ~isempty(outs)
-            %     a1=[];a2=[];a3=[];a4=[];a5=[];a6=[];a7=[];
-            %     evalstring=strcat('[',sprintf('%s,',outs{:}),']');
-            %
-            %     if length(args)>=2 %this needs to change to better logic
-            %         args{2}=gr.window_main;
-            %     end
-            %
-            %     eval(strcat(evalstring,'=Screen(args{:});'));
-            %
-            %     outstr='';
-            %     for ii=1:length(outs)
-            %         outstr=strcat(outstr,outs{ii},'=',string(eval(outs{ii})),';');
-            %     end
-            %     writeline(graphicsport,strcat('mh.graphicssent=0;', outstr),'0.0.0.0',2020)
-            % end
-
             clear args
         end
         clear args args_uncut  outs   additionalinfo
         gr.functionsbuffer=[];
         Screen('DrawingFinished',gr.window_main);
     end
-%%make grid lines function
+
+%% make grid lines function
     function gr=makegridlines(gr)
         gr.pixelsforlines=deg2pix(gr.toconvert,'cart');
         gr.xlines=reshape(repmat(gr.pixelsforlines(:,1),2)',1,[]);
@@ -454,7 +438,8 @@ end
         gr.center_circle=[truezero-10 truezero+10;...
             truezero-degadds truezero+degadds]';
     end
-%%set grid
+
+%% set grid
     function gr=setgrid(gr)
         Screen('TextSize', gr.window_monitor,gr.fontsize);
         try
@@ -541,6 +526,7 @@ end
         % Show the figure after all components are created
         gr.UIFigure.Visible = 'on';
     end
+
     function updategui(gr)
         if strcmp(gr.TurnthisoffifthiswindowslowsdowngraphicsSwitch.Value,'On')
             gr.photodiodesquarecolorLamp.Color = gr.diode_color;
@@ -548,12 +534,14 @@ end
             eyepos=round(pix2deg(gr.eye.geteye,'cart'),1);
             gr.xpositionEditField.Value=num2str(eyepos(1));
             gr.ypositionEditField.Value=num2str(eyepos(2));
-        else
-            % gr.xpositionEditField.Value='off';
-            % gr.ypositionEditField.Value='off';
-            % gr.StateEditField.Value = 'out of trial';
         end
     end
+
+%% Helper: drain all pending datagrams from the socket (replaces flush).
+    function udpDrain(sock)
+        while matlabUDP_gandhi('check', sock)
+            matlabUDP_gandhi('receive', sock);
+        end
+    end
+
 end
-
-

@@ -668,7 +668,9 @@ classdef MHost2_exported < matlab.apps.AppBase
                     app.mhpass=mh;
                     app.running=1;
 
-                    flush(mh.graphicsport);% flush the graphics
+                    while matlabUDP_gandhi('check', mh.graphicsport)
+                        matlabUDP_gandhi('receive', mh.graphicsport);
+                    end % flush the graphics
 
                     xippmex('close'); %this might prevent xippmex errors
                     
@@ -928,7 +930,9 @@ classdef MHost2_exported < matlab.apps.AppBase
             else
                 mh.failcounter=0;
             end
-            flush(mh.graphicsport);% flush the graphics
+            while matlabUDP_gandhi('check', mh.graphicsport)
+                matlabUDP_gandhi('receive', mh.graphicsport);
+            end % flush the graphics
             mh.runtrial=1; % activate next trial
 
             app.calibration_check(mh);
@@ -1073,9 +1077,11 @@ classdef MHost2_exported < matlab.apps.AppBase
             end
             for i=1:howmany
                 try
-                    com=readline(app.mhpass.graphicsport);
+                    com=matlabUDP_gandhi('receive', app.mhpass.graphicsport);
                     eval(com)
-                    flush(app.mhpass.graphicsport)
+                    while matlabUDP_gandhi('check', app.mhpass.graphicsport)
+                        matlabUDP_gandhi('receive', app.mhpass.graphicsport);
+                    end
                 end
                 if exist('isGraphicsReady','var') % checking if graphics are still working
                     if isGraphicsReady==1
@@ -1182,9 +1188,10 @@ classdef MHost2_exported < matlab.apps.AppBase
             %% start the mh structure
             mh=internal;
             mh.runtrial=1;
-            mh.graphicsport = udpport("LocalPort",2020, "Timeout",1); %start udp port
-            app.mhpass=mh;
+            mh.graphicsport = matlabUDP_gandhi('open', '127.0.0.1', '127.0.0.2', 2020); %start udp port %start udp port
+            disp('1192')
             mh.rewardport = udpport("LocalPort",2024, "Timeout",0.001); %start udp port
+            app.mhpass=mh;
 
             %% set up initial conditions from previous session
             isini=app.ini.ReadFile('inis/ScreenParams.ini');
@@ -1546,37 +1553,37 @@ classdef MHost2_exported < matlab.apps.AppBase
 
         % Button pushed function: ZoomInButton
         function ZoomInButtonPushed(app, event)
-            writeline(app.mhpass.graphicsport,'executegr.scalefactor=0.9;','0.0.0.0',2021)
+            matlabUDP_gandhi('send', app.mhpass.graphicsport, 'executegr.scalefactor=0.9;');
         end
 
         % Button pushed function: ZoomOutButton
         function ZoomOutButtonPushed(app, event)
-            writeline(app.mhpass.graphicsport,'executegr.scalefactor=1.1;','0.0.0.0',2021)
+            matlabUDP_gandhi('send', app.mhpass.graphicsport, 'executegr.scalefactor=1.1;');
         end
 
         % Button pushed function: ResetZoomButton
         function ResetZoomButtonPushed(app, event)
-            writeline(app.mhpass.graphicsport,'executeScreen(''PanelFitter'', gr.window_monitor,gr.original_monitor_params);','0.0.0.0',2021)
+            matlabUDP_gandhi('send', app.mhpass.graphicsport, 'executeScreen(''PanelFitter'', gr.window_monitor,gr.original_monitor_params);');
         end
 
         % Button pushed function: LeftButton
         function LeftButtonPushed(app, event)
-            writeline(app.mhpass.graphicsport,'executegr.left_right=20;','0.0.0.0',2021)
+            matlabUDP_gandhi('send', app.mhpass.graphicsport, 'executegr.left_right=20;');
         end
 
         % Button pushed function: RightButton
         function RightButtonPushed(app, event)
-            writeline(app.mhpass.graphicsport,'executegr.left_right=-20;','0.0.0.0',2021)
+            matlabUDP_gandhi('send', app.mhpass.graphicsport, 'executegr.left_right=-20;');
         end
 
         % Button pushed function: DownButton
         function DownButtonPushed(app, event)
-            writeline(app.mhpass.graphicsport,'executegr.up_down=20;','0.0.0.0',2021)
+            matlabUDP_gandhi('send', app.mhpass.graphicsport, 'executegr.up_down=20;');
         end
 
         % Button pushed function: UpButton
         function UpButtonPushed(app, event)
-            writeline(app.mhpass.graphicsport,'executegr.up_down=-20;','0.0.0.0',2021)
+            matlabUDP_gandhi('send', app.mhpass.graphicsport, 'executegr.up_down=-20;');
         end
 
         % Button pushed function: SetGuidesButton
@@ -1593,7 +1600,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                 app.XYguidelinesEditField.Value,';',...
                 'gr.fontsize=',...
                 fontsize,';']);
-            writeline(app.mhpass.graphicsport,commandstring,'0.0.0.0',2021)
+            matlabUDP_gandhi('send', app.mhpass.graphicsport, commandstring);
         end
 
         % Value changed function: RewardDuration

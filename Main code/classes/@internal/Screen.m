@@ -1,34 +1,11 @@
 function varargout = Screen(mh, varargin)
-% Create a simpler hash for comparison
+% Create a simple random hash for this command
 try
-%     % Faster hashing approach using typecast for numeric operations
-%     hashValues = zeros(1, length(varargin), 'double');
-%     for i = 1:length(varargin)
-%         if isnumeric(varargin{i})
-%             % Use direct sum on vectorized data without double conversion
-%             hashValues(i) = sum(varargin{i}(:));
-%         elseif ischar(varargin{i})
-%             % Avoid double conversion for character arrays
-%             hashValues(i) = sum(uint8(varargin{i}));
-%         elseif isstring(varargin{i})
-%             % Convert string to char first for faster processing
-%             hashValues(i) = sum(uint8(char(varargin{i})));
-%         elseif isobject(varargin{i})
-%             hashValues(i) = i * 1000; % Simple object identifier
-%         else
-%             hashValues(i) = i;
-%         end
-%     end
-%     cmd_hash = sprintf('%d', sum(hashValues));
-% catch
-    % commented out hashing above because i think it caused issues. all
-    % commands should have unique hash now
     cmd_hash = sprintf('%d', randi(10000000));
 end
 
 % Fast path for cached output
 if strcmp(mh.cachedout, cmd_hash) || mh.holdbuffer
-    % If command is 'sendtogr', process that separately
     if nargin > 1 && strcmpi(varargin{1}, 'sendtogr') && ~isempty(mh.graphicscommandbuffer)
         processSendToGr(mh);
     end
@@ -41,9 +18,8 @@ mh.cachedout = cmd_hash;
 % Handle special commands
 if nargin > 1
     if strcmpi(varargin{1}, 'clearbuffer') || strcmpi(varargin{1}, 'sendtogr')
-        % Clear buffer more efficiently
         if strcmpi(varargin{1}, 'clearbuffer')
-            writeline(mh.graphicsport, 'executegr.functionsbuffer=[];', '0.0.0.0', 2021);
+            matlabUDP_gandhi('send', mh.graphicsport, 'executegr.functionsbuffer=[];');
         elseif strcmpi(varargin{1}, 'sendtogr') && ~isempty(mh.graphicscommandbuffer)
             processSendToGr(mh);
         end
@@ -51,10 +27,9 @@ if nargin > 1
     end
 end
 
-% Preallocate command string with estimated size
+% Build command string for this Screen call
 numArgs = length(varargin);
-estimatedCmdLength = numArgs * 50; % Estimate average 50 chars per argument
-cmdStr = strings(1, numArgs + 2); % +2 for additional commands
+cmdStr = strings(1, numArgs + 2);
 cmdIdx = 1;
 
 % Process arguments
@@ -64,7 +39,7 @@ for i = 1:numArgs
     mh.lastcommand = mh.lastcommand + 1;
 end
 
-% Handle texture case - faster string manipulation
+% Handle texture case
 if numArgs > 0 && strcmpi(varargin{1}, 'DrawTexture') && numArgs >= 3
     if ischar(varargin{3}) || isstring(varargin{3})
         varval = strrep(varargin{3}, '.texture', '.monitortexture');
@@ -73,7 +48,7 @@ if numArgs > 0 && strcmpi(varargin{1}, 'DrawTexture') && numArgs >= 3
     end
 end
 
-% Handle output variables more efficiently
+% Handle output variables
 if nargout > 0
     outStr = strings(1, nargout);
     for i = 1:nargout
@@ -87,37 +62,38 @@ end
 cmdStr(cmdIdx) = sprintf('args_udp{%d}=''endcommand'';', mh.lastcommand);
 mh.lastcommand = mh.lastcommand + 1;
 
-% Join strings - more efficient than strjoin on cell arrays
-mh.graphicscommandbuffer = mh.graphicscommandbuffer + join(cmdStr(1:cmdIdx), '');
+% Accumulate into buffer (kept as char throughout)
+mh.graphicscommandbuffer = [mh.graphicscommandbuffer, char(join(cmdStr(1:cmdIdx), ''))];
 
-% Handle output retrieval
+% Handle output retrieval (blocking receive loop)
 if nargout > 0
-    commands = readline(mh.graphicsport);
-    eval(commands);  % Consider replacing with more efficient code if possible
-    
-    % Preallocate output
+    com = '';
+    t = tic;
+    while isempty(com) && toc(t) < 1
+        com = matlabUDP_gandhi('receive', mh.graphicsport);
+    end
+    eval(com);
+
     varargout = cell(nargout, 1);
     for i = 1:nargout
-        varargout{i} = eval(['a' num2str(i)]);  % Consider more efficient approach
+        varargout{i} = eval(['a' num2str(i)]);
     end
 end
 
 end
 
 function processSendToGr(mh)
-% Extracted sendtogr logic for cleaner code organization
 if mh.commandID == 0
     mh.commandID = getsecs;
 end
 
-% Send state name once - combine operations
+% Send active state name
 mh.evalgraphics(['gr.activestatename =''' mh.activestatename ''';']);
-writeline(mh.graphicsport, mh.activestatename, '0.0.0.0', 2023);
+matlabUDP_gandhi('send', mh.graphicsport, char(mh.activestatename));
 
-% Send commands in one batch - faster string formatting
-cmdBatch = strjoin([mh.graphicscommandbuffer, ';commandID_udp=', num2str(mh.commandID), ';']);
-    
-    writeline(mh.graphicsport, cmdBatch, '0.0.0.0', 2021);
+% Send full command batch — explicitly char() since strcat/[] may yield string
+cmdBatch = [mh.graphicscommandbuffer, ';commandID_udp=', num2str(mh.commandID), ';'];
+matlabUDP_gandhi('send', mh.graphicsport, char(cmdBatch));
 
 % Reset state
 mh.lastsenttime = getsecs;
@@ -128,7 +104,6 @@ mh.commandID = 0;
 end
 
 function formatted = formatArgument(mh, arg, argIdx)
-% Optimized argument formatting function
 if ischar(arg)
     if contains(arg, 'gr')
         formatted = arg;
@@ -136,10 +111,8 @@ if ischar(arg)
         formatted = ['''' arg ''''];
     end
 elseif isnumeric(arg)
-    % More efficient numeric conversion
     formatted = mat2str(arg);
 elseif isobject(arg)
-    % Optimize object handling
     targname = arg.name;
     pos = mh.trialtarg(targname, 'getpos');
     formatted = mat2str(pos);

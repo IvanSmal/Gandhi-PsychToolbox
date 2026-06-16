@@ -1,20 +1,21 @@
 function response = WaitForGraphics(mh)
 mh.graphicssent=0;
-tic
-while toc<1 && mh.graphicssent==0
-        str=('writeline(graphicsport,''mh.graphicssent=1;'',''0.0.0.0'',2020);');
-        mh.evalgraphics(str);
-        com=readline(mh.graphicsport);
-        tic
-        try %this is a dirty way to make sure 'com' is evaluatable
+t = tic;
+while toc(t) < 1 && mh.graphicssent==0
+    % Ask GraphicsHandler to echo back a flag via matlabUDP_gandhi
+    str = 'matlabUDP_gandhi(''send'', graphicsport, ''mh.graphicssent=1;'');';
+    mh.evalgraphics(str);
+    com = matlabUDP_gandhi('receive', mh.graphicsport);
+    if ~isempty(com)
+        try
             eval(com);
         catch
         end
+    end
 end
 if mh.graphicssent==1
     response = 1;
-elseif mh.graphicssent==0
+else
     response = 0;
 end
-
 end

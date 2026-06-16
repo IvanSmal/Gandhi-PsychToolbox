@@ -1,3 +1,3 @@
-function evalgraphics(obj,command)
-writeline(obj.graphicsport,join(['execute' command]),'0.0.0.0',2021)
+function evalgraphics(obj, command)
+matlabUDP_gandhi('send', obj.graphicsport, char(join(['execute' command])))
 end

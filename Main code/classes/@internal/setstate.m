@@ -18,6 +18,6 @@ name_hex=dec2hex(name); %convert to hex
 
 for i=1:size(name_hex,1); xippmex('digout', 5, hex2dec(name_hex(i,:)));end%convert hex to numbers and send as digital stamp
 
-writeline(mh.graphicsport, name, 'localhost', 2024 )
+writeline(mh.rewardport, name, 'localhost', 2024 )
 disp(name)
 end

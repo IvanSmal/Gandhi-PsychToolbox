@@ -1,6 +1,6 @@
-/* MATLABUDP2.H
+/* MATLABUDP_GANDHI.H
  *
- *  Header file for matlabUDP2.c
+ *  Header file for matlabUDP_gandhi.c
  *
  *  Original code by Ben Heasly (Josh Gold lab, UPenn, ~2006).
  *  Modified by Ryan Williamson (Smith Lab) for multi-socket support.
@@ -9,8 +9,8 @@
  *  added nextSocket() error return.
  */
 
-#ifndef MATLABUDP2_H_
-#define MATLABUDP2_H_
+#ifndef MATLABUDP_GANDHI_H_
+#define MATLABUDP_GANDHI_H_
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,4 +55,4 @@ void mexFunction(
     const mxArray *prhs[]
 );
 
-#endif /* MATLABUDP2_H_ */
+#endif /* MATLABUDP_GANDHI_H_ */

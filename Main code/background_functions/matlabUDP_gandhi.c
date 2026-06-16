@@ -1,4 +1,4 @@
-/* matlabUDP2.C
+/* matlabUDP_gandhi.C
  *
  *  C MEX routines for fast UDP communication from MATLAB.
  *
@@ -27,7 +27,7 @@
  *    matlabUDP2('closeall')
  */
 
-#include "matlabUDP2.h"
+#include "matlabUDP_gandhi.h"
 
 /* -----------------------------------------------------------------------
  * mexAtExit handler — called when MEX is cleared or MATLAB shuts down.

@@ -35,7 +35,7 @@ close all;
 % Here we call some default settings for setting up Psychtoolbox
 PsychDefaultSetup(2);
 
-% Screen('Resolution',1,1920,1080,120); %set resolutions
+Screen('Resolution',1,1920,1080,120); %set resolutions
 
 % priority
 Priority(90);

@@ -15,10 +15,11 @@ warning ('off','all');
 graphicsport = udpport("LocalPort",2021, "timeout", 0.02);
 
 %% initiate a bunch of gr stuff
-gr.screenparams= IniConfig();
-gr.screenparams.ReadFile(filepaths_ini.GetValues('paths','ini_screen'));
-bgcolor=gr.screenparams.GetValues('screen info','background');
+screenIni = IniConfig();
+screenIni.ReadFile(filepaths_ini.GetValues('paths','ini_screen'));
+bgcolor = screenIni.GetValues('screen info','background');
 gr = graphics;
+gr.screenparams = screenIni; % previously wiped by the 'gr = graphics' line above
 gr.eye=eyeinfo;
 
 %% set up the screens for experiments
@@ -26,7 +27,6 @@ Screen('Preference', 'SkipSyncTests', 1);
 Screen('Preference', 'VisualDebugLevel', 3);
 
 %set the resolution
-% Screen('Resolution',1,1920,1080,120)
 
 % Clear the workspace and the screen
 sca;
@@ -35,7 +35,18 @@ close all;
 % Here we call some default settings for setting up Psychtoolbox
 PsychDefaultSetup(2);
 
-Screen('Resolution',1,1920,1080,120); %set resolutions
+%% stimulus display mode -- rig-specific, so read it from this rig's own ini
+% rig1 drives a native 1080p60 panel and needs no mode change; rig2 drives a 4K
+% panel that must be forced to 1920x1080@120. Missing keys mean "leave it alone".
+stimXres    = screenIni.GetValues('screen info','stim_xres');
+stimYres    = screenIni.GetValues('screen info','stim_yres');
+stimRefresh = screenIni.GetValues('screen info','stim_refresh');
+if ~isempty(stimXres) && ~isempty(stimYres) && ~isempty(stimRefresh)
+    Screen('Resolution', 1, stimXres, stimYres, stimRefresh);
+    fprintf('stimulus display set to %gx%g @ %g Hz from ScreenParams.ini\n', stimXres, stimYres, stimRefresh);
+else
+    disp('no stim_xres/stim_yres/stim_refresh in ScreenParams.ini; display mode left unchanged');
+end
 
 % priority
 Priority(90);

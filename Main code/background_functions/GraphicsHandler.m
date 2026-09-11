@@ -427,7 +427,11 @@ end
                 ok = false; return                      % not loaded, or failed
             end
             if strcmp(gr.resourceKind{id}, 'movie')
-                if wantMonitor, ok = false; return; end % movie is decoded for the display only
+                % The experimenter's window shows the movie too. Textures are
+                % shared between the two windows on this rig, so the monitor
+                % reuses the frame the display just decoded - one decode, two
+                % draws. drawFrame resolves the display first, so by the time
+                % the monitor asks, movieLastTex already holds this frame.
                 % Movies advance at the renderer's rate. GetMovieImage with
                 % waitForImage=0 returns 0 when no NEW frame is ready, which is
                 % most flips for a 30 fps movie on a 60 Hz panel - so keep the

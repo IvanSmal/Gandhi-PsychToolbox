@@ -6,5 +6,9 @@ if nargin < 2 || isempty(p), p = scenePath(); end
 if nargin < 1, writable = false; end
 L = sceneLayout();
 if ~isfile(p), sceneCreate(p); end
-m = memmapfile(p, 'Format', {'double',[L.N 1],'s'}, 'Writable', logical(writable));
+d = dir(p);
+if d.bytes ~= L.CAP*8
+    sceneCreate(p);   % capacity changed (layout revision): rebuild
+end
+m = memmapfile(p, 'Format', {'double',[L.CAP 1],'s'}, 'Writable', logical(writable));
 end

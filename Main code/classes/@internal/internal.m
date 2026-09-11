@@ -72,10 +72,10 @@ classdef internal < matlab.mixin.Copyable
         %reads the newest complete scene at its own refresh rate. Writer
         %never blocks on the renderer, so the two rates are independent.
         sceneMap;            % memmapfile handle, writable
-        sceneVec;            % preallocated scene vector, reused every frame
+        cmdList;             % commands accumulated for the frame being built
         sceneSeq = 0;        % monotonically increasing sequence number
-        nTargetsAcc = 0;     % primitives accumulated so far this frame
-        nOverlayAcc = 0;     % monitor-only annotations this frame
+
+
         sceneSetEye = 0;     % one-shot: tell graphics to reload eye calibration
             
         %stim stuff

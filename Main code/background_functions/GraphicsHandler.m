@@ -152,17 +152,15 @@ while 1
     try %error handler
         getCommands(graphicsport)          % low-rate control only (dumpdata, exit, seteye)
 
-        [v, ok] = sceneRead(sceneMap);
+        [frame, ok] = sceneRead(sceneMap);
         if ~ok
-            % kept tearing: reuse nothing, treat as out-of-trial this pass
-            v = zeros(L.N,1);
+            frame = struct('trialStarted',false,'stateName','null','setEye',false,'cmds',{{}});
         end
 
-        gr.trialstarted = v(L.TRIALSTARTED) > 0;
+        gr.trialstarted = frame.trialStarted;
 
-        % state name travels in the scene; diode flips on transition
-        nm = char(v(L.NAME).');
-        nm = nm(nm > 0);
+        % state name travels with the frame; diode flips on transition
+        nm = frame.stateName;
         if isempty(nm), nm = 'null'; end
         if ~strcmp(gr.state_history{end}, nm)
             gr.state_history{end+1} = nm;
@@ -171,21 +169,21 @@ while 1
             disp(join(["changed diode for state: " nm]));
         end
 
-        if v(L.RESERVED(1)) > 0
+        if isfield(frame,'setEye') && frame.setEye
             try, seteye; catch, end
         end
 
         if gr.trialstarted
-            drawScene(gr, v, L);
+            drawFrame(gr, frame);
             Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
             gr.fliptimes  = [gr.fliptimes getsecs];
-            gr.commandIDs = [gr.commandIDs v(L.SEQ_HEAD)];
+            gr.commandIDs = [gr.commandIDs numel(frame.cmds)];
             Screen('DrawingFinished', gr.window_main);
             Screen('Flip', gr.window_main);
 
             flipcount = flipcount + 1;
             if flipcount >= 3
-                drawMonitorExtras(gr, v, L);
+                drawMonitorExtras(gr);
                 Screen('Flip', gr.window_monitor);
                 updategui(gr);
                 flipcount = 0;
@@ -282,40 +280,37 @@ end
     end
 %%parse the commands without drawing'
 %% draw the scene onto both windows
-    function drawScene(gr, v, L)
-        for k = 1:L.MAX_TARGETS
-            base = L.TARGETS(1) + (k-1)*L.TARGET_WIDTH;
-            if v(base) == 0, continue; end
-            shape = v(base+1);
-            rect  = v(base+2:base+5).';
-            col   = v(base+6:base+8).';
-            drawPrim(gr.window_main,    shape, col, rect, 1);
-            drawPrim(gr.window_monitor, shape, col, rect, 1);
+%% dispatch one frame's Screen calls onto the real windows
+    function drawFrame(gr, frame)
+        for i = 1:numel(frame.cmds)
+            a = frame.cmds{i};
+            if numel(a) < 2, continue; end
+            sel = a{2};
+            rest = a(3:end);
+            if ~(ischar(sel) || isstring(sel))
+                % arg 2 is not a window selector: pass the call through whole
+                try, Screen(a{:}); catch drawErr, disp(drawErr.message); end
+                continue
+            end
+            switch lower(string(sel))
+                case "both"
+                    try, Screen(a{1}, gr.window_main,    rest{:}); catch e1, disp(e1.message); end
+                    try, Screen(a{1}, gr.window_monitor, rest{:}); catch, end
+                case "display"
+                    try, Screen(a{1}, gr.window_main,    rest{:}); catch e2, disp(e2.message); end
+                case "monitor"
+                    try, Screen(a{1}, gr.window_monitor, rest{:}); catch, end
+                otherwise
+                    try, Screen(a{:}); catch e3, disp(e3.message); end
+            end
         end
     end
 
-%% monitor-only extras: grid, eye dot, acceptance windows, diode
-    function drawMonitorExtras(gr, v, L)
+%% monitor-only furniture: grid and eye position
+    function drawMonitorExtras(gr)
         setgrid(gr);
         try, Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]); catch, end
-        for k = 1:L.MAX_OVERLAY
-            base = L.OVERLAYS(1) + (k-1)*L.OVERLAY_WIDTH;
-            if v(base) == 0, continue; end
-            shape = v(base+1);
-            rect  = v(base+2:base+5).';
-            col   = v(base+6:base+8).';
-            drawPrim(gr.window_monitor, shape, col, rect, v(base+9));
-        end
         Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
-    end
-
-    function drawPrim(win, shape, col, rect, penWidth)
-        switch shape
-            case 1, Screen('FillOval',  win, col, rect);
-            case 2, Screen('FillRect',  win, col, rect);
-            case 3, Screen('FrameOval', win, col, rect, penWidth);
-            case 4, Screen('FrameRect', win, col, rect, penWidth);
-        end
     end
 
     function gr=makegridlines(gr)

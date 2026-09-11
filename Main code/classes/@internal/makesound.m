@@ -1,19 +1,21 @@
-function [outputArg1,outputArg2] = makesound(mh, type, hz, amp, dur)
-%MAKESOUND Summary of this function goes here
-%   Detailed explanation goes here
+function [outputArg1,outputArg2] = makesound(mh, soundType, freqHz, amplitude, durationSec)
+%MAKESOUND Ask the SoundGenerator process to play a tone or cue.
+%   soundType: 'sine' (default), 'noise', 'start' or 'reward'.
 %% generate command string
-commid=num2str(mh.activestatetime);
-tp='1';
-if matches(type,'noise')
-    tp='2';
-elseif matches(type,'start')
-    tp='3';
-elseif matches(type,'reward')
-    tp='4';
+commandId=num2str(mh.activestatetime);
+soundTypeCode='1';
+if matches(soundType,'noise')
+    soundTypeCode='2';
+elseif matches(soundType,'start')
+    soundTypeCode='3';
+elseif matches(soundType,'reward')
+    soundTypeCode='4';
 end
 
-commstring=join(['GenerateSound_udp(app,',commid,',', tp,',', num2str(dur),',', num2str(amp),',', num2str(hz),');']);
+% GenerateSound_udp is the SoundGenerator process's own function name - it is
+% evaluated on the far side of the UDP link, so it must not be renamed here.
+commandString=join(['GenerateSound_udp(app,',commandId,',', soundTypeCode,',', num2str(durationSec),',', num2str(amplitude),',', num2str(freqHz),');']);
 %% send the thing using the reward port
-writeline(mh.rewardport,commstring,'0.0.0.0',2025);
+writeline(mh.rewardport,commandString,'0.0.0.0',2025);
 end
 

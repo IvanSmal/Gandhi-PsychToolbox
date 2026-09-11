@@ -41,89 +41,89 @@ classdef target %< handle
 
         function out = getpos(targ,mh, varargin)
 
-            hwidth=targ.size(3)-targ.size(1);
-            hheight=targ.size(4)-targ.size(2);
+            halfWidth=targ.size(3)-targ.size(1);
+            halfHeight=targ.size(4)-targ.size(2);
             if targ.speed==0 && isempty(targ.custompath_x)
 
-                temppos=targ.position;
-                degtype=targ.degreestype;
+                tempPos=targ.position;
+                degType=targ.degreestype;
                 if strcmp(targ.degreestype,'pol') || strcmp(targ.degreestype,'polar') 
-                    [temppos(1),temppos(2)]=pol2cart(deg2rad(temppos(1)),temppos(2));
-                    degtype='cart';
+                    [tempPos(1),tempPos(2)]=pol2cart(deg2rad(tempPos(1)),tempPos(2));
+                    degType='cart';
                 end
-                mh.trial.targets.(targ.name).moving_position=temppos;
-                pixpos=deg2pix(temppos,degtype,mh.screenparams);
+                mh.trial.targets.(targ.name).moving_position=tempPos;
+                pixPos=deg2pix(tempPos,degType,mh.screenparams);
                 
             else
                 if ~any(matches(varargin(:),'continue',IgnoreCase=true))
-                    curstate=mh.activestatename;
-                    tim=getsecs-mh.trial.state.(curstate).time;
-                    mh.targettime=mh.trial.state.(curstate).time;
+                    curState=mh.activestatename;
+                    elapsedSec=getsecs-mh.trial.state.(curState).time;
+                    mh.targettime=mh.trial.state.(curState).time;
                 elseif any(matches(varargin(:),'continue',IgnoreCase=true))
                     try
-                        curstate = varargin{end};
-                        tim=getsecs-mh.trial.state.(curstate).time; 
+                        curState = varargin{end};
+                        elapsedSec=getsecs-mh.trial.state.(curState).time; 
                     catch
-                        tim=getsecs-mh.targettime;
+                        elapsedSec=getsecs-mh.targettime;
                         center=varargin(1);
                     end
                 end
                 
                 if isempty(targ.custompath_x)
-                    targpos=targ.position;
-                    degtype=targ.degreestype;
+                    targPos=targ.position;
+                    degType=targ.degreestype;
                     if strcmp(targ.degreestype,'pol') || strcmp(targ.degreestype,'polar') 
-                        [targpos(1),targpos(2)]=pol2cart(deg2rad(targpos(1)),targpos(2));
-                        degtype='cart';
+                        [targPos(1),targPos(2)]=pol2cart(deg2rad(targPos(1)),targPos(2));
+                        degType='cart';
                     end
 
-                    xyadd=[targ.speed*cosd(targ.direction), targ.speed*sind(targ.direction)];
+                    xyStep=[targ.speed*cosd(targ.direction), targ.speed*sind(targ.direction)];
 
-                    tempx=targpos(1)+xyadd(1)*tim;
-                    tempy=targpos(2)-xyadd(2)*tim;
+                    tempX=targPos(1)+xyStep(1)*elapsedSec;
+                    tempY=targPos(2)-xyStep(2)*elapsedSec;
 
-                    temppos=[tempx tempy];
+                    tempPos=[tempX tempY];
                     mh.trial.targets.(targ.name).moving_position=...
-                        [mh.trial.targets.(targ.name).moving_position; temppos];
+                        [mh.trial.targets.(targ.name).moving_position; tempPos];
                     mh.trial.targets.(targ.name).timestamp=...
                         [mh.trial.targets.(targ.name).timestamp getsecs];
-                    pixpos=deg2pix(temppos,degtype,mh.screenparams);
+                    pixPos=deg2pix(tempPos,degType,mh.screenparams);
 
                 else
                     xf=@(mh,t,x) eval(targ.custompath_x);
                     yf=@(mh,t,y) eval(targ.custompath_y);
                     
-                    tempx=xf(mh,tim*targ.speed,targ.position(1));
-                    tempy=yf(mh,tim*targ.speed,targ.position(2));
+                    tempX=xf(mh,elapsedSec*targ.speed,targ.position(1));
+                    tempY=yf(mh,elapsedSec*targ.speed,targ.position(2));
 
-                    temppos=[tempx tempy];
+                    tempPos=[tempX tempY];
                     mh.trial.targets.(targ.name).moving_position=...
-                        [mh.trial.targets.(targ.name).moving_position; temppos];
+                        [mh.trial.targets.(targ.name).moving_position; tempPos];
                     mh.trial.targets.(targ.name).timestamp=...
                         [mh.trial.targets.(targ.name).timestamp getsecs];
-                    pixpos=deg2pix(temppos,targ.degreestype,mh.screenparams);
+                    pixPos=deg2pix(tempPos,targ.degreestype,mh.screenparams);
                 end
             end
 
             if any(matches(varargin(:),'center',IgnoreCase=true))
-                out=pixpos;
+                out=pixPos;
             else
                 if matches(targ.shape,'square',IgnoreCase=true) ||...
                         matches(targ.shape,'circle',IgnoreCase=true)
-                    out=targ.squarepos(pixpos);
+                    out=targ.squarepos(pixPos);
                 end
             end
         end
 
-        function out=squarepos(targ,temppos)
-            hwidth=ceil(targ.size(3)-targ.size(1)/2);
-            hheight=ceil(targ.size(4)-targ.size(2)/2);
+        function out=squarepos(targ,tempPos)
+            halfWidth=ceil(targ.size(3)-targ.size(1)/2);
+            halfHeight=ceil(targ.size(4)-targ.size(2)/2);
 
 
-            out=[temppos(1)-hwidth,...
-                temppos(2)-hheight,...
-                temppos(1)+hwidth,...
-                temppos(2)+hheight];
+            out=[tempPos(1)-halfWidth,...
+                tempPos(2)-halfHeight,...
+                tempPos(1)+halfWidth,...
+                tempPos(2)+halfHeight];
         end
 
         function out=getcolor(t,mh,varargin)
@@ -148,26 +148,26 @@ classdef target %< handle
                     idx=randi(size(t.position,1));
                     out=t.position(idx,:);
                 elseif strcmp(varargin{1},'square')
-                    hwidth=t.size(3)-t.size(1);
-                    hheight=t.size(4)-t.size(2);
+                    halfWidth=t.size(3)-t.size(1);
+                    halfHeight=t.size(4)-t.size(2);
                     idx=randi(size(t.position,1));
-                    out=[t.position(idx,1)-hwidth,...
-                        t.position(idx,2)-hheight,...
-                        t.position(idx,1)+hwidth,...
-                        t.position(idx,2)+hheight];
+                    out=[t.position(idx,1)-halfWidth,...
+                        t.position(idx,2)-halfHeight,...
+                        t.position(idx,1)+halfWidth,...
+                        t.position(idx,2)+halfHeight];
                 end
             else
                 if nargin==1
                     idx=randi(size(t.position,1));
                     out=t.position(idx,:);
                 elseif strcmp(varargin{1},'square')
-                    hwidth=t.size(3)-t.size(1);
-                    hheight=t.size(4)-t.size(2);
+                    halfWidth=t.size(3)-t.size(1);
+                    halfHeight=t.size(4)-t.size(2);
                     idx=randi(size(t.position,1));
-                    out=[t.position(idx,1)-hwidth,...
-                        t.position(idx,2)-hheight,...
-                        t.position(idx,1)+hwidth,...
-                        t.position(idx,2)+hheight];
+                    out=[t.position(idx,1)-halfWidth,...
+                        t.position(idx,2)-halfHeight,...
+                        t.position(idx,1)+halfWidth,...
+                        t.position(idx,2)+halfHeight];
                 end
             end
         end

@@ -317,8 +317,8 @@ end
             side = fullfile(pp, [nn '.graphics_orphan.mat']);
             save(side, '-struct', 'rec');
             disp(['DUMPDATA FAILED - wrote orphan sidecar: ' side]);
-        catch
-            disp('DUMPDATA FAILED and no sidecar could be written; this trial''s graphics timing is lost.');
+        catch sideErr
+            disp(['DUMPDATA FAILED and no sidecar could be written: ' sideErr.message]);
         end
     end
 %%parse the commands without drawing'

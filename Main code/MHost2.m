@@ -1,4 +1,4 @@
-classdef MHost2_exported < matlab.apps.AppBase
+classdef MHost2 < matlab.apps.AppBase
 
     % Properties that correspond to app components
     properties (Access = public)
@@ -2218,7 +2218,7 @@ classdef MHost2_exported < matlab.apps.AppBase
     methods (Access = public)
 
         % Construct app
-        function app = MHost2_exported
+        function app = MHost2
 
             % Create UIFigure and components
             createComponents(app)

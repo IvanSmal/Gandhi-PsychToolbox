@@ -26,23 +26,8 @@ if nargin < 2 || isempty(inisDir)
     inisDir = 'inis';
 end
 
-CONFIG_FILE = fullfile(inisDir, 'RigConfig.ini');
-STATE_FILE  = fullfile(inisDir, 'ScreenParams.ini');
 
-switch lower(string(which_file))
-    case "config"
-        if isfile(CONFIG_FILE)
-            target = CONFIG_FILE;
-        else
-            target = STATE_FILE;   % pre-migration fallback
-        end
-    case "state"
-        target = STATE_FILE;
-    otherwise
-        error('rigIni:badArg', ...
-            'which_file must be ''config'' or ''state'', got ''%s''.', which_file);
-end
-
+target  = rigIniPath(which_file, inisDir);
 iniPath = target;
 ini = IniConfig();
 if ~ini.ReadFile(target)

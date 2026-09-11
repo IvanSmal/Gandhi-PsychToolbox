@@ -315,7 +315,7 @@ end
         try
             [pp,nn,~] = fileparts(fname);
             side = fullfile(pp, [nn '.graphics_orphan.mat']);
-            save(side, '-struct', 'rec');
+            save(side, 'rec');   % one struct variable: unambiguous, no -struct edge cases
             disp(['DUMPDATA FAILED - wrote orphan sidecar: ' side]);
         catch sideErr
             disp(['DUMPDATA FAILED and no sidecar could be written: ' sideErr.message]);

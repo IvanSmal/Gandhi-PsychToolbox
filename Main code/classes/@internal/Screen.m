@@ -1,149 +1,148 @@
 function varargout = Screen(mh, varargin)
-% Create a simpler hash for comparison
-try
-%     % Faster hashing approach using typecast for numeric operations
-%     hashValues = zeros(1, length(varargin), 'double');
-%     for i = 1:length(varargin)
-%         if isnumeric(varargin{i})
-%             % Use direct sum on vectorized data without double conversion
-%             hashValues(i) = sum(varargin{i}(:));
-%         elseif ischar(varargin{i})
-%             % Avoid double conversion for character arrays
-%             hashValues(i) = sum(uint8(varargin{i}));
-%         elseif isstring(varargin{i})
-%             % Convert string to char first for faster processing
-%             hashValues(i) = sum(uint8(char(varargin{i})));
-%         elseif isobject(varargin{i})
-%             hashValues(i) = i * 1000; % Simple object identifier
-%         else
-%             hashValues(i) = i;
-%         end
-%     end
-%     cmd_hash = sprintf('%d', sum(hashValues));
-% catch
-    % commented out hashing above because i think it caused issues. all
-    % commands should have unique hash now
-    cmd_hash = sprintf('%d', randi(10000000));
+%SCREEN Psychtoolbox-style drawing that publishes to the shared scene slot.
+%
+%   Task files keep the Psychtoolbox syntax they have always used:
+%       mh.Screen('FillOval', mh, color, rect)
+%       mh.Screen('sendtogr')
+%
+%   What changed is what happens underneath. This used to serialise every
+%   call into MATLAB source text and ship it over UDP for GraphicsHandler to
+%   eval - about 1 ms per writeline, three per iteration, which was 77% of
+%   the state-machine loop. Now each call fills fields in a fixed binary
+%   scene, and 'sendtogr' publishes the whole scene with ONE contiguous
+%   write (~39 us measured).
+%
+%   The scene is a LATEST-VALUE SLOT, not a queue: the state machine
+%   overwrites it as fast as it likes and never waits, while GraphicsHandler
+%   reads whichever scene is current when it is ready to draw. Scenes the
+%   renderer skipped were never displayable, so skipping them is correct and
+%   nothing can back up.
+%
+%   Shape codes: 1 FillOval, 2 FillRect, 3 FrameOval, 4 FrameRect
+
+L = sceneLayout();
+
+% ---- lazily attach to the slot -----------------------------------------
+if isempty(mh.sceneMap)
+    mh.sceneMap = sceneOpen(true);
+    mh.sceneVec = zeros(L.N,1);
 end
 
-% Fast path for cached output
-if strcmp(mh.cachedout, cmd_hash) || mh.holdbuffer
-    % If command is 'sendtogr', process that separately
-    if nargin > 1 && strcmpi(varargin{1}, 'sendtogr') && ~isempty(mh.graphicscommandbuffer)
-        processSendToGr(mh);
-    end
-    return;
+cmd = varargin{1};
+if ~(ischar(cmd) || isstring(cmd)), return; end
+
+switch lower(string(cmd))
+    case "sendtogr"
+        publishScene(mh, L);
+        return
+    case "clearbuffer"
+        mh.nTargetsAcc = 0; mh.nOverlayAcc = 0;
+        return
+    case "seteye"
+        mh.sceneSetEye = 1;
+        return
+    case {"playmovie","closemovie","drawtexture","openmovie","setmovietimeindex"}
+        % Movies are handled renderer-side; wired up separately.
+        return
 end
 
-% Update cache hash
-mh.cachedout = cmd_hash;
+% ---- drawing primitive --------------------------------------------------
+shape = shapeCode(cmd);
+if shape == 0 || numel(varargin) < 4, return; end
 
-% Handle special commands
-if nargin > 1
-    if strcmpi(varargin{1}, 'clearbuffer') || strcmpi(varargin{1}, 'sendtogr')
-        % Clear buffer more efficiently
-        if strcmpi(varargin{1}, 'clearbuffer')
-            writeline(mh.graphicsport, 'executegr.functionsbuffer=[];', '0.0.0.0', 2021);
-        elseif strcmpi(varargin{1}, 'sendtogr') && ~isempty(mh.graphicscommandbuffer)
-            processSendToGr(mh);
-        end
-        return;
-    end
+isOverlay = (ischar(varargin{2}) || isstring(varargin{2})) && ...
+            strcmpi(varargin{2}, 'monitoronly');
+
+colors = normaliseRows(varargin{3}, 3);
+rects  = normaliseRows(varargin{4}, 4);
+if isempty(rects), return; end
+penWidth = 1;
+if numel(varargin) >= 5 && isnumeric(varargin{5}) && isscalar(varargin{5})
+    penWidth = varargin{5};
 end
 
-% Preallocate command string with estimated size
-numArgs = length(varargin);
-estimatedCmdLength = numArgs * 50; % Estimate average 50 chars per argument
-cmdStr = strings(1, numArgs + 2); % +2 for additional commands
-cmdIdx = 1;
-
-% Process arguments
-for i = 1:numArgs
-    cmdStr(cmdIdx) = sprintf('args_udp{%d}=%s;', mh.lastcommand, formatArgument(mh, varargin{i}, i));
-    cmdIdx = cmdIdx + 1;
-    mh.lastcommand = mh.lastcommand + 1;
-end
-
-% Handle texture case - faster string manipulation
-if numArgs > 0 && strcmpi(varargin{1}, 'DrawTexture') && numArgs >= 3
-    if ischar(varargin{3}) || isstring(varargin{3})
-        varval = strrep(varargin{3}, '.texture', '.monitortexture');
-        cmdStr(cmdIdx) = sprintf('additionalinfo_udp{1}=%s;', varval);
-        cmdIdx = cmdIdx + 1;
-    end
-end
-
-% Handle output variables more efficiently
-if nargout > 0
-    outStr = strings(1, nargout);
-    for i = 1:nargout
-        outStr(i) = sprintf('outs_udp{%d}=''a%d'';', i, i);
-    end
-    cmdStr(cmdIdx) = join(outStr, '');
-    cmdIdx = cmdIdx + 1;
-end
-
-% Add delimiter
-cmdStr(cmdIdx) = sprintf('args_udp{%d}=''endcommand'';', mh.lastcommand);
-mh.lastcommand = mh.lastcommand + 1;
-
-% Join strings - more efficient than strjoin on cell arrays
-mh.graphicscommandbuffer = mh.graphicscommandbuffer + join(cmdStr(1:cmdIdx), '');
-
-% Handle output retrieval
-if nargout > 0
-    commands = readline(mh.graphicsport);
-    eval(commands);  % Consider replacing with more efficient code if possible
-    
-    % Preallocate output
-    varargout = cell(nargout, 1);
-    for i = 1:nargout
-        varargout{i} = eval(['a' num2str(i)]);  % Consider more efficient approach
-    end
-end
-
-end
-
-function processSendToGr(mh)
-% Extracted sendtogr logic for cleaner code organization
-if mh.commandID == 0
-    mh.commandID = getsecs;
-end
-
-% Send state name once - combine operations
-mh.evalgraphics(['gr.activestatename =''' mh.activestatename ''';']);
-writeline(mh.graphicsport, mh.activestatename, '0.0.0.0', 2023);
-
-% Send commands in one batch - faster string formatting
-cmdBatch = strjoin([mh.graphicscommandbuffer, ';commandID_udp=', num2str(mh.commandID), ';']);
-    
-    writeline(mh.graphicsport, cmdBatch, '0.0.0.0', 2021);
-
-% Reset state
-mh.lastsenttime = getsecs;
-mh.graphicscommandbuffer = '';
-mh.lastcommand = 1;
-mh.holdbuffer = 0;
-mh.commandID = 0;
-end
-
-function formatted = formatArgument(mh, arg, argIdx)
-% Optimized argument formatting function
-if ischar(arg)
-    if contains(arg, 'gr')
-        formatted = arg;
+n = size(rects,1);
+for k = 1:n
+    rect = rects(k,:);
+    if size(colors,1) >= k, col = colors(k,:); else, col = colors(1,:); end
+    if isOverlay
+        if mh.nOverlayAcc >= L.MAX_OVERLAY, continue; end
+        mh.nOverlayAcc = mh.nOverlayAcc + 1;
+        base = L.OVERLAYS(1) + (mh.nOverlayAcc-1)*L.OVERLAY_WIDTH;
+        mh.sceneVec(base:base+9) = [1, shape, rect(:).', col(:).', penWidth];
     else
-        formatted = ['''' arg ''''];
+        if mh.nTargetsAcc >= L.MAX_TARGETS, continue; end
+        mh.nTargetsAcc = mh.nTargetsAcc + 1;
+        base = L.TARGETS(1) + (mh.nTargetsAcc-1)*L.TARGET_WIDTH;
+        mh.sceneVec(base:base+8) = [1, shape, rect(:).', col(:).'];
     end
-elseif isnumeric(arg)
-    % More efficient numeric conversion
-    formatted = mat2str(arg);
-elseif isobject(arg)
-    % Optimize object handling
-    targname = arg.name;
-    pos = mh.trialtarg(targname, 'getpos');
-    formatted = mat2str(pos);
-else
-    formatted = ['''' inputname(argIdx) ''''];
+end
+end
+
+% =========================================================================
+function publishScene(mh, L)
+% One contiguous write. Sequence number is duplicated at both ends so a
+% reader catching a partial write sees a stale tail and retries.
+v = mh.sceneVec;
+
+v(L.TRIALSTARTED) = mh.trialstarted;
+v(L.NTARGETS)     = mh.nTargetsAcc;
+v(L.NOVERLAY)     = mh.nOverlayAcc;
+v(L.MOVIECMD)     = 0;
+v(L.MOVIEID)      = 0;
+
+nm = char(mh.activestatename);
+nm = nm(1:min(numel(nm), L.NAME_CHARS));
+nameVec = zeros(1, L.NAME_CHARS);
+nameVec(1:numel(nm)) = double(nm);
+v(L.NAME) = nameVec;
+
+v(L.RESERVED(1)) = mh.sceneSetEye;
+mh.sceneSetEye = 0;
+
+% blank any slots not used this frame, so stale primitives never linger
+for k = mh.nTargetsAcc+1 : L.MAX_TARGETS
+    base = L.TARGETS(1) + (k-1)*L.TARGET_WIDTH;
+    v(base) = 0;
+end
+for k = mh.nOverlayAcc+1 : L.MAX_OVERLAY
+    base = L.OVERLAYS(1) + (k-1)*L.OVERLAY_WIDTH;
+    v(base) = 0;
+end
+
+mh.sceneSeq = mh.sceneSeq + 1;
+v(L.SEQ_HEAD) = mh.sceneSeq;
+v(L.SEQ_TAIL) = mh.sceneSeq;
+
+mh.sceneVec = v;
+mh.sceneMap.Data.s = v;          % single contiguous assignment
+
+mh.nTargetsAcc = 0;
+mh.nOverlayAcc = 0;
+end
+
+% =========================================================================
+function c = shapeCode(cmd)
+switch lower(string(cmd))
+    case "filloval",  c = 1;
+    case "fillrect",  c = 2;
+    case "frameoval", c = 3;
+    case "framerect", c = 4;
+    otherwise,        c = 0;
+end
+end
+
+% =========================================================================
+function out = normaliseRows(x, width)
+% Accept a 1xW row, an NxW stack, or a WxN stack (Psychtoolbox vectorised
+% form, which checkeye uses to draw several frame ovals in one call).
+out = [];
+if isempty(x) || ~isnumeric(x), return; end
+if size(x,2) == width
+    out = x;
+elseif size(x,1) == width
+    out = x.';
+elseif numel(x) == width
+    out = reshape(x,1,width);
 end
 end

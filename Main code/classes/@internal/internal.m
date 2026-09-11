@@ -66,6 +66,17 @@ classdef internal < matlab.mixin.Copyable
         readyforflip=1;
         commandID=0;
         lastsenttime=0;
+
+        %shared-memory scene channel (replaces the UDP command stream).
+        %The state machine overwrites a fixed binary slot; GraphicsHandler
+        %reads the newest complete scene at its own refresh rate. Writer
+        %never blocks on the renderer, so the two rates are independent.
+        sceneMap;            % memmapfile handle, writable
+        sceneVec;            % preallocated scene vector, reused every frame
+        sceneSeq = 0;        % monotonically increasing sequence number
+        nTargetsAcc = 0;     % primitives accumulated so far this frame
+        nOverlayAcc = 0;     % monitor-only annotations this frame
+        sceneSetEye = 0;     % one-shot: tell graphics to reload eye calibration
             
         %stim stuff
         stimmed=0;

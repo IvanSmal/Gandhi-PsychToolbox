@@ -140,86 +140,62 @@ seteye
 % disp('loaded movie')
 % Screen('PlayMovie', gr.movie, 1);
 %% keep function alive
+% The scene is a LATEST-VALUE SLOT in shared memory, not a command queue.
+% The state machine overwrites it as fast as it likes (measured ~39 us) and
+% never waits; this loop reads whichever scene is current when it is ready to
+% draw, at whatever rate Screen('Flip') allows. Scenes skipped in between
+% were never displayable, so skipping them is correct and nothing backs up.
+sceneMap = sceneOpen(false);
+L        = sceneLayout();
+flipcount = 0;
 while 1
     try %error handler
-        % pause(0.00001) %allow for callbacks to be checked
-        getCommands(graphicsport)
-        %% evaluate graphics buffer
-        runonce=0;
-        flipcount=0;
-        vbl=0;
-        while gr.trialstarted
-            if ~isempty(gr.functionsbuffer)
-                runonce=runonce+1;
-                if runonce==1
-                    setgrid(gr);
-                    Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
-                end
+        getCommands(graphicsport)          % low-rate control only (dumpdata, exit, seteye)
 
-                if ~strcmp(gr.state_history{end},gr.activestatename)
-                    gr.state_history{end+1}=gr.activestatename;
-                    gr.diode_color=abs(gr.diode_color-1);
-                    disp(join(["changed diode for state: " gr.activestatename]));
-                end
-                gr.fliptimes=[gr.fliptimes getsecs];
-                gr.commandIDs=[gr.commandIDs gr.commid_udp];
-
-                if ~exist('allargs','var') %I know the while loop makes this redundant. While loop was added later and I didn't want to mess with what works
-                    while ~exist('allargs','var')
-                        getCommands(graphicsport)
-                        try
-                            [additionalinfo,allargs,outs]=parsecommands(gr);
-                        end
-                    end
-                else
-                    Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
-                    DrawScreen(gr,additionalinfo,allargs,outs)
-
-                    clear additionalinfo allargs outs
-
-                    fliptime=vbl-vblhis;
-                    vblhis=vbl;
-
-                    vbl=getsecs;
-                    Screen('Flip',gr.window_main,[],[],1);
-                    if ~isempty(gr.texture)
-                        if  gr.texture >= 0
-                        Screen('Close',gr.texture)
-                        end
-                    end
-                    flipcount=flipcount+1;
-
-
-                    if flipcount>3
-                        Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
-                        Screen('Flip',gr.window_monitor,[],[],1);
-                        updategui(gr);
-                        runonce=0;
-                        flipcount=0;
-                    end
-
-                    getCommands(graphicsport)
-
-                    flipped=1;
-                end
-            else
-                getCommands(graphicsport)
-            end
+        [v, ok] = sceneRead(sceneMap);
+        if ~ok
+            continue
         end
-        %% this is to show eye when trials are not running
-        while ~gr.trialstarted
-            % send ready signal to mh
-            writeline(graphicsport,'isGraphicsReady=1;','0.0.0.0',2020);
 
-            getCommands(graphicsport)
-            writeline(graphicsport,'mh.readyforflip=1;','0.0.0.0',2020);
-            gr=makegridlines(gr);
-            try
-                seteye;
-            catch
+        gr.trialstarted = v(L.TRIALSTARTED) > 0;
+
+        % state name travels in the scene; diode flips on transition
+        nm = char(v(L.NAME).');
+        nm = nm(nm > 0);
+        if isempty(nm), nm = 'null'; end
+        if ~strcmp(gr.state_history{end}, nm)
+            gr.state_history{end+1} = nm;
+            gr.activestatename      = nm;
+            gr.diode_color          = abs(gr.diode_color - 1);
+            disp(join(["changed diode for state: " nm]));
+        end
+
+        if v(L.RESERVED(1)) > 0
+            try, seteye; catch, end
+        end
+
+        if gr.trialstarted
+            drawScene(gr, v, L);
+            Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
+            gr.fliptimes  = [gr.fliptimes getsecs];
+            gr.commandIDs = [gr.commandIDs v(L.SEQ_HEAD)];
+            Screen('DrawingFinished', gr.window_main);
+            Screen('Flip', gr.window_main);
+
+            flipcount = flipcount + 1;
+            if flipcount >= 3
+                drawMonitorExtras(gr, v, L);
+                Screen('Flip', gr.window_monitor);
+                updategui(gr);
+                flipcount = 0;
             end
+        else
+            % out of trial: show the eye and the grid on the monitor window
+            writeline(graphicsport,'isGraphicsReady=1;','0.0.0.0',2020);
+            gr = makegridlines(gr);
+            try, seteye; catch, end
             setgrid(gr);
-            Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
+            try, Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]); catch, end
 
             gr.newsize=Screen('GlobalRect',gr.window_monitor);
             gr.newsize_true(1)=gr.newsize(3)-gr.newsize(1);
@@ -236,47 +212,31 @@ while 1
             Screen('Flip',gr.window_monitor);
             Screen('Flip',gr.window_main);
             updategui(gr);
-
-            gr.functionsbuffer=[];
-            % Screen('Close');
         end
     catch e
         disp(e.message)
     end
 end
-%% callback function that does the graphics handling
+%% low-rate control channel (still UDP: dumpdata, exit, seteye once a trial)
     function getCommands(graphicsport,~)
         try
+            % NumBytesAvailable first: a bare readline blocks for the port
+            % timeout (20 ms) when idle, which would cap this loop at 50 Hz.
+            if graphicsport.NumBytesAvailable == 0
+                return
+            end
             command=readline(graphicsport);
+            if strlength(command)==0
+                return
+            end
             if contains(command,'SetEye','IgnoreCase',true)
                 seteye;
             elseif contains(command,'execute','IgnoreCase',true)
                 rawexecute(command);
-            else
-                executeScreen(command);
             end
         catch
         end
     end
-
-%% recive and execute Screen calls
-    function executeScreen(command)
-
-        args_udp={};
-        outs_udp={};
-        additionalinfo_udp={};
-        commandID_udp={};
-        gr.lastarg=1;
-        eval(command);
-
-        gr.functionsbuffer(end+1).args_uncut=args_udp;
-        gr.functionsbuffer(end+1).outs=outs_udp;
-        gr.functionsbuffer(end+1).additionalinfo=additionalinfo_udp;
-        gr.commid_udp=commandID_udp;
-        flush(graphicsport);
-
-    end
-%% set eye calibration
     function seteye
         try
             gr.eye=eyeinfo;
@@ -320,137 +280,43 @@ end
         disp(join(['saved ',trname{:}]))
     end
 %%parse the commands without drawing'
-    function [additionalinfo,allargs,outs]=parsecommands(gr)
-        flush(graphicsport);
-        gr.flipped=0;
-        args_uncut={};
-        outs={};
-        additionalinfo={};
-        v = fieldnames(gr.functionsbuffer);
-        for ii = 1 : length(v) %unwrap commands
-            eval([v{ii} '= gr.functionsbuffer.' v{ii} ';']);
-        end
-        gr.functionsbuffer=[];
-
-        commandcount=1;
-        lastargcount=1;
-
-        for iii = 1:length(args_uncut)
-            if strcmp(args_uncut{iii},'endcommand')
-                % args_uncut(iii)=[];
-                allargs{commandcount}=args_uncut(lastargcount:iii-1);
-                commandcount=commandcount+1;
-                lastargcount=iii+1;
-            end
+%% draw the scene onto both windows
+    function drawScene(gr, v, L)
+        for k = 1:L.MAX_TARGETS
+            base = L.TARGETS(1) + (k-1)*L.TARGET_WIDTH;
+            if v(base) == 0, continue; end
+            shape = v(base+1);
+            rect  = v(base+2:base+5).';
+            col   = v(base+6:base+8).';
+            drawPrim(gr.window_main,    shape, col, rect, 1);
+            drawPrim(gr.window_monitor, shape, col, rect, 1);
         end
     end
 
-    function DrawScreen(gr,additionalinfo,allargs,outs)
-        for i=1:length(allargs) %drawing satarts here
-            args=allargs{i};
-            %% check if user wants to set a graphics parameter
-            if length(args)>2 &&...
-                    (isstring(args{end-1}) || ischar(args{end-1})) &&...
-                    matches(args{end-1},'set','IgnoreCase',true)           % this is to check if the user wants to set a parameter in the graphics handler
-
-                % user MUST be setting something to a window
-                args{2}=gr.window_main;
-                if contains(args{end},'monitor')
-                    args{2}=gr.window_monitor;
-                end
-
-                evalstring=strcat(args{end},'=Screen(args{1:end-2});');
-                eval(evalstring);
-            end
-            if isempty(outs)
-                if length(args) >= 2 && (isstring(args{2}) || ischar(args{2}))
-                    if length(args)==2 &&...
-                            matches(args{2},'windowPtr') &&...
-                            ~matches(args{1},'flip','IgnoreCase',true)
-
-                        Screen(args{1},gr.window_main);
-                        Screen(args{1},gr.window_monitor);
-
-                    elseif length(args)>2 && matches(args{2},'windowPtr')
-
-                        Screen(args{1},gr.window_main,args{3:end});
-
-                        if (isstring(args{1}) || ischar(args{1})) && matches(args{1},'DrawTexture','IgnoreCase',true)
-                            args{3}=additionalinfo{1};
-                            try
-                                Screen(args{1},gr.window_monitor,args{3:end});
-                            catch
-                                disp("Couldn't draw a texture on monitor-screen")
-                            end
-                        else
-                            Screen(args{1},gr.window_monitor,args{3:end});
-                        end
-                    elseif length(args)>2 && matches(args{2},'monitoronly')
-                        try
-                            Screen(args{1},gr.window_monitor,args{3:end});
-                        catch
-                            disp("Couldn't draw something on monitor-screen")
-                        end
-                    end
-                else
-
-                    %% movie logic
-                    if (isstring(args{1}) || ischar(args{1})) && matches(args{1},'PlayMovie','IgnoreCase',true)
-                        if ~gr.movieplaying
-                            % Screen('PlayMovie', gr.movie, 0);
-                            % Screen('SetMovieTimeIndex', gr.movie, 1)
-                            Screen('PlayMovie', gr.movie, 1);
-                            Screen('SetMovieTimeIndex', gr.movie, 0)
-                            disp('movie playing')
-                            gr.movieplaying=1;
-                        end
-                        gr.movie
-                        gr.texture=Screen('GetMovieImage', gr.window_main, gr.movie);
-                        if ~isempty(gr.texture) && gr.texture >= 0
-                        Screen('DrawTexture', gr.window_main, gr.texture);
-                        end
-                        % gr.monitortexture=Screen('MakeTexture', gr.window_monitor, gr.monitormovieplaceholder);
-                        % Screen('DrawTexture', gr.window_monitor, gr.monitortexture);
-                    elseif (isstring(args{1}) || ischar(args{1})) && matches(args{1},'CloseMovie','IgnoreCase',true)
-                        gr.movieplaying=0;
-                        disp('movie closed')
-                        Screen('Close',gr.texture)
-                        Screen('PlayMovie', gr.movie, 0);
-                        % Screen('CloseMovie', gr.movie);
-                    end
-
-                    if ~(isstring(args{1}) || ischar(args{1})) && matches(args{1},'PlayMovie','IgnoreCase',true) &&...
-                            ~(isstring(args{1}) || ischar(args{1})) && matches(args{1},'CloseMovie','IgnoreCase',true)
-                        Screen(args{:});
-                    end
-                end
-            end
-
-            %% if output is requested
-            % elseif ~isempty(outs)
-            %     a1=[];a2=[];a3=[];a4=[];a5=[];a6=[];a7=[];
-            %     evalstring=strcat('[',sprintf('%s,',outs{:}),']');
-            %
-            %     if length(args)>=2 %this needs to change to better logic
-            %         args{2}=gr.window_main;
-            %     end
-            %
-            %     eval(strcat(evalstring,'=Screen(args{:});'));
-            %
-            %     outstr='';
-            %     for ii=1:length(outs)
-            %         outstr=strcat(outstr,outs{ii},'=',string(eval(outs{ii})),';');
-            %     end
-            %     writeline(graphicsport,strcat('mh.graphicssent=0;', outstr),'0.0.0.0',2020)
-            % end
-
-            clear args
+%% monitor-only extras: grid, eye dot, acceptance windows, diode
+    function drawMonitorExtras(gr, v, L)
+        setgrid(gr);
+        try, Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]); catch, end
+        for k = 1:L.MAX_OVERLAY
+            base = L.OVERLAYS(1) + (k-1)*L.OVERLAY_WIDTH;
+            if v(base) == 0, continue; end
+            shape = v(base+1);
+            rect  = v(base+2:base+5).';
+            col   = v(base+6:base+8).';
+            drawPrim(gr.window_monitor, shape, col, rect, v(base+9));
         end
-        clear args args_uncut  outs   additionalinfo
-        gr.functionsbuffer=[];
-        Screen('DrawingFinished',gr.window_main);
+        Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
     end
-%%make grid lines function
+
+    function drawPrim(win, shape, col, rect, penWidth)
+        switch shape
+            case 1, Screen('FillOval',  win, col, rect);
+            case 2, Screen('FillRect',  win, col, rect);
+            case 3, Screen('FrameOval', win, col, rect, penWidth);
+            case 4, Screen('FrameRect', win, col, rect, penWidth);
+        end
+    end
+
     function gr=makegridlines(gr)
         gr.pixelsforlines=deg2pix(gr.toconvert,'cart');
         gr.xlines=reshape(repmat(gr.pixelsforlines(:,1),2)',1,[]);
@@ -567,5 +433,3 @@ end
         end
     end
 end
-
-

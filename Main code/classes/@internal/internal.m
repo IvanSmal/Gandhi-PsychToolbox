@@ -77,6 +77,15 @@ classdef internal < matlab.mixin.Copyable
 
 
         sceneSetEye = 0;     % one-shot: tell graphics to reload eye calibration
+
+        %command timing log. Every published frame gets an ID (sceneSeq) and
+        %a generation timestamp; the renderer records which IDs actually made
+        %it to the screen. Joining the two on ID gives the true
+        %generation-to-display latency for the commands that were displayed.
+        %Preallocated and index-tracked: this runs in the 1 kHz loop.
+        cmdLogId   = zeros(1,20000);
+        cmdLogTime = zeros(1,20000);
+        cmdLogN    = 0;
             
         %stim stuff
         stimmed=0;

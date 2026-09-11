@@ -52,14 +52,35 @@ end
 
 % =========================================================================
 function publishFrame(mh)
+% Every published frame gets an ID and a generation timestamp. The ID is the
+% join key: the renderer records which IDs actually reached the screen, so
+% latency = flipTime(id) - tGenerated(id) for the frames that were displayed.
+% GetSecs (PTB, monotonic, 0.48 us resolution) is used on BOTH sides -
+% getsecs is wall-clock seconds-since-midnight and is not comparable to
+% Psychtoolbox flip timestamps.
+tGen = GetSecs;
+mh.sceneSeq = mh.sceneSeq + 1;
+seq = mh.sceneSeq;
+
 frame = struct( ...
+    'seq',          seq, ...
+    'tGenerated',   tGen, ...
     'trialStarted', logical(mh.trialstarted), ...
     'stateName',    char(mh.activestatename), ...
     'setEye',       logical(mh.sceneSetEye), ...
     'cmds',         {mh.cmdList});
 
-mh.sceneSeq = mh.sceneSeq + 1;
-sceneWrite(mh.sceneMap, mh.sceneSeq, frame);
+sceneWrite(mh.sceneMap, seq, frame);
+
+% log EVERY generated command, not only the ones that get displayed
+n = mh.cmdLogN + 1;
+if n > numel(mh.cmdLogId)
+    mh.cmdLogId(2*numel(mh.cmdLogId))     = 0;   % geometric growth
+    mh.cmdLogTime(2*numel(mh.cmdLogTime)) = 0;
+end
+mh.cmdLogId(n)   = seq;
+mh.cmdLogTime(n) = tGen;
+mh.cmdLogN       = n;
 
 mh.cmdList     = {};
 mh.sceneSetEye = 0;

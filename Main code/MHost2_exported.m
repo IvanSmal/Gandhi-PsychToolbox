@@ -603,6 +603,14 @@ classdef MHost2_exported < matlab.apps.AppBase
                     d.photodiode(1,:)=eyeandphotodiode(3,:);
                     ts_temp=1:length(d.eyepos);
                     d.timestamps=ts_temp+floor(mh.trial.tstarttime*1000);
+                    % State-machine side of the command timing log: the ID and
+                    % generation time of EVERY command published this trial.
+                    % The renderer records which of these IDs actually reached
+                    % the screen (data.graphics_fliptimes.commandIDs) and when,
+                    % so joining on ID gives generation-to-display latency for
+                    % the commands that were displayed.
+                    d.graphics_commands.id         = mh.cmdLogId(1:mh.cmdLogN);
+                    d.graphics_commands.tGenerated = mh.cmdLogTime(1:mh.cmdLogN);
                     clear eyeandphotodiode;
                     fprintf('(493-508) inserting data to structure finished at %f \n' , toc(app.post_trial_timer))                    
 

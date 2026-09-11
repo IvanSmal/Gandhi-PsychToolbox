@@ -4,7 +4,8 @@ classdef data
         cursor
         neural_data
         photodiode
-        graphics_fliptimes;
+        graphics_fliptimes;   % renderer side: which command IDs actually reached the screen, and when
+        graphics_commands;    % state-machine side: every command ID generated, and when
         DiodeFlipStates;
         timestamps;
     end

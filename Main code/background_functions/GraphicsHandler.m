@@ -176,10 +176,17 @@ while 1
         if gr.trialstarted
             drawFrame(gr, frame);
             Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
-            gr.fliptimes  = [gr.fliptimes getsecs];
-            gr.commandIDs = [gr.commandIDs numel(frame.cmds)];
             Screen('DrawingFinished', gr.window_main);
-            Screen('Flip', gr.window_main);
+            % Take the timestamps Psychtoolbox actually reports rather than
+            % calling a clock afterwards: vbl/onset are when photons appeared,
+            % and missed>0 means this flip overran its deadline.
+            [vbl, onset, ~, missed] = Screen('Flip', gr.window_main);
+            % frame.seq is the ID the state machine assigned when it generated
+            % this command, so the two logs join on it.
+            gr.commandIDs = [gr.commandIDs frame.seq];
+            gr.fliptimes  = [gr.fliptimes  vbl];
+            gr.flipOnsets = [gr.flipOnsets onset];
+            gr.flipMissed = [gr.flipMissed missed];
 
             flipcount = flipcount + 1;
             if flipcount >= 3
@@ -265,18 +272,54 @@ end
 %%data save function
     function dumpdata(fname)
         gr;
-        temptr=[];
-        trname=[];
-        disp('trying to dump data')
-        fname=strtrim(fname);
-        temptr=load(fname);
-        trname=fields(temptr);
-        temptr.(trname{:}).data.graphics_fliptimes.fliptimes=gr.fliptimes;
-        temptr.(trname{:}).data.graphics_fliptimes.commandIDs = gr.commandIDs;
-        temptr.(trname{:}).data.DiodeFlipStates={gr.state_history{2:end}};
-        gr.commandIDs=[];gr.fliptimes=[];gr.state_history={'null'};
-        save(fname,'-struct','temptr');
-        disp(join(['saved ',trname{:}]))
+        fname = strtrim(fname);
+
+        % Snapshot and clear FIRST, before touching the file.
+        %
+        % The previous version cleared these buffers only AFTER a successful
+        % load(). If the load threw, the data was neither written nor
+        % cleared, so the next trial's dump wrote both trials' data into the
+        % next trial's file - one trial empty, the following one doubled.
+        % Clearing up front means a failed dump can lose at most the trial it
+        % belongs to, and can never corrupt a second trial.
+        rec = struct( ...
+            'commandIDs', gr.commandIDs, ...   % which command IDs reached the screen
+            'fliptimes',  gr.fliptimes,  ...   % VBL timestamp of each flip
+            'onsets',     gr.flipOnsets, ...   % StimulusOnsetTime of each flip
+            'missed',     gr.flipMissed, ...   % >0 means that flip overran its deadline
+            'states',     {{gr.state_history{2:end}}});
+        gr.commandIDs = []; gr.fliptimes = []; gr.flipOnsets = [];
+        gr.flipMissed = []; gr.state_history = {'null'};
+
+        for attempt = 1:3
+            try
+                temptr = load(fname);
+                trname = fields(temptr);
+                temptr.(trname{1}).data.graphics_fliptimes.commandIDs = rec.commandIDs;
+                temptr.(trname{1}).data.graphics_fliptimes.fliptimes  = rec.fliptimes;
+                temptr.(trname{1}).data.graphics_fliptimes.onsets     = rec.onsets;
+                temptr.(trname{1}).data.graphics_fliptimes.missed     = rec.missed;
+                temptr.(trname{1}).data.DiodeFlipStates               = rec.states;
+                save(fname,'-struct','temptr');
+                disp(join(['saved ', trname{1}]))
+                return
+            catch dumpErr
+                disp(['dumpdata attempt ' num2str(attempt) ' failed: ' dumpErr.message]);
+                pause(0.05);
+            end
+        end
+
+        % Still could not write it. Spill to a sidecar next to the trial file
+        % so the timing data is recoverable and unambiguously attributable,
+        % instead of silently vanishing or landing in the wrong trial.
+        try
+            [pp,nn,~] = fileparts(fname);
+            side = fullfile(pp, [nn '.graphics_orphan.mat']);
+            save(side, '-struct', 'rec');
+            disp(['DUMPDATA FAILED - wrote orphan sidecar: ' side]);
+        catch
+            disp('DUMPDATA FAILED and no sidecar could be written; this trial''s graphics timing is lost.');
+        end
     end
 %%parse the commands without drawing'
 %% draw the scene onto both windows

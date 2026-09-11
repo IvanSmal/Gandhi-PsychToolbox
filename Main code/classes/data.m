@@ -10,13 +10,13 @@ classdef data
     end
 
     methods
-        function ev=vel(in,property)
-            ev=diff(in.(property),1,1)*1000;
+        function velocity=vel(obj,propName)
+            velocity=diff(obj.(propName),1,1)*1000;
         end
 
-        function [m,t]=vect(in,property)
-            [t,m]=cart2pol(in.(property)(:,1),...
-                in.(property)(:,2));
+        function [magnitude,theta]=vect(obj,propName)
+            [theta,magnitude]=cart2pol(obj.(propName)(:,1),...
+                obj.(propName)(:,2));
         end
     end
 end

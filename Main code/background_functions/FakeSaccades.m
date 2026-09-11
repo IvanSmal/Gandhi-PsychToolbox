@@ -1,36 +1,35 @@
-function [xpos] = FakeSaccades(degrees,prob,timelength)
+function [xPos] = FakeSaccades(degrees,saccadeProb,nSamples)
 %generates a vector of fake generic saccades for code debugging. Very
 %rudimentary. The degrees specify just the degrees of each component, not
 %obliques.
 
-saccade=(1./(1 + exp(-0.3.*((0:40)-20)))*degrees);
+saccadeProfile=(1./(1 + exp(-0.3.*((0:40)-20)))*degrees);
 
-xpos=zeros(1,timelength);
-ypos=zeros(1,timelength);
+xPos=zeros(1,nSamples);
+yPos=zeros(1,nSamples);
 
-xissaccade=0;
-xcount=0;
-xreverse=0;
+xIsSaccade=0;
+xCount=0;
+xReverse=0;
 
-for i=2:timelength
-    rollxdice=randi(1000);
-    if rollxdice>(prob*1000) && ~xissaccade
-        xpos(i)=xpos(i-1)+normrnd(0,0.01);
+for iSample=2:nSamples
+    xDiceRoll=randi(1000);
+    if xDiceRoll>(saccadeProb*1000) && ~xIsSaccade
+        xPos(iSample)=xPos(iSample-1)+normrnd(0,0.01);
     else 
-        xissaccade=1;
-        if ~xreverse
-            xcount=xcount+1;
-            xpos(i)=saccade(xcount);
+        xIsSaccade=1;
+        if ~xReverse
+            xCount=xCount+1;
+            xPos(iSample)=saccadeProfile(xCount);
         else
-            xcount=xcount+1;
-            xpos(i)=-saccade(xcount)+degrees;
+            xCount=xCount+1;
+            xPos(iSample)=-saccadeProfile(xCount)+degrees;
         end
-        if xcount==length(saccade)
-            xcount=0;
-            xissaccade=0;
-            xreverse=~xreverse;
+        if xCount==length(saccadeProfile)
+            xCount=0;
+            xIsSaccade=0;
+            xReverse=~xReverse;
         end
     end
 end
-
 

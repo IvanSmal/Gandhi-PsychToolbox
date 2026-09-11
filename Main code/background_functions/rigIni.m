@@ -23,7 +23,7 @@ function [ini, iniPath] = rigIni(which_file, inisDir)
 %   not been migrated behaves exactly as before.
 
 if nargin < 2 || isempty(inisDir)
-    inisDir = 'inis';
+    inisDir = '';   % empty: let rigIniPath resolve it relative to its own location
 end
 
 
@@ -33,5 +33,13 @@ ini = IniConfig();
 if ~ini.ReadFile(target)
     error('rigIni:readFailed', ...
         'Could not read "%s". Copy RigConfig.example.ini to RigConfig.ini and fill it in.', target);
+end
+
+% A config file that lacks the config sections means we fell back to the
+% state file on a migrated rig. Fail loudly rather than return empties.
+if strcmpi(which_file,'config') && ~ini.IsSections('for deg2pix')
+    error('rigIni:notConfig', ...
+        ['"%s" has no [for deg2pix] section, so it is not a usable rig config. ' ...
+         'On a migrated rig this means RigConfig.ini was not found.'], target);
 end
 end

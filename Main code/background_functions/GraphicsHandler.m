@@ -387,7 +387,10 @@ end
     function ensureResources(gr, decls)
         for i = 1:numel(decls)
             d = decls{i};
-            if numel(gr.resourceMap) >= d.id && gr.resourceMap(d.id) ~= 0
+            % Test the KIND marker, not the handle value: a valid Psychtoolbox
+            % movie handle can legitimately be 0, which made the numeric test
+            % miss the cache and open the movie a second time, leaking it.
+            if numel(gr.resourceKind) >= d.id && ~isempty(gr.resourceKind{d.id})
                 continue                        % already loaded, or already failed
             end
             try

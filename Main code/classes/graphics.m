@@ -89,6 +89,9 @@ classdef graphics < handle
         resourceMapMon = []         % logical id -> PTB handle on the MONITOR window (textures only)
         resourceKind = {}           % logical id -> 'texture' / 'movie' / 'failed'
         movieLastTex = []           % most recent frame fetched per movie, reused when no new frame is ready
+        resourcePath = {}           % logical id -> path it was loaded from, so a recycled id cannot masquerade
+        lastOneShot  = 0            % highest one-shot token (PlayMovie/CloseMovie) already run
+        lastFrameSeq = -1           % newest frame seq seen; a drop means the state machine restarted
 
         %% extra
         actualFlipCount

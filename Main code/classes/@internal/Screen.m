@@ -41,11 +41,29 @@ switch lower(string(cmd))
         return
 end
 
-% Any other call is a drawing command: stash it verbatim, with the window
-% argument reduced to a token. The internal object must never be serialised.
+% Playback control is a ONE-SHOT: it changes the renderer's state instead of
+% describing the current picture. A drawing command may be dropped safely
+% because the next frame draws it again, but a dropped PlayMovie never comes
+% back - and the renderer only ever reads the NEWEST frame, so a command
+% carried by exactly one frame is almost always skipped. One-shots therefore
+% ride in every frame, each tagged with a token, and the renderer runs each
+% token once.
 args = varargin;
 if numel(args) >= 2
     args{2} = windowToken(args{2});
+end
+if any(strcmpi(string(cmd), ["PlayMovie","CloseMovie"]))
+    mh.oneShotSeq = mh.oneShotSeq + 1;
+    s = struct('token', mh.oneShotSeq);
+    s.cmd = args;
+    mh.oneShots{end+1} = s;
+    % Bounded ring rather than a clear at the trial boundary: a clear can
+    % drop a token the renderer has not read yet, and one-shots are rare
+    % enough that it can never fall this far behind.
+    if numel(mh.oneShots) > 32
+        mh.oneShots = mh.oneShots(end-31:end);
+    end
+    return
 end
 mh.cmdList{end+1} = args;
 end
@@ -69,6 +87,7 @@ frame = struct( ...
     'stateName',    char(mh.activestatename), ...
     'setEye',       logical(mh.sceneSetEye), ...
     'resources',    {mh.resourceDecl}, ...
+    'oneShots',     {mh.oneShots}, ...
     'cmds',         {mh.cmdList});
 
 sceneWrite(mh.sceneMap, seq, frame);

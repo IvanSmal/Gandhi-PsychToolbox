@@ -23,6 +23,21 @@ gr = graphics;
 gr.screenparams = screenIni; % previously wiped by the 'gr = graphics' line above
 gr.eye=eyeinfo;
 
+%% diagnostics log
+% This process used to disp() into a terminal that dies with it, so a failed
+% texture load or a dropped draw left no trace anywhere on disk and the only
+% symptom was "nothing appears". Everything that went to the console now goes
+% to a file next to the app's error logs as well.
+grlogfid  = -1;
+grlogLast = 0;
+try
+    logdir = fullfile(pathhere,'ErrorLogs');
+    if ~exist(logdir,'dir'), mkdir(logdir); end
+    grlogfid = fopen(fullfile(logdir, ...
+        ['GraphicsHandler_' datestr(now,'yyyymmdd_HHMMSS') '.log']), 'w');
+catch
+end
+
 %% set up the screens for experiments
 Screen('Preference', 'SkipSyncTests', 1);
 Screen('Preference', 'VisualDebugLevel', 3);
@@ -154,7 +169,8 @@ while 1
 
         [frame, ok] = sceneRead(sceneMap);
         if ~ok
-            frame = struct('trialStarted',false,'stateName','null','setEye',false,'resources',{{}},'cmds',{{}});
+            frame = struct('seq',-1,'trialStarted',false,'stateName','null', ...
+                'setEye',false,'resources',{{}},'oneShots',{{}},'cmds',{{}});
         end
 
         gr.trialstarted = frame.trialStarted;
@@ -173,12 +189,27 @@ while 1
             try, seteye; catch, end
         end
 
+        % Only a frame that was really read carries a sequence number. The state
+        % machine numbers frames and one-shot tokens from zero each time it
+        % starts, and this renderer outlives it, so a sequence number that goes
+        % backwards means a fresh run whose tokens would otherwise sit below the
+        % high-water mark and be ignored forever.
+        if ok
+            if frame.seq < gr.lastFrameSeq
+                grlog('state machine restarted (seq %d -> %d); resetting one-shots', ...
+                    gr.lastFrameSeq, frame.seq);
+                gr.lastOneShot = 0;
+            end
+            gr.lastFrameSeq = frame.seq;
+        end
+
         % load any texture or movie this renderer has not seen yet. The
         % declaration list rides in every frame, so this is idempotent and
         % there is no race over which frame happened to carry it.
         if isfield(frame,'resources') && ~isempty(frame.resources)
             ensureResources(gr, frame.resources);
         end
+        runOneShots(gr, frame);
 
         if gr.trialstarted
             drawFrame(gr, frame);
@@ -227,9 +258,34 @@ while 1
             updategui(gr);
         end
     catch e
-        disp(e.message)
+        grlog('LOOP ERROR: %s', e.message);
     end
 end
+%% diagnostics: console as before, plus a file that outlives this process
+    function grlog(fmt, varargin)
+        try
+            msg = sprintf(fmt, varargin{:});
+        catch
+            msg = fmt;
+        end
+        disp(msg);
+        if grlogfid > 0
+            try
+                fprintf(grlogfid, '%s  %s\n', datestr(now,'HH:MM:SS.FFF'), msg);
+            catch
+            end
+        end
+    end
+
+    function grlogThrottled(fmt, varargin)
+        % For conditions that repeat every frame: say it once a second rather
+        % than 60 times, so the log stays readable but never goes silent.
+        t = GetSecs;
+        if t - grlogLast < 1, return; end
+        grlogLast = t;
+        grlog(fmt, varargin{:});
+    end
+
 %% low-rate control channel (still UDP: dumpdata, exit, seteye once a trial)
     function getCommands(graphicsport,~)
         try
@@ -340,45 +396,64 @@ end
             a = frame.cmds{i};
             if numel(a) < 2, continue; end
             nm = a{1};
-
-            % PlayMovie/CloseMovie take a MOVIE handle, not a window pointer
-            if (ischar(nm) || isstring(nm)) && any(strcmpi(string(nm), ["PlayMovie","CloseMovie"]))
-                if numel(a) >= 3 && isstruct(a{3}) && isfield(a{3},'resref')
-                    id = a{3}.resref;
-                    if numel(gr.resourceKind) >= id && strcmp(gr.resourceKind{id},'movie')
-                        rate = 1;
-                        if strcmpi(string(nm),"CloseMovie"), rate = 0; end
-                        if numel(a) >= 4 && isnumeric(a{4}) && isscalar(a{4}), rate = a{4}; end
-                        try, Screen('PlayMovie', gr.resourceMap(id), rate);
-                        catch pmErr, disp(pmErr.message); end
-                    end
-                end
-                continue
-            end
-
             sel = a{2};
             if ~(ischar(sel) || isstring(sel))
-                try, Screen(a{:}); catch e0, disp(e0.message); end
+                try, Screen(a{:}); catch e0, grlogThrottled('Screen(%s) failed: %s', char(string(nm)), e0.message); end
                 continue
             end
             wantBoth    = strcmpi(string(sel), "both");
             wantDisplay = wantBoth || strcmpi(string(sel), "display");
             wantMonitor = wantBoth || strcmpi(string(sel), "monitor");
             if ~(wantDisplay || wantMonitor)
-                try, Screen(a{:}); catch e3, disp(e3.message); end
+                try, Screen(a{:}); catch e3, grlogThrottled('Screen(%s) failed: %s', char(string(nm)), e3.message); end
                 continue
             end
             if wantDisplay
                 [rest, ok] = resolveArgs(gr, a(3:end), false);
                 if ok
-                    try, Screen(nm, gr.window_main, rest{:}); catch e1, disp(e1.message); end
+                    try, Screen(nm, gr.window_main, rest{:}); catch e1, grlogThrottled('display %s failed: %s', char(string(nm)), e1.message); end
                 end
             end
             if wantMonitor
                 [restM, okM] = resolveArgs(gr, a(3:end), true);
                 if okM
-                    try, Screen(nm, gr.window_monitor, restM{:}); catch, end
+                    try, Screen(nm, gr.window_monitor, restM{:}); catch e2, grlogThrottled('monitor %s failed: %s', char(string(nm)), e2.message); end
                 end
+            end
+        end
+    end
+
+%% run each one-shot exactly once, no matter how many frames carried it
+    function runOneShots(gr, frame)
+        % Playback control changes renderer state rather than describing the
+        % current picture, so it cannot be treated like a draw. This loop only
+        % ever reads the NEWEST frame, so a command carried by a single frame
+        % is almost always skipped -- which is why PlayMovie never arrived and
+        % the movie sat on its first decoded frame. One-shots now ride in every
+        % frame, tagged, and each token is run once.
+        if ~isfield(frame,'oneShots') || isempty(frame.oneShots), return; end
+        for i = 1:numel(frame.oneShots)
+            s = frame.oneShots{i};
+            if ~(isstruct(s) && isfield(s,'token') && isfield(s,'cmd')), continue; end
+            if s.token <= gr.lastOneShot, continue; end
+            gr.lastOneShot = s.token;           % consumed, whatever happens next
+            a = s.cmd;
+            if numel(a) < 3 || ~(isstruct(a{3}) && isfield(a{3},'resref')), continue; end
+            nm = a{1};
+            id = a{3}.resref;
+            if ~(numel(gr.resourceKind) >= id && strcmp(gr.resourceKind{id},'movie'))
+                grlog('%s skipped: id=%d is not a loaded movie', char(nm), id);
+                continue
+            end
+            % PlayMovie/CloseMovie take a MOVIE handle, not a window pointer
+            rate = 1;
+            if strcmpi(string(nm),"CloseMovie"), rate = 0; end
+            if numel(a) >= 4 && isnumeric(a{4}) && isscalar(a{4}), rate = a{4}; end
+            try
+                Screen('PlayMovie', gr.resourceMap(id), rate);
+                grlog('%s id=%d rate=%g', char(nm), id, rate);
+            catch pmErr
+                grlog('%s FAILED id=%d: %s', char(nm), id, pmErr.message);
             end
         end
     end
@@ -387,12 +462,18 @@ end
     function ensureResources(gr, decls)
         for i = 1:numel(decls)
             d = decls{i};
-            % Test the KIND marker, not the handle value: a valid Psychtoolbox
-            % movie handle can legitimately be 0, which made the numeric test
-            % miss the cache and open the movie a second time, leaking it.
-            if numel(gr.resourceKind) >= d.id && ~isempty(gr.resourceKind{d.id})
+            % A logical id only means something within ONE run of the state
+            % machine: ids are handed out 1,2,3... per run, while this renderer
+            % keeps its cache across restarts of that process. Keying the cache
+            % on the id alone let a texture resolve against a movie left over
+            % from an earlier run, and a movie against a leftover texture -- so
+            % the texture drew nothing and the movie drew a stale still frame.
+            % The id is trusted only while the declaration still agrees about
+            % what it points at.
+            if cachedMatches(gr, d)
                 continue                        % already loaded, or already failed
             end
+            releaseResource(gr, d.id);          % id recycled: let the old one go
             try
                 switch d.kind
                     case 'texture'
@@ -402,19 +483,54 @@ end
                         gr.resourceMap(d.id)    = Screen('MakeTexture', gr.window_main,    img);
                         gr.resourceMapMon(d.id) = Screen('MakeTexture', gr.window_monitor, img);
                         gr.resourceKind{d.id}   = 'texture';
-                        disp(['loaded texture: ' d.path]);
+                        grlog('loaded texture id=%d: %s', d.id, d.path);
                     case 'movie'
                         gr.resourceMap(d.id)    = Screen('OpenMovie', gr.window_main, d.path);
                         gr.resourceMapMon(d.id) = 0;     % decoded once, shown on the display
                         gr.resourceKind{d.id}   = 'movie';
-                        disp(['opened movie: ' d.path]);
+                        grlog('opened movie id=%d: %s', d.id, d.path);
+                    otherwise
+                        gr.resourceKind{d.id}   = 'failed';
+                        grlog('UNKNOWN RESOURCE KIND "%s" id=%d', char(d.kind), d.id);
                 end
             catch resErr
                 gr.resourceMap(d.id)  = -1;     % mark failed so we stop retrying every frame
                 gr.resourceKind{d.id} = 'failed';
-                disp(['RESOURCE LOAD FAILED (' d.path '): ' resErr.message]);
+                grlog('RESOURCE LOAD FAILED id=%d (%s): %s', d.id, d.path, resErr.message);
             end
+            gr.resourcePath{d.id} = d.path;     % what this id now stands for
         end
+    end
+
+%% is the cached entry for this id still the thing the task is asking for?
+    function tf = cachedMatches(gr, d)
+        tf = numel(gr.resourceKind) >= d.id && ~isempty(gr.resourceKind{d.id}) ...
+            && numel(gr.resourcePath) >= d.id ...
+            && strcmp(gr.resourcePath{d.id}, d.path) ...
+            && (strcmp(gr.resourceKind{d.id}, d.kind) ...
+                || strcmp(gr.resourceKind{d.id}, 'failed'));
+    end
+
+%% free whatever an id used to hold, before it is reused for something else
+    function releaseResource(gr, id)
+        if numel(gr.resourceKind) < id || isempty(gr.resourceKind{id}), return; end
+        try
+            switch gr.resourceKind{id}
+                case 'texture'
+                    if gr.resourceMap(id)    > 0, Screen('Close', gr.resourceMap(id));    end
+                    if gr.resourceMapMon(id) > 0, Screen('Close', gr.resourceMapMon(id)); end
+                case 'movie'
+                    if numel(gr.movieLastTex) >= id && gr.movieLastTex(id) > 0
+                        Screen('Close', gr.movieLastTex(id));
+                    end
+                    Screen('CloseMovie', gr.resourceMap(id));
+            end
+            grlog('released stale resource id=%d (%s)', id, gr.resourceKind{id});
+        catch relErr
+            grlog('could not release id=%d: %s', id, relErr.message);
+        end
+        gr.resourceKind{id} = '';
+        if numel(gr.movieLastTex) >= id, gr.movieLastTex(id) = 0; end
     end
 
 %% turn resource references into handles valid for the requested window
@@ -424,6 +540,10 @@ end
             if ~(isstruct(rest{j}) && isfield(rest{j},'resref')), continue; end
             id = rest{j}.resref;
             if numel(gr.resourceKind) < id || isempty(gr.resourceKind{id}) || strcmp(gr.resourceKind{id},'failed')
+                % Dropping the draw is right -- there is nothing to draw yet --
+                % but doing it silently is what made a failed load look like a
+                % task that simply does nothing.
+                grlogThrottled('draw dropped: resource id=%d not available', id);
                 ok = false; return                      % not loaded, or failed
             end
             if strcmp(gr.resourceKind{id}, 'movie')
@@ -436,7 +556,14 @@ end
                 % waitForImage=0 returns 0 when no NEW frame is ready, which is
                 % most flips for a 30 fps movie on a 60 Hz panel - so keep the
                 % last frame and redraw it instead of flickering.
-                t = Screen('GetMovieImage', gr.window_main, gr.resourceMap(id), 0);
+                try
+                    t = Screen('GetMovieImage', gr.window_main, gr.resourceMap(id), 0);
+                catch gmErr
+                    % A stale handle used to throw out of here and abort the
+                    % whole frame, so one bad movie blanked everything.
+                    grlogThrottled('GetMovieImage failed for id=%d: %s', id, gmErr.message);
+                    ok = false; return
+                end
                 if t > 0
                     if numel(gr.movieLastTex) >= id && gr.movieLastTex(id) > 0
                         try, Screen('Close', gr.movieLastTex(id)); catch, end

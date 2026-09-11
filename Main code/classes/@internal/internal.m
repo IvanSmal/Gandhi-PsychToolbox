@@ -97,6 +97,8 @@ classdef internal < matlab.mixin.Copyable
         resourceIds  = struct();   % kind_name -> logical id
         resourceDecl = {};         % declarations, carried in every frame
         nextResId    = 0;
+        oneShots     = {};         % PlayMovie/CloseMovie etc: ride every frame until run
+        oneShotSeq   = 0;          % monotonic token, never reset within a session
             
         %stim stuff
         stimmed=0;

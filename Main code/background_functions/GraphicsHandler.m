@@ -154,7 +154,8 @@ while 1
 
         [v, ok] = sceneRead(sceneMap);
         if ~ok
-            continue
+            % kept tearing: reuse nothing, treat as out-of-trial this pass
+            v = zeros(L.N,1);
         end
 
         gr.trialstarted = v(L.TRIALSTARTED) > 0;

@@ -1,64 +1,63 @@
-function out = pix2deg(in,type,screenparams)
-%DEG2PIX Summary of this function goes here
-%   Detailed explanation goes here
-if ~exist('type','var')
-    type='cart';
+function out = pix2deg(pixIn, coordType, screenParams)
+%PIX2DEG Convert screen pixel coordinates to degrees of visual angle.
+out = []; % always assigned: empty input must not throw "output not assigned"
+if ~exist('coordType','var')
+    coordType='cart';
 end
 
-if ~exist('screenparams','var') || isempty(screenparams)
+if ~exist('screenParams','var') || isempty(screenParams)
     %% get ini params
     ini=IniConfig();
 
-    isini=ini.ReadFile('inis/ScreenParams.ini');
+    isIniLoaded=ini.ReadFile('inis/ScreenParams.ini');
 
-    if ~isini
+    if ~isIniLoaded
         errordlg('ini not found. Missing or in the wrong path.')
-    elseif isini
-        PixelSize(1)=ini.GetValues('for deg2pix','xPixelSize');
-        PixelSize(2)=ini.GetValues('for deg2pix','yPixelSize');
+    elseif isIniLoaded
+        pixelSize(1)=ini.GetValues('for deg2pix','xPixelSize');
+        pixelSize(2)=ini.GetValues('for deg2pix','yPixelSize');
         trueCenter=ini.GetValues('for deg2pix','true center');
         distFromScreen=ini.GetValues('for deg2pix','subject distance');
     end
 else
-    PixelSize(1) = screenparams.xPixelSize;
-    PixelSize(2) = screenparams.yPixelSize;
-    trueCenter=screenparams.true_center;
-    distFromScreen=screenparams.subject_distance;
+    pixelSize(1) = screenParams.xPixelSize;
+    pixelSize(2) = screenParams.yPixelSize;
+    trueCenter=screenParams.true_center;
+    distFromScreen=screenParams.subject_distance;
 end
 
 %% do the calculations
-for i=1:size(in,1)
-    XYin=in(i,:);
-    XYin(1)=XYin(1)-trueCenter(1);
-    XYin(2)=-(XYin(2)-trueCenter(2));
+for iRow=1:size(pixIn,1)
+    xyIn=pixIn(iRow,:);
+    xyIn(1)=xyIn(1)-trueCenter(1);
+    xyIn(2)=-(xyIn(2)-trueCenter(2));
 
-    if matches(type,'size')
-        XYin(1)=XYin(1)+trueCenter(1);
-        XYin(2)=-XYin(2)+trueCenter(2);
-        type='cart';
+    if matches(coordType,'size')
+        xyIn(1)=xyIn(1)+trueCenter(1);
+        xyIn(2)=-xyIn(2)+trueCenter(2);
+        coordType='cart';
     end
 
-    Xmm=XYin(1)*PixelSize(1);
-    Ymm=XYin(2)*PixelSize(2);
+    xMm=xyIn(1)*pixelSize(1);
+    yMm=xyIn(2)*pixelSize(2);
 
-    Xdeg=round(atand(Xmm/distFromScreen),2);
-    Ydeg=round(atand(Ymm/distFromScreen),2);
+    xDeg=round(atand(xMm/distFromScreen),2);
+    yDeg=round(atand(yMm/distFromScreen),2);
 
-    if matches(type,'cart',IgnoreCase=1) ||...
-            matches(type,'cartesian',IgnoreCase=1)
-        out(i,:)=[Xdeg, Ydeg];
+    if matches(coordType,'cart',IgnoreCase=1) ||...
+            matches(coordType,'cartesian',IgnoreCase=1)
+        out(iRow,:)=[xDeg, yDeg];
 
-    elseif matches(type,'pol',IgnoreCase=1) ||...
-            matches(type,'polar',IgnoreCase=1)
+    elseif matches(coordType,'pol',IgnoreCase=1) ||...
+            matches(coordType,'polar',IgnoreCase=1)
 
-        [t,rr]=cart2pol(Xdeg,Ydeg);
-        theta=round(rad2deg(t),2);
-        r=round(rr,2);
-        out(i,:)=[theta r];
+        [thetaRad,radiusRaw]=cart2pol(xDeg,yDeg);
+        theta=round(rad2deg(thetaRad),2);
+        r=round(radiusRaw,2);
+        out(iRow,:)=[theta r];
     end
 end
 if any(isempty(out)) || any(any(isnan(out)))
     out=rmmissing(out);
 end
 end
-

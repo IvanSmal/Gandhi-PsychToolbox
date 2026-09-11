@@ -1,0 +1,45 @@
+# ---------------------------------------------------------------------------
+# Rig-local configuration.
+# Every rig has its own geometry, calibration and paths. These files must
+# NEVER be committed: a rig checking out another rig's values would get a
+# silently wrong degree-to-pixel mapping, not a crash.
+# See ScreenParams.example.ini / FilePaths.example.ini for the documented keys.
+# ---------------------------------------------------------------------------
+Main code/inis/ScreenParams.ini
+Main code/inis/FilePaths.ini
+*.bak_*
+
+# ---------------------------------------------------------------------------
+# Secrets. Never commit private keys.
+# ---------------------------------------------------------------------------
+rig1gandhi*
+*.pem
+id_rsa*
+id_ed25519*
+
+# ---------------------------------------------------------------------------
+# MATLAB editor autosaves
+# ---------------------------------------------------------------------------
+*.asv
+*.m~
+
+# ---------------------------------------------------------------------------
+# Runtime scratch. Recreated by MHost2.startupFcn / LiveParams on every launch.
+# ---------------------------------------------------------------------------
+Main code/.Parameters_Internal/
+Main code/.Tasks_Internal/
+Main code/.Custom_Functions/
+
+# ---------------------------------------------------------------------------
+# Per-rig, high churn
+# ---------------------------------------------------------------------------
+Main code/ErrorLogs/
+Main code/data/
+
+# ---------------------------------------------------------------------------
+# MATLAB Compiler output and project files
+# ---------------------------------------------------------------------------
+Main code/MHost2/
+Main code/RewardHandler/RewardHandler/
+Main code/Utilities/SoundGenerator/
+*.prj

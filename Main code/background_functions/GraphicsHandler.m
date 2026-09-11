@@ -345,7 +345,7 @@ end
             if (ischar(nm) || isstring(nm)) && any(strcmpi(string(nm), ["PlayMovie","CloseMovie"]))
                 if numel(a) >= 3 && isstruct(a{3}) && isfield(a{3},'resref')
                     id = a{3}.resref;
-                    if numel(gr.resourceMap) >= id && gr.resourceMap(id) > 0
+                    if numel(gr.resourceKind) >= id && strcmp(gr.resourceKind{id},'movie')
                         rate = 1;
                         if strcmpi(string(nm),"CloseMovie"), rate = 0; end
                         if numel(a) >= 4 && isnumeric(a{4}) && isscalar(a{4}), rate = a{4}; end
@@ -423,7 +423,7 @@ end
         for j = 1:numel(rest)
             if ~(isstruct(rest{j}) && isfield(rest{j},'resref')), continue; end
             id = rest{j}.resref;
-            if numel(gr.resourceMap) < id || gr.resourceMap(id) <= 0
+            if numel(gr.resourceKind) < id || isempty(gr.resourceKind{id}) || strcmp(gr.resourceKind{id},'failed')
                 ok = false; return                      % not loaded, or failed
             end
             if strcmp(gr.resourceKind{id}, 'movie')

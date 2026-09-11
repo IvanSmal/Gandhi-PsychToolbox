@@ -86,6 +86,17 @@ classdef internal < matlab.mixin.Copyable
         cmdLogId   = zeros(1,20000);
         cmdLogTime = zeros(1,20000);
         cmdLogN    = 0;
+
+        %texture and movie resources. Declared by name in the parameter file
+        %(addtexture/addmovie), grabbed once per trial in the task's setup
+        %block (gettexture/getmovie). Psychtoolbox handles are only valid in
+        %the process that created them, so the state machine holds paths and
+        %logical ids while GraphicsHandler holds the real handles.
+        textures     = struct();   % name -> image path
+        movies       = struct();   % name -> movie path
+        resourceIds  = struct();   % kind_name -> logical id
+        resourceDecl = {};         % declarations, carried in every frame
+        nextResId    = 0;
             
         %stim stuff
         stimmed=0;

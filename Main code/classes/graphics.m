@@ -84,6 +84,12 @@ classdef graphics < handle
         user_defined                % User-defined custom data
         target                      % Target information
 
+        %% Resources owned by this process (Psychtoolbox handles are process-local)
+        resourceMap  = []           % logical id -> PTB handle on the DISPLAY window
+        resourceMapMon = []         % logical id -> PTB handle on the MONITOR window (textures only)
+        resourceKind = {}           % logical id -> 'texture' / 'movie' / 'failed'
+        movieLastTex = []           % most recent frame fetched per movie, reused when no new frame is ready
+
         %% extra
         actualFlipCount
         actualCommandCount

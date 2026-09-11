@@ -154,7 +154,7 @@ while 1
 
         [frame, ok] = sceneRead(sceneMap);
         if ~ok
-            frame = struct('trialStarted',false,'stateName','null','setEye',false,'cmds',{{}});
+            frame = struct('trialStarted',false,'stateName','null','setEye',false,'resources',{{}},'cmds',{{}});
         end
 
         gr.trialstarted = frame.trialStarted;
@@ -171,6 +171,13 @@ while 1
 
         if isfield(frame,'setEye') && frame.setEye
             try, seteye; catch, end
+        end
+
+        % load any texture or movie this renderer has not seen yet. The
+        % declaration list rides in every frame, so this is idempotent and
+        % there is no race over which frame happened to carry it.
+        if isfield(frame,'resources') && ~isempty(frame.resources)
+            ensureResources(gr, frame.resources);
         end
 
         if gr.trialstarted
@@ -332,26 +339,115 @@ end
         for i = 1:numel(frame.cmds)
             a = frame.cmds{i};
             if numel(a) < 2, continue; end
-            sel = a{2};
-            rest = a(3:end);
-            if ~(ischar(sel) || isstring(sel))
-                % arg 2 is not a window selector: pass the call through whole
-                try, Screen(a{:}); catch drawErr, disp(drawErr.message); end
+            nm = a{1};
+
+            % PlayMovie/CloseMovie take a MOVIE handle, not a window pointer
+            if (ischar(nm) || isstring(nm)) && any(strcmpi(string(nm), ["PlayMovie","CloseMovie"]))
+                if numel(a) >= 3 && isstruct(a{3}) && isfield(a{3},'resref')
+                    id = a{3}.resref;
+                    if numel(gr.resourceMap) >= id && gr.resourceMap(id) > 0
+                        rate = 1;
+                        if strcmpi(string(nm),"CloseMovie"), rate = 0; end
+                        if numel(a) >= 4 && isnumeric(a{4}) && isscalar(a{4}), rate = a{4}; end
+                        try, Screen('PlayMovie', gr.resourceMap(id), rate);
+                        catch pmErr, disp(pmErr.message); end
+                    end
+                end
                 continue
             end
-            switch lower(string(sel))
-                case "both"
-                    try, Screen(a{1}, gr.window_main,    rest{:}); catch e1, disp(e1.message); end
-                    try, Screen(a{1}, gr.window_monitor, rest{:}); catch, end
-                case "display"
-                    try, Screen(a{1}, gr.window_main,    rest{:}); catch e2, disp(e2.message); end
-                case "monitor"
-                    try, Screen(a{1}, gr.window_monitor, rest{:}); catch, end
-                otherwise
-                    try, Screen(a{:}); catch e3, disp(e3.message); end
+
+            sel = a{2};
+            if ~(ischar(sel) || isstring(sel))
+                try, Screen(a{:}); catch e0, disp(e0.message); end
+                continue
+            end
+            wantBoth    = strcmpi(string(sel), "both");
+            wantDisplay = wantBoth || strcmpi(string(sel), "display");
+            wantMonitor = wantBoth || strcmpi(string(sel), "monitor");
+            if ~(wantDisplay || wantMonitor)
+                try, Screen(a{:}); catch e3, disp(e3.message); end
+                continue
+            end
+            if wantDisplay
+                [rest, ok] = resolveArgs(gr, a(3:end), false);
+                if ok
+                    try, Screen(nm, gr.window_main, rest{:}); catch e1, disp(e1.message); end
+                end
+            end
+            if wantMonitor
+                [restM, okM] = resolveArgs(gr, a(3:end), true);
+                if okM
+                    try, Screen(nm, gr.window_monitor, restM{:}); catch, end
+                end
             end
         end
     end
+
+%% load any resource this renderer has not seen yet
+    function ensureResources(gr, decls)
+        for i = 1:numel(decls)
+            d = decls{i};
+            if numel(gr.resourceMap) >= d.id && gr.resourceMap(d.id) ~= 0
+                continue                        % already loaded, or already failed
+            end
+            try
+                switch d.kind
+                    case 'texture'
+                        img = imread(d.path);
+                        % A Psychtoolbox texture belongs to the window it was
+                        % made for, so the experimenter's window needs its own.
+                        gr.resourceMap(d.id)    = Screen('MakeTexture', gr.window_main,    img);
+                        gr.resourceMapMon(d.id) = Screen('MakeTexture', gr.window_monitor, img);
+                        gr.resourceKind{d.id}   = 'texture';
+                        disp(['loaded texture: ' d.path]);
+                    case 'movie'
+                        gr.resourceMap(d.id)    = Screen('OpenMovie', gr.window_main, d.path);
+                        gr.resourceMapMon(d.id) = 0;     % decoded once, shown on the display
+                        gr.resourceKind{d.id}   = 'movie';
+                        disp(['opened movie: ' d.path]);
+                end
+            catch resErr
+                gr.resourceMap(d.id)  = -1;     % mark failed so we stop retrying every frame
+                gr.resourceKind{d.id} = 'failed';
+                disp(['RESOURCE LOAD FAILED (' d.path '): ' resErr.message]);
+            end
+        end
+    end
+
+%% turn resource references into handles valid for the requested window
+    function [rest, ok] = resolveArgs(gr, rest, wantMonitor)
+        ok = true;
+        for j = 1:numel(rest)
+            if ~(isstruct(rest{j}) && isfield(rest{j},'resref')), continue; end
+            id = rest{j}.resref;
+            if numel(gr.resourceMap) < id || gr.resourceMap(id) <= 0
+                ok = false; return                      % not loaded, or failed
+            end
+            if strcmp(gr.resourceKind{id}, 'movie')
+                if wantMonitor, ok = false; return; end % movie is decoded for the display only
+                % Movies advance at the renderer's rate. GetMovieImage with
+                % waitForImage=0 returns 0 when no NEW frame is ready, which is
+                % most flips for a 30 fps movie on a 60 Hz panel - so keep the
+                % last frame and redraw it instead of flickering.
+                t = Screen('GetMovieImage', gr.window_main, gr.resourceMap(id), 0);
+                if t > 0
+                    if numel(gr.movieLastTex) >= id && gr.movieLastTex(id) > 0
+                        try, Screen('Close', gr.movieLastTex(id)); catch, end
+                    end
+                    gr.movieLastTex(id) = t;
+                end
+                if numel(gr.movieLastTex) < id || gr.movieLastTex(id) <= 0
+                    ok = false; return                  % nothing decoded yet
+                end
+                rest{j} = gr.movieLastTex(id);
+            elseif wantMonitor
+                rest{j} = gr.resourceMapMon(id);
+            else
+                rest{j} = gr.resourceMap(id);
+            end
+        end
+    end
+
 
 %% monitor-only furniture: grid and eye position
     function drawMonitorExtras(gr)

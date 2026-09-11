@@ -35,17 +35,17 @@ close all;
 % Here we call some default settings for setting up Psychtoolbox
 PsychDefaultSetup(2);
 
-%% stimulus display mode -- rig-specific, so read it from this rig's own ini
+%% display mode (the animal's TV) -- rig-specific, so read it from this rig's own ini
 % rig1 drives a native 1080p60 panel and needs no mode change; rig2 drives a 4K
 % panel that must be forced to 1920x1080@120. Missing keys mean "leave it alone".
-stimXres    = screenIni.GetValues('screen info','stim_xres');
-stimYres    = screenIni.GetValues('screen info','stim_yres');
-stimRefresh = screenIni.GetValues('screen info','stim_refresh');
-if ~isempty(stimXres) && ~isempty(stimYres) && ~isempty(stimRefresh)
-    Screen('Resolution', 1, stimXres, stimYres, stimRefresh);
-    fprintf('stimulus display set to %gx%g @ %g Hz from ScreenParams.ini\n', stimXres, stimYres, stimRefresh);
+displayXres    = screenIni.GetValues('screen info','display_xres');
+displayYres    = screenIni.GetValues('screen info','display_yres');
+displayRefresh = screenIni.GetValues('screen info','display_refresh');
+if ~isempty(displayXres) && ~isempty(displayYres) && ~isempty(displayRefresh)
+    Screen('Resolution', 1, displayXres, displayYres, displayRefresh);
+    fprintf('display set to %gx%g @ %g Hz from ScreenParams.ini\n', displayXres, displayYres, displayRefresh);
 else
-    disp('no stim_xres/stim_yres/stim_refresh in ScreenParams.ini; display mode left unchanged');
+    disp('no display_xres/display_yres/display_refresh in ScreenParams.ini; display mode left unchanged');
 end
 
 % priority

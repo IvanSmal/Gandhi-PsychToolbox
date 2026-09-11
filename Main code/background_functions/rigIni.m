@@ -1,4 +1,4 @@
-function ini = rigIni(which_file, inisDir)
+function [ini, iniPath] = rigIni(which_file, inisDir)
 %RIGINI Handle to this rig's config or state ini file.
 %
 %   ini = rigIni('config')  human-authored settings: screen geometry,
@@ -43,6 +43,7 @@ switch lower(string(which_file))
             'which_file must be ''config'' or ''state'', got ''%s''.', which_file);
 end
 
+iniPath = target;
 ini = IniConfig();
 if ~ini.ReadFile(target)
     error('rigIni:readFailed', ...

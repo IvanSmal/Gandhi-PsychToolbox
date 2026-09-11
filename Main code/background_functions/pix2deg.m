@@ -6,19 +6,14 @@ if ~exist('coordType','var')
 end
 
 if ~exist('screenParams','var') || isempty(screenParams)
-    %% get ini params
-    ini=IniConfig();
-
-    isIniLoaded=ini.ReadFile('inis/ScreenParams.ini');
-
-    if ~isIniLoaded
-        errordlg('ini not found. Missing or in the wrong path.')
-    elseif isIniLoaded
-        pixelSize(1)=ini.GetValues('for deg2pix','xPixelSize');
-        pixelSize(2)=ini.GetValues('for deg2pix','yPixelSize');
-        trueCenter=ini.GetValues('for deg2pix','true center');
-        distFromScreen=ini.GetValues('for deg2pix','subject distance');
-    end
+    %% get rig config
+    % rigIni('config') returns RigConfig.ini, or falls back to
+    % ScreenParams.ini on a rig that has not been migrated yet.
+    ini = rigIni('config');
+    pixelSize(1)=ini.GetValues('for deg2pix','xPixelSize');
+    pixelSize(2)=ini.GetValues('for deg2pix','yPixelSize');
+    trueCenter=ini.GetValues('for deg2pix','true center');
+    distFromScreen=ini.GetValues('for deg2pix','subject distance');
 else
     pixelSize(1) = screenParams.xPixelSize;
     pixelSize(2) = screenParams.yPixelSize;

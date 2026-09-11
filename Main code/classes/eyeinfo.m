@@ -14,8 +14,8 @@ classdef eyeinfo < handle
 
     methods
         function obj=eyeinfo
-            ini = IniConfig();
-            ini.ReadFile('inis/ScreenParams.ini');
+            % eye calibration is machine-written state, not hand config
+            ini = rigIni('state');
 
         try
             obj.xgain=ini.GetValues('eye calibration','xgain');

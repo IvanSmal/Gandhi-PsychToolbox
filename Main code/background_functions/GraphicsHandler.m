@@ -15,8 +15,9 @@ warning ('off','all');
 graphicsport = udpport("LocalPort",2021, "timeout", 0.02);
 
 %% initiate a bunch of gr stuff
-screenIni = IniConfig();
-screenIni.ReadFile(filepaths_ini.GetValues('paths','ini_screen'));
+% [screen info] is hand-written rig config; rigIni falls back to
+% ScreenParams.ini on a rig that has not been migrated yet.
+screenIni = rigIni('config', fullfile(pathhere,'inis'));
 bgcolor = screenIni.GetValues('screen info','background');
 gr = graphics;
 gr.screenparams = screenIni; % previously wiped by the 'gr = graphics' line above

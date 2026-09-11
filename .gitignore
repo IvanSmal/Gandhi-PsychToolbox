@@ -43,3 +43,13 @@ Main code/MHost2/
 Main code/RewardHandler/RewardHandler/
 Main code/Utilities/SoundGenerator/
 *.prj
+
+# ---------------------------------------------------------------------------
+# App Designer exports. MHost2.m would SHADOW MHost2.mlapp - MATLAB resolves
+# the .m first, so the app would never launch. MHost2_exported.m is the safe
+# tracked export: App Designer renames the class precisely to avoid this.
+# ---------------------------------------------------------------------------
+Main code/MHost2.m
+Main code/MHost2_debug.txt
+Main code/inis/classdef SoundGenerator  matlab.txt
+Main code/inputtest.m

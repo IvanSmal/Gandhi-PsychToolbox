@@ -114,7 +114,7 @@ classdef MHost2_exported < matlab.apps.AppBase
         last_trial_timestamp = 0
         last_trial_ITI = 0
         ITI_first=1
-        post_trial_timer =0
+        post_trial_timer = uint64(0) % uint64 so toc() cannot throw if a post-trial tic was skipped
 
         % repeating failed trials
         trials_failed = 0
@@ -180,11 +180,16 @@ classdef MHost2_exported < matlab.apps.AppBase
                 else
                     app.insToTxtbox('No temporary data file for this trial number found. Attempting to fix trial numbers')
                     % get files in dir
-                    files=dir(fullfile(app.checkForDataDirectory,'temptrials'));
+                    files=dir(fullfile(app.checkForDataDirectory,'temptrials','*.mat'));
                     % load last file
-                    lastfile=load([files(end).folder,'/',files(end).name]);
-                    %get last trial number
-                    truetrnum=lastfile.(files(end).name(1:end-4)).trialnum;
+                    if isempty(files)
+                        app.insToTxtbox('No temptrial .mat files found; using persistent trial counter instead.')
+                        truetrnum=app.mhpass.trialnumpersistent;
+                    else
+                        lastfile=load(fullfile(files(end).folder,files(end).name));
+                        %get last trial number
+                        truetrnum=lastfile.(files(end).name(1:end-4)).trialnum;
+                    end
                     %add one
                     truetrnum =truetrnum+1;
                     % insert new trial number to the persistent trnumber
@@ -223,11 +228,16 @@ classdef MHost2_exported < matlab.apps.AppBase
                     if exist(tempfname,'file')
                         app.insToTxtbox(['trial file: ' tempfname ' already exists. Will attempt to fix trial numbers.'])
                         % get files in dir
-                        files=dir(fullfile(app.checkForDataDirectory,'temptrials'));
+                        files=dir(fullfile(app.checkForDataDirectory,'temptrials','*.mat'));
                         % load last file
-                        lastfile=load([files(end).folder,'/',files(end).name]);
-                        %get last trial number
-                        truetrnum=lastfile.(files(end).name(1:end-4)).trialnum;
+                        if isempty(files)
+                            app.insToTxtbox('No temptrial .mat files found; using persistent trial counter instead.')
+                            truetrnum=app.mhpass.trialnumpersistent;
+                        else
+                            lastfile=load(fullfile(files(end).folder,files(end).name));
+                            %get last trial number
+                            truetrnum=lastfile.(files(end).name(1:end-4)).trialnum;
+                        end
                         %add one
                         truetrnum =truetrnum+1;
                         % insert new trial number to the persistent trnumber
@@ -272,6 +282,7 @@ classdef MHost2_exported < matlab.apps.AppBase
 
     methods (Access = private)
         function [mh,e] = Run_Experiment(app,mh)
+            e = []; % guarantee 'e' exists so the catch handler cannot fail on an undefined 'e'
             try
                 if app.errored
                     temptrialnumpersistent=mh.trialnumpersistent;
@@ -525,6 +536,11 @@ classdef MHost2_exported < matlab.apps.AppBase
                         mh.graphicssent=0; % check if needed
                         [eyeandphotodiode_temp, ts]=xippmex('cont',app.chidx([1,2,4]),300,'1ksps');
                         tsshift=floor((ts-xippmextstart)/30);
+                        if tsshift < 0 || tsshift > 600000 % NIP clock wrap/resync: >10 min of samples in one trial is impossible
+                            app.insToTxtbox(['Implausible NIP timestamp shift (' num2str(tsshift) ' ms). Resyncing trial clock.'])
+                            xippmextstart = ts;
+                            tsshift = 0;
+                        end
                         eyeandphotodiode(:,tsshift+1:300+tsshift)=eyeandphotodiode_temp;
 
                         if ~gotinfo
@@ -709,6 +725,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                 logError(app, err, 'Run_Experiment');
 
                 app.insToTxtbox('Attempting to perform end of trial procedure')
+                if isempty(e), e = make_e(app); end
                 try
                     [mh,e] = app.EmergencyTrialEndingProcedure(mh,e);
                 catch emergencyErr
@@ -887,7 +904,7 @@ classdef MHost2_exported < matlab.apps.AppBase
             try
                 %% show eye position/ idle loop
                 onceinawhile=99;
-                while ~app.running
+                while isvalid(app) && ~app.running
                     onceinawhile=onceinawhile+1;
                     pause(0.001) %help gui
                     drawnow %help gui
@@ -907,6 +924,10 @@ classdef MHost2_exported < matlab.apps.AppBase
                     end
                 end
             catch err
+                if ~isvalid(app)
+                    % app was closed while idling: nothing left to recover, exit quietly
+                    return
+                end
                 app.errored = 1;
                 logError(app, err, 'idle_loop');
 
@@ -1014,6 +1035,10 @@ classdef MHost2_exported < matlab.apps.AppBase
         function gettrialinfo(app,mh)
             % name
             app.TrialnameEditField.Value=mh.trial.ttype;
+            if ~isstruct(mh.trial.targets) || ~isstruct(mh.trial.intervals)
+                app.insToTxtbox('Trial has no registered targets/intervals yet; skipping trial-info display.')
+                return
+            end
             %targets
             targs=fieldnames(mh.trial.targets);
             targnames=cell(length(targs) ,1);
@@ -1137,16 +1162,26 @@ classdef MHost2_exported < matlab.apps.AppBase
             % Write application state if available
             fprintf(fid, 'APPLICATION STATE:\n');
             fprintf(fid, '-----------------------------------------------------------------\n');
-            fprintf(fid, 'Running: %d\n', app.running);
-            fprintf(fid, 'Trial number: %d\n', app.mhpass.trialnumpersistent);
-            fprintf(fid, 'Subject: %s\n', app.SubjectNameEditField.Value);
-            fprintf(fid, 'Parameter file: %s\n', app.ParameterFile.Value);
+            if ~isvalid(app)
+                fprintf(fid, '(app object was already deleted when this error was logged)\n');
+            else
+                try
+                    fprintf(fid, 'Running: %d\n', app.running);
+                    fprintf(fid, 'Trial number: %d\n', app.mhpass.trialnumpersistent);
+                    fprintf(fid, 'Subject: %s\n', app.SubjectNameEditField.Value);
+                    fprintf(fid, 'Parameter file: %s\n', app.ParameterFile.Value);
+                catch stateErr
+                    fprintf(fid, '(could not read app state: %s)\n', stateErr.message);
+                end
+            end
 
             % Close the file
             fclose(fid);
 
             % Add error to app's information text area
-            app.insToTxtbox(sprintf('Error occurred in %s. See %s for details.', source, filename));
+            if isvalid(app)
+                app.insToTxtbox(sprintf('Error occurred in %s. See %s for details.', source, filename));
+            end
         end
     end
 

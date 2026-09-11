@@ -272,7 +272,11 @@ end
 %%data save function
     function dumpdata(fname)
         gr;
-        fname = strtrim(fname);
+        % char, not string: the command arrives as dumpdata("...") with double
+        % quotes, so fname is a string scalar. [str 'suffix'] then builds a 1x2
+        % STRING ARRAY instead of concatenating, which made save reject the
+        % sidecar path with 'Argument must be a text scalar'.
+        fname = char(strtrim(fname));
 
         % Snapshot and clear FIRST, before touching the file.
         %

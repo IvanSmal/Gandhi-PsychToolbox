@@ -184,7 +184,7 @@ while 1
             flipcount = flipcount + 1;
             if flipcount >= 3
                 drawMonitorExtras(gr);
-                Screen('Flip', gr.window_monitor);
+                Screen('Flip', gr.window_monitor, [], [], 1);   % dontsync: never block the display flip
                 updategui(gr);
                 flipcount = 0;
             end
@@ -208,7 +208,7 @@ while 1
             gr.up_down=0;
             Screen('PanelFitter', gr.window_monitor, gr.winparams);
 
-            Screen('Flip',gr.window_monitor);
+            Screen('Flip',gr.window_monitor, [], [], 1);
             Screen('Flip',gr.window_main);
             updategui(gr);
         end

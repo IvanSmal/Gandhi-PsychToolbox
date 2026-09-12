@@ -129,6 +129,8 @@ classdef MHost2_exported < matlab.apps.AppBase
         CheckBoxCounter = 0; % counting how many trials were ran without recording neural data
         homepath; % Description
         post_trial_procedure_complete = 1; % Check that post trial procedure actually happened
+        scopeMetaMap                       % shared-memory slot: publish trial name to TrellisScope
+        scopeMetaSeq = 0                    % seqlock counter for scopeMetaMap
         % misc tab gauges (created by createMiscStats at startup, not in the design view)
         miscStats = struct()          % handles: fps, loopMs
         miscStatsTimer = uint64(0)    % throttles updateMiscStats to 2 Hz
@@ -399,6 +401,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                     trialtypestring=char(tlist{randTrial});
                     mh.trial.ttype=trialtypestring(1:end-2);
                     mh.trial_function=str2func(mh.trial.ttype);
+                    app.publishScopeMeta(mh.trial.ttype);
 
                     %%
                     % check if autocalibrate buffer changed
@@ -924,6 +927,19 @@ classdef MHost2_exported < matlab.apps.AppBase
                 app.insToTxtbox('launched Trellis Scope');
             catch e
                 app.insToTxtbox(['could not launch Trellis Scope: ' e.message]);
+            end
+        end
+
+        function publishScopeMeta(app, trialName)
+            % Publish the current trial name to the Trellis Scope slot so it
+            % can colour overlaid windows by task type. Lazy-open, best-effort.
+            try
+                if isempty(app.scopeMetaMap)
+                    app.scopeMetaMap = sceneOpen(true, scopeMetaPath());
+                end
+                app.scopeMetaSeq = app.scopeMetaSeq + 1;
+                sceneWrite(app.scopeMetaMap, app.scopeMetaSeq, struct('trialName', char(trialName)));
+            catch
             end
         end
 

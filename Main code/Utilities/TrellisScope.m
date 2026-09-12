@@ -74,6 +74,8 @@ classdef TrellisScope < handle
         eyeCal              % struct: xgain,xoffset,ygain,yoffset
         lastNipTick = []    % NIP tick of the last appended sample (dedup)
         nPull = 300         % samples to pull per tick (100 ms of history at 1 kHz)
+        metaMap             % shared-memory slot: current trial name from MonkeyHost
+        lastTrialName = ''  % last trial name read from the slot
     end
 
     methods
@@ -417,6 +419,7 @@ classdef TrellisScope < handle
             end
             xippmex('digin');                               % clear the digital buffer
             app.lastNipTick = [];
+            try, app.metaMap = sceneOpen(false, scopeMetaPath()); catch, app.metaMap = []; end
             app.inited = true;
         end
 
@@ -476,6 +479,22 @@ classdef TrellisScope < handle
                 ymat(c,:) = row(keep);
             end
             events = app.readDigin();
+            % current trial name from MonkeyHost -> a 'trial' event when it changes
+            tn = app.readTrialName();
+            if ~isempty(tn) && ~strcmp(tn, app.lastTrialName)
+                app.lastTrialName = tn;
+                events = [struct('kind','trial','name',tn,'t',app.xippmexNow()), events];
+            end
+        end
+
+        function tn = readTrialName(app)
+            tn = '';
+            if isempty(app.metaMap), return; end
+            try
+                [m, ok] = sceneRead(app.metaMap);
+                if ok && isfield(m,'trialName'), tn = m.trialName; end
+            catch
+            end
         end
 
         function events = readDigin(app)

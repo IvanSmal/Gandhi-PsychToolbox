@@ -86,9 +86,10 @@ classdef graphics < handle
 
         %% Resources owned by this process (Psychtoolbox handles are process-local)
         resourceMap  = []           % logical id -> PTB handle on the DISPLAY window
-        resourceMapMon = []         % logical id -> PTB handle on the MONITOR window (textures only)
+        resourceMapMon = []         % logical id -> PTB handle on the MONITOR window (NaN: movie has no monitor copy)
         resourceKind = {}           % logical id -> 'texture' / 'movie' / 'failed'
-        movieLastTex = []           % most recent frame fetched per movie, reused when no new frame is ready
+        movieLastTex = []           % most recent frame fetched per movie on the DISPLAY, reused when no new frame is ready
+        movieLastTexMon = []        % same, for the monitor's own copy of the movie
         resourcePath = {}           % logical id -> path it was loaded from, so a recycled id cannot masquerade
         lastOneShot  = 0            % highest one-shot token (PlayMovie/CloseMovie) already run
         lastFrameSeq = -1           % newest frame seq seen; a drop means the state machine restarted

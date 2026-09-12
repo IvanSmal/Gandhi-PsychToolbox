@@ -47,12 +47,17 @@ end
 % back - and the renderer only ever reads the NEWEST frame, so a command
 % carried by exactly one frame is almost always skipped. One-shots therefore
 % ride in every frame, each tagged with a token, and the renderer runs each
-% token once.
+% token once, in order.
+%
+%   mh.Screen('PlayMovie',         mh, mov, rate)   start / pause (rate 0)
+%   mh.Screen('CloseMovie',        mh, mov)         pause; playback resumes
+%                                                   where it stopped
+%   mh.Screen('SetMovieTimeIndex', mh, mov, secs)   seek, e.g. 0 to restart
 args = varargin;
 if numel(args) >= 2
     args{2} = windowToken(args{2});
 end
-if any(strcmpi(string(cmd), ["PlayMovie","CloseMovie"]))
+if any(strcmpi(string(cmd), ["PlayMovie","CloseMovie","SetMovieTimeIndex"]))
     mh.oneShotSeq = mh.oneShotSeq + 1;
     s = struct('token', mh.oneShotSeq);
     s.cmd = args;

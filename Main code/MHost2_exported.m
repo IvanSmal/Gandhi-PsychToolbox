@@ -962,18 +962,27 @@ classdef MHost2_exported < matlab.apps.AppBase
 
     methods (Access = public)
         function ok = validateLoadedTasks(app)
-            % Validate the loaded tasks against the loaded parameter file just
-            % before a run. Returns false only if the user cancels the start.
-            % Warns about anything the parameter file does not declare, and if
-            % a task needs custom path functions that are not imported, offers
-            % to load them.
+            % Validate the loaded tasks and parameter file just before a run.
+            % Returns false only if the user cancels the start. Checks, in
+            % order: files MATLAB cannot parse (syntax), items the parameter
+            % file does not declare, and custom path functions not imported.
             ok = true;
             if ~app.paramsloaded || isempty(app.UIFigure) || ~isvalid(app.UIFigure), return; end
             try
-                rep = validateTasks(app.mhpass, '.Tasks_Internal');
+                rep = validateTasks(app.mhpass, '.Tasks_Internal', app.ParameterFile.Value);
             catch valErr
                 app.insToTxtbox(['task validation skipped: ' valErr.message]);
                 return
+            end
+            if ~isempty(rep.syntaxErrors)
+                msg = "These files have syntax errors and will not run:";
+                for i = 1:size(rep.syntaxErrors,1)
+                    msg = msg + newline + "    " + rep.syntaxErrors{i,1} + "  ->  " + rep.syntaxErrors{i,2};
+                end
+                app.insToTxtbox(char(msg));
+                c = uiconfirm(app.UIFigure, char(msg), 'Syntax errors', ...
+                    'Options', {'Cancel','Start anyway'}, 'DefaultOption', 1, 'CancelOption', 1, 'Icon', 'error');
+                if strcmp(c, 'Cancel'), ok = false; return; end
             end
             if ~isempty(rep.customTasks)
                 msg = sprintf(['These tasks need custom functions that are not loaded:\n'  ...
@@ -987,7 +996,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                         ok = false; return
                     case 'Load and start'
                         app.loadCustomFunctions;
-                        try, rep = validateTasks(app.mhpass, '.Tasks_Internal'); catch, end
+                        try, rep = validateTasks(app.mhpass, '.Tasks_Internal', app.ParameterFile.Value); catch, end
                         if ~isempty(rep.customTasks)
                             c2 = uiconfirm(app.UIFigure, sprintf(['Still missing: %s\n\n' ...
                                 'Start anyway?'], strjoin(rep.missingFns, ', ')), ...

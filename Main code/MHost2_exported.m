@@ -501,10 +501,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                         gotiti=1;
                         pause(0.001)
                         mh.rewcheck(app);
-                        try
-                            com=readline(mh.rewardport);
-                            eval(com);
-                        end
+                        app.drainRewardPort;
                     end
                                         
                     if ~gotiti && ~app.ITI_first
@@ -558,6 +555,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                         end
 
                         mh.rewcheck(app);
+                        app.drainRewardPort;
                         a=[a toc];
                         app.updateMiscStats(a);
                         if length(a)>5 && a(end)>10
@@ -665,11 +663,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                     app.savestate(e,0);
                     fprintf('(551-553) ran app.savestate(e,0) %f \n' , toc(app.post_trial_timer))                    
                     
-                    try
-                        %check of the reward handler is talking
-                        com=readline(mh.rewardport);
-                        eval(com);
-                    end
+                    app.drainRewardPort;   %check of the reward handler is talking
                     fprintf('(553-562) talked to reward handler at %f \n' , toc(app.post_trial_timer))
 
                     if trellisrecording ==1
@@ -1042,6 +1036,29 @@ classdef MHost2_exported < matlab.apps.AppBase
     end
 
     methods (Access = private)
+        function drainRewardPort(app)
+            % Read and act on EVERY reward-handler message waiting on UDP 2024,
+            % not just one. The reward handler replies with code to run, e.g.
+            % app.insToTxtbox("reward: 0.3s");. Reading a single line per check
+            % let messages pile up in the socket buffer during a trial and then
+            % dump in a burst; drain them all so each reward shows as it happens.
+            try
+                rp = app.mhpass.rewardport;
+            catch
+                return
+            end
+            while rp.NumBytesAvailable > 0
+                try
+                    com = readline(rp);
+                    if ~ismissing(com) && strlength(com) > 0
+                        eval(com);
+                    end
+                catch
+                    break
+                end
+            end
+        end
+
         function idle_loop(app)
             try
                 %% show eye position/ idle loop
@@ -1061,10 +1078,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                         xippmex('close');
                     end
                     app.mhpass=mh;
-                    try
-                        com=readline(mh.rewardport);
-                        eval(com);
-                    end
+                    app.drainRewardPort;
                 end
             catch err
                 if ~isvalid(app)

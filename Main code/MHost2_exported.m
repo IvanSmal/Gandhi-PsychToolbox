@@ -129,6 +129,10 @@ classdef MHost2_exported < matlab.apps.AppBase
         CheckBoxCounter = 0; % counting how many trials were ran without recording neural data
         homepath; % Description
         post_trial_procedure_complete = 1; % Check that post trial procedure actually happened
+        % misc tab gauges (created by createMiscStats at startup, not in the design view)
+        miscStats = struct()          % handles: fps, loopMs
+        miscStatsTimer = uint64(0)    % throttles updateMiscStats to 2 Hz
+        renderStatsMap = []           % renderer -> state machine flip-rate slot, see renderStatsPath
     end
 
     methods (Access = public)
@@ -555,6 +559,7 @@ classdef MHost2_exported < matlab.apps.AppBase
 
                         mh.rewcheck(app);
                         a=[a toc];
+                        app.updateMiscStats(a);
                         if length(a)>5 && a(end)>10
                             app.insToTxtbox(['Check time was slow: ' num2str(a(end))  'ms.'])
                         end
@@ -909,6 +914,114 @@ classdef MHost2_exported < matlab.apps.AppBase
             app.paramsloaded=1;
         end
 
+        function createMiscStats(app)
+            % Misc tab gauges. Built at runtime rather than in the design
+            % view so the .mlapp component tree stays untouched.
+            lbl = uilabel(app.miscTab);
+            lbl.Position = [17 220 139 22];
+            lbl.Text = 'Display FPS';
+            app.miscStats.fps = uieditfield(app.miscTab, 'numeric');
+            app.miscStats.fps.Position = [176 220 60 22];
+            app.miscStats.fps.Editable = 'off';
+            app.miscStats.fps.ValueDisplayFormat = '%.1f';
+            app.miscStats.fps.Tooltip = {'Display window flip rate reported by GraphicsHandler over its last ~2 s'};
+
+            lbl = uilabel(app.miscTab);
+            lbl.Position = [17 190 139 22];
+            lbl.Text = 'State loop (ms)';
+            app.miscStats.loopMs = uieditfield(app.miscTab, 'numeric');
+            app.miscStats.loopMs.Position = [176 190 60 22];
+            app.miscStats.loopMs.Editable = 'off';
+            app.miscStats.loopMs.ValueDisplayFormat = '%.2f';
+            app.miscStats.loopMs.Tooltip = {'Mean state-machine iteration time over the last 200 iterations of the current trial'};
+        end
+
+        function updateMiscStats(app, loopSec)
+            % Refresh the misc tab gauges at most twice a second. Values set
+            % during a trial appear when the GUI next repaints, i.e. at the
+            % trial boundary; while idle they are live.
+            if toc(app.miscStatsTimer) < 0.5, return; end
+            app.miscStatsTimer = tic;
+            try
+                if isempty(app.renderStatsMap)
+                    app.renderStatsMap = sceneOpen(false, renderStatsPath());
+                end
+                [s, ok] = sceneRead(app.renderStatsMap);
+                if ok && isfield(s, 'fps')
+                    app.miscStats.fps.Value = s.fps;
+                end
+            catch
+            end
+            if ~isempty(loopSec)
+                n = min(numel(loopSec), 200);
+                app.miscStats.loopMs.Value = mean(loopSec(end-n+1:end)) * 1000;
+            end
+        end
+
+        function validateLoadedTasks(app)
+            % Check the loaded tasks against the loaded parameter file and
+            % warn about anything the parameter file does not declare. If a
+            % task uses a target whose custom path names a function that is
+            % not on the path (custom functions not imported), offer to load
+            % them. Runs when tasks or the parameter file are (re)loaded.
+            if ~app.paramsloaded || isempty(app.UIFigure) || ~isvalid(app.UIFigure), return; end
+            try
+                rep = validateTasks(app.mhpass, '.Tasks_Internal');
+            catch valErr
+                app.insToTxtbox(['task validation skipped: ' valErr.message]);
+                return
+            end
+            if ~isempty(rep.undeclared)
+                msg = "The loaded parameter file does not declare everything these tasks use:";
+                for i = 1:size(rep.undeclared,1)
+                    msg = msg + newline + "    " + rep.undeclared{i,1} + "  ->  " + ...
+                        rep.undeclared{i,2} + " """ + rep.undeclared{i,3} + """";
+                end
+                msg = msg + newline + newline + ...
+                    "Load the parameter file these tasks expect, or add the missing declarations.";
+                app.insToTxtbox(char(msg));
+                uialert(app.UIFigure, char(msg), 'Missing parameter declarations', 'Icon', 'warning');
+            end
+            if ~isempty(rep.customTasks)
+                msg = sprintf(['These tasks require custom functions that are not loaded:\n'  ...
+                    '    %s\n\nMissing functions: %s\n\nLoad the custom-functions folder now?'], ...
+                    strjoin(rep.customTasks, ', '), strjoin(rep.missingFns, ', '));
+                choice = uiconfirm(app.UIFigure, msg, 'Custom functions needed', ...
+                    'Options', {'Load','Ignore'}, 'DefaultOption', 1, 'CancelOption', 2, 'Icon', 'warning');
+                if strcmp(choice, 'Load')
+                    app.loadCustomFunctions;
+                else
+                    app.insToTxtbox('custom functions not loaded (ignored); tasks that need them will fail.');
+                end
+            end
+        end
+
+        function loadCustomFunctions(app)
+            % Import a custom-functions folder and make it callable right now.
+            folder = uigetdir('~/Documents', 'select the folder with custom functions');
+            if isequal(folder, 0), return; end
+            try
+                copyfile(folder, '.Custom_Functions');
+                addpath('.Custom_Functions'); rehash;
+                app.insToTxtbox(['loaded custom functions from ' folder]);
+            catch cfErr
+                uialert(app.UIFigure, ['Could not load custom functions: ' cfErr.message], ...
+                    'Custom functions', 'Icon', 'error');
+                return
+            end
+            try
+                rep = validateTasks(app.mhpass, '.Tasks_Internal');
+                if isempty(rep.customTasks)
+                    app.insToTxtbox('custom functions loaded; all tasks satisfied.');
+                else
+                    uialert(app.UIFigure, sprintf('Still missing: %s\n(needed by %s)', ...
+                        strjoin(rep.missingFns, ', '), strjoin(rep.customTasks, ', ')), ...
+                        'Custom functions', 'Icon', 'warning');
+                end
+            catch
+            end
+        end
+
         function idle_loop(app)
             try
                 %% show eye position/ idle loop
@@ -917,6 +1030,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                     onceinawhile=onceinawhile+1;
                     pause(0.001) %help gui
                     drawnow %help gui
+                    app.updateMiscStats([]);
                     mh=app.mhpass;
                     mh.rewcheck(app);
                     app.calibration_check(mh);
@@ -1232,6 +1346,7 @@ classdef MHost2_exported < matlab.apps.AppBase
             mh.graphicsport = udpport("LocalPort",2020, "Timeout",1); %start udp port
             app.mhpass=mh;
             mh.rewardport = udpport("LocalPort",2024, "Timeout",0.001); %start udp port
+            app.createMiscStats();
 
             %% set up initial conditions from previous session
             % state = machine-written values, cfg = hand-written rig config
@@ -1333,6 +1448,7 @@ classdef MHost2_exported < matlab.apps.AppBase
             clc
             system('clear');
             disp('-----Trial Handler-----')
+            app.validateLoadedTasks;
             try %app throws error here when closed
                 app.idle_loop;
             end
@@ -1390,6 +1506,21 @@ classdef MHost2_exported < matlab.apps.AppBase
             delete(fullfile(dirname,'temptrials',finfo(1).name))
             save(fullfile(dirname,'e.mat'),'e')
             rmdir(fullfile(dirname,'temptrials'))
+            % Every STOP drops a timestamped folder (task copies and the info
+            % box text) straight into the data folder. Gather them under
+            % metadata/ so the finalized folder holds e.mat, class_definitions
+            % and one metadata folder rather than one folder per stop.
+            stamps = dir(dirname);
+            stamps = stamps([stamps.isdir] & ~cellfun(@isempty, regexp({stamps.name}, '^\d+$', 'once')));
+            if ~isempty(stamps)
+                metadir = fullfile(dirname, 'metadata');
+                if ~isfolder(metadir), mkdir(metadir); end
+                for k = 1:numel(stamps)
+                    src = fullfile(dirname, stamps(k).name);
+                    try, rmpath(src); catch, end      % savestate addpath'd it
+                    movefile(src, fullfile(metadir, stamps(k).name));
+                end
+            end
             app.checkForDataDirectory = [];
 
             %iterate folders and move
@@ -1574,6 +1705,7 @@ classdef MHost2_exported < matlab.apps.AppBase
         function ParameterFileValueChanged(app, event)
             copyfile(fullfile(app.ParameterFile.Value),'.Parameters_Internal')
             app.makeparams
+            app.validateLoadedTasks;
         end
 
         % Menu selected function: ImportCustomFunctionsMenu

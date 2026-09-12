@@ -909,6 +909,24 @@ classdef MHost2_exported < matlab.apps.AppBase
             app.paramsloaded=1;
         end
 
+        function createUtilsMenu(app)
+            % Built at startup (design-time component tree untouched).
+            m = uimenu(app.UIFigure, 'Text', 'Utils');
+            uimenu(m, 'Text', 'Trellis Scope', ...
+                'MenuSelectedFcn', @(~,~) app.launchTrellisScope());
+        end
+
+        function launchTrellisScope(app)
+            % Launch the scope in its own MATLAB, alongside MonkeyHost, so its
+            % timer and Trellis reads never fight the trial loop.
+            try
+                system('gnome-terminal --tab -- sh -c "cd ./Utilities/; matlab -nodesktop -r ''TrellisScope''" --title="Trellis Scope"');
+                app.insToTxtbox('launched Trellis Scope');
+            catch e
+                app.insToTxtbox(['could not launch Trellis Scope: ' e.message]);
+            end
+        end
+
         function createMiscStats(app)
             % Misc tab gauges. Built at runtime rather than in the design
             % view so the .mlapp component tree stays untouched.
@@ -1405,6 +1423,7 @@ classdef MHost2_exported < matlab.apps.AppBase
             app.mhpass=mh;
             mh.rewardport = udpport("LocalPort",2024, "Timeout",0.001); %start udp port
             app.createMiscStats();
+            app.createUtilsMenu();
 
             %% set up initial conditions from previous session
             % state = machine-written values, cfg = hand-written rig config

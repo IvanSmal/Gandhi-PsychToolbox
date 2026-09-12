@@ -497,7 +497,7 @@ classdef MHost2_exported < matlab.apps.AppBase
 
                     % ITI check
                     gotiti=0;
-                    while (app.last_trial_timestamp+app.last_trial_ITI)>getsecs %% ITI
+                    while (app.last_trial_timestamp+app.last_trial_ITI)>getsecs && ~app.STOPButton.Value %% ITI
                         gotiti=1;
                         pause(0.001)
                         mh.rewcheck(app);
@@ -550,6 +550,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                             gotinfo=1;
                         end
 
+                        drawnow limitrate   % process a STOP / emergency-stop click mid-trial
                         if app.STOPButton.Value == 1 %check for force stop trial
                             mh.stoptrial(0);
                         end
@@ -928,6 +929,16 @@ classdef MHost2_exported < matlab.apps.AppBase
             app.miscStats.loopMs.Editable = 'off';
             app.miscStats.loopMs.ValueDisplayFormat = '%.2f';
             app.miscStats.loopMs.Tooltip = {'Mean state-machine iteration time over the last 200 iterations of the current trial'};
+
+            eb = uibutton(app.miscTab, 'push');
+            eb.Text = 'EMERGENCY STOP';
+            eb.BackgroundColor = [0.80 0.10 0.10];
+            eb.FontColor = [1 1 1];
+            eb.FontWeight = 'bold';
+            eb.FontSize = 14;
+            eb.Position = [17 20 220 45];
+            eb.Tooltip = {'Kill the current trial immediately; does not wait for it to finish'};
+            eb.ButtonPushedFcn = createCallbackFcn(app, @emergencyStopPushed, true);
         end
 
         function updateMiscStats(app, loopSec)
@@ -1011,6 +1022,19 @@ classdef MHost2_exported < matlab.apps.AppBase
                     'Options', {'Start anyway','Cancel'}, 'DefaultOption', 2, 'CancelOption', 2, 'Icon', 'warning');
                 if strcmp(c3, 'Cancel'), ok = false; return; end
             end
+        end
+
+        function emergencyStopPushed(app, event) %#ok<INUSD>
+            % Kill the current trial immediately and stop the session, without
+            % waiting for a long interval to elapse. internal is a handle, so
+            % clearing runtrial breaks the trial loop at its next check; the
+            % loop's drawnow makes that check happen within a frame. The ITI
+            % loop and outer loop stop on STOPButton being set.
+            app.STOPButton.Value = 1;
+            if ~isempty(app.mhpass) && isvalid(app.mhpass)
+                app.mhpass.runtrial = 0;
+            end
+            app.insToTxtbox('EMERGENCY STOP: killing current trial');
         end
 
         function loadCustomFunctions(app)

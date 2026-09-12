@@ -958,6 +958,9 @@ classdef MHost2_exported < matlab.apps.AppBase
             end
         end
 
+    end
+
+    methods (Access = public)
         function validateLoadedTasks(app)
             % Check the loaded tasks against the loaded parameter file and
             % warn about anything the parameter file does not declare. If a
@@ -1022,6 +1025,9 @@ classdef MHost2_exported < matlab.apps.AppBase
             end
         end
 
+    end
+
+    methods (Access = private)
         function idle_loop(app)
             try
                 %% show eye position/ idle loop

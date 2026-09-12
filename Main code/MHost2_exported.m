@@ -920,7 +920,7 @@ classdef MHost2_exported < matlab.apps.AppBase
             % Launch the scope in its own MATLAB, alongside MonkeyHost, so its
             % timer and Trellis reads never fight the trial loop.
             try
-                system('gnome-terminal --tab -- sh -c "cd ./Utilities/; matlab -nodesktop -r ''TrellisScope''" --title="Trellis Scope"');
+                system('gnome-terminal --tab -- sh -c "cd ./Utilities/; matlab -nodesktop -r ''launchScope''" --title="Trellis Scope"');
                 app.insToTxtbox('launched Trellis Scope');
             catch e
                 app.insToTxtbox(['could not launch Trellis Scope: ' e.message]);

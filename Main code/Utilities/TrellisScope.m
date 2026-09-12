@@ -67,6 +67,13 @@ classdef TrellisScope < handle
         typeColors          % containers.Map: task name -> RGB
         proxyLines          % containers.Map: task name -> legend proxy (top axes)
         palette
+
+        % xippmex source
+        chanMap             % containers.Map: friendly name -> struct(elec,type,unit)
+        inited = false
+        eyeCal              % struct: xgain,xoffset,ygain,yoffset
+        lastNipTick = []    % NIP tick of the last appended sample (dedup)
+        nPull = 300         % samples to pull per tick (100 ms of history at 1 kHz)
     end
 
     methods
@@ -168,7 +175,8 @@ classdef TrellisScope < handle
             app.pending = struct('name',{},'t0',{},'endT',{});
             app.typeColors = containers.Map('KeyType','char','ValueType','any');
             app.lastAcqT = app.sourceNow();
-            app.initSim();
+            if app.sim, app.initSim();
+            else,       app.xippmexInit(); app.lastNipTick = []; xippmex('digin'); end
 
             app.running = true;
             app.statusLbl.Text = 'running'; app.statusLbl.FontColor = [0 0.5 0];
@@ -372,11 +380,119 @@ classdef TrellisScope < handle
             end
         end
 
-        % --- Phase 1 placeholders (xippmex) -------------------------------
-        function names = xippmexChannels(~), names = {}; end
+        % ------------------------------------------------- xippmex source
+        function names = xippmexChannels(app)
+            % Build the selectable channel list from what Trellis reports, and
+            % remember how to read each one (electrode, stream type, unit).
+            app.xippmexInit();
+            app.chanMap = containers.Map('KeyType','char','ValueType','any');
+            names = {};
+            an = xippmex('elec','analog');
+            friendly = containers.Map({10241,10242,10244}, {'eyeX','eyeY','photodiode'});
+            for e = an
+                if isKey(friendly, e), nm = friendly(e); else, nm = sprintf('analog %d', e); end
+                unit = 'adc'; if any(e == [10241 10242]), unit = 'deg'; end
+                app.chanMap(nm) = struct('elec',e,'type','1ksps','unit',unit);
+                names{end+1} = nm; %#ok<AGROW>
+            end
+            for e = xippmex('elec','micro')
+                nm = sprintf('lfp %d', e);
+                app.chanMap(nm) = struct('elec',e,'type','lfp','unit','uV');
+                names{end+1} = nm; %#ok<AGROW>
+            end
+        end
+
+        function xippmexInit(app)
+            if app.inited, return; end
+            xippmex;                                        % connect to the NIP (idempotent)
+            try
+                si = rigIni('state');
+                app.eyeCal = struct( ...
+                    'xgain',  si.GetValues('eye calibration','xgain'), ...
+                    'xoffset',si.GetValues('eye calibration','xoffset'), ...
+                    'ygain',  si.GetValues('eye calibration','ygain'), ...
+                    'yoffset',si.GetValues('eye calibration','yoffset'));
+            catch
+                app.eyeCal = struct('xgain',1,'xoffset',0,'ygain',1,'yoffset',0);
+            end
+            xippmex('digin');                               % clear the digital buffer
+            app.lastNipTick = [];
+            app.inited = true;
+        end
+
         function t = xippmexNow(~), t = double(xippmex('time'))/30000; end
-        function [tvec, ymat, events] = acquireXippmex(~)
-            tvec = zeros(1,0); ymat = []; events = struct('kind',{},'name',{},'t',{});
+
+        function [tvec, ymat, events] = acquireXippmex(app)
+            N = app.nPull; nCh = numel(app.channels);
+            % group selected channels by stream type; always read the eye pair
+            % if any eye channel is shown (pix2deg needs both x and y)
+            need1k = []; needLfp = [];
+            for c = 1:nCh
+                m = app.chanMap(app.channels{c});
+                if strcmp(m.type,'lfp'), needLfp(end+1) = m.elec; else, need1k(end+1) = m.elec; end %#ok<AGROW>
+            end
+            wantEye = any(ismember(app.channels,{'eyeX','eyeY'}));
+            if wantEye, need1k = unique([need1k 10241 10242]); end
+
+            refTick = []; d1 = []; e1 = unique(need1k); dL = []; eL = unique(needLfp);
+            if ~isempty(e1)
+                [d1, ts1] = xippmex('cont', e1, N, '1ksps'); refTick = double(ts1);
+            end
+            if ~isempty(eL)
+                [dL, tsL] = xippmex('cont', eL, N, 'lfp');
+                if isempty(refTick), refTick = double(tsL); end
+            end
+            if isempty(refTick) || refTick == 0
+                refTick = double(xippmex('time')) - (N-1)*30;   % approximate: batch ends ~now
+            end
+
+            ticks = refTick + (0:N-1)*30;                    % NIP tick per sample (1 kHz -> 30 ticks)
+            keep = true(1,N);
+            if ~isempty(app.lastNipTick), keep = ticks > app.lastNipTick; end
+            if ~any(keep)
+                tvec = zeros(1,0); ymat = zeros(nCh,0); events = app.readDigin(); return
+            end
+            app.lastNipTick = ticks(end);
+            tvec = ticks(keep) / 30000;
+
+            % eye pair -> degrees, once (pix2deg with no screenparams reads the ini)
+            if wantEye && ~isempty(d1)
+                xr = d1(e1==10241, :); yr = d1(e1==10242, :);
+                xpix = xr*app.eyeCal.xgain + app.eyeCal.xoffset;
+                ypix = yr*app.eyeCal.ygain + app.eyeCal.yoffset;
+                try, deg = pix2deg([xpix' ypix'],'cart'); catch, deg = [xpix' ypix']; end
+            end
+
+            ymat = zeros(nCh, sum(keep));
+            for c = 1:nCh
+                m = app.chanMap(app.channels{c}); nm = app.channels{c};
+                switch nm
+                    case 'eyeX', row = deg(:,1)';
+                    case 'eyeY', row = deg(:,2)';
+                    otherwise
+                        if strcmp(m.type,'lfp'), row = dL(eL==m.elec, :);
+                        else,                     row = d1(e1==m.elec, :); end
+                end
+                ymat(c,:) = row(keep);
+            end
+            events = app.readDigin();
+        end
+
+        function events = readDigin(app)
+            % Decode state markers written by MonkeyHost on digout 5. Each state
+            % name arrives as a burst of parallel bytes; group bytes by their
+            % NIP timestamp so one burst = one state onset.
+            events = struct('kind',{},'name',{},'t',{});
+            [cnt, tstamps, ev] = xippmex('digin');
+            if cnt == 0 || isempty(ev) || ~isfield(ev,'parallel'), return; end
+            par = double([ev.parallel]); ts = double(tstamps);
+            grp = [0 find(diff(ts) > 150) numel(ts)];         % split on >5 ms gaps
+            for g = 1:numel(grp)-1
+                idx = grp(g)+1 : grp(g+1);
+                nm = char(par(idx));
+                if isempty(nm), continue; end
+                events(end+1) = struct('kind','state','name',nm,'t',ts(idx(1))/30000); %#ok<AGROW>
+            end
         end
     end
 end

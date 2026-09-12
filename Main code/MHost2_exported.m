@@ -961,12 +961,13 @@ classdef MHost2_exported < matlab.apps.AppBase
     end
 
     methods (Access = public)
-        function validateLoadedTasks(app)
-            % Check the loaded tasks against the loaded parameter file and
-            % warn about anything the parameter file does not declare. If a
-            % task uses a target whose custom path names a function that is
-            % not on the path (custom functions not imported), offer to load
-            % them. Runs when tasks or the parameter file are (re)loaded.
+        function ok = validateLoadedTasks(app)
+            % Validate the loaded tasks against the loaded parameter file just
+            % before a run. Returns false only if the user cancels the start.
+            % Warns about anything the parameter file does not declare, and if
+            % a task needs custom path functions that are not imported, offers
+            % to load them.
+            ok = true;
             if ~app.paramsloaded || isempty(app.UIFigure) || ~isvalid(app.UIFigure), return; end
             try
                 rep = validateTasks(app.mhpass, '.Tasks_Internal');
@@ -974,54 +975,58 @@ classdef MHost2_exported < matlab.apps.AppBase
                 app.insToTxtbox(['task validation skipped: ' valErr.message]);
                 return
             end
+            if ~isempty(rep.customTasks)
+                msg = sprintf(['These tasks need custom functions that are not loaded:\n'  ...
+                    '    %s\n\nMissing functions: %s'], ...
+                    strjoin(rep.customTasks, ', '), strjoin(rep.missingFns, ', '));
+                choice = uiconfirm(app.UIFigure, msg, 'Custom functions needed', ...
+                    'Options', {'Load and start','Start anyway','Cancel'}, ...
+                    'DefaultOption', 1, 'CancelOption', 3, 'Icon', 'warning');
+                switch choice
+                    case 'Cancel'
+                        ok = false; return
+                    case 'Load and start'
+                        app.loadCustomFunctions;
+                        try, rep = validateTasks(app.mhpass, '.Tasks_Internal'); catch, end
+                        if ~isempty(rep.customTasks)
+                            c2 = uiconfirm(app.UIFigure, sprintf(['Still missing: %s\n\n' ...
+                                'Start anyway?'], strjoin(rep.missingFns, ', ')), ...
+                                'Custom functions', 'Options', {'Start anyway','Cancel'}, ...
+                                'DefaultOption', 2, 'CancelOption', 2, 'Icon', 'warning');
+                            if strcmp(c2, 'Cancel'), ok = false; return; end
+                        end
+                end
+            end
             if ~isempty(rep.undeclared)
                 msg = "The loaded parameter file does not declare everything these tasks use:";
                 for i = 1:size(rep.undeclared,1)
                     msg = msg + newline + "    " + rep.undeclared{i,1} + "  ->  " + ...
                         rep.undeclared{i,2} + " """ + rep.undeclared{i,3} + """";
                 end
-                msg = msg + newline + newline + ...
-                    "Load the parameter file these tasks expect, or add the missing declarations.";
                 app.insToTxtbox(char(msg));
-                uialert(app.UIFigure, char(msg), 'Missing parameter declarations', 'Icon', 'warning');
-            end
-            if ~isempty(rep.customTasks)
-                msg = sprintf(['These tasks require custom functions that are not loaded:\n'  ...
-                    '    %s\n\nMissing functions: %s\n\nLoad the custom-functions folder now?'], ...
-                    strjoin(rep.customTasks, ', '), strjoin(rep.missingFns, ', '));
-                choice = uiconfirm(app.UIFigure, msg, 'Custom functions needed', ...
-                    'Options', {'Load','Ignore'}, 'DefaultOption', 1, 'CancelOption', 2, 'Icon', 'warning');
-                if strcmp(choice, 'Load')
-                    app.loadCustomFunctions;
-                else
-                    app.insToTxtbox('custom functions not loaded (ignored); tasks that need them will fail.');
-                end
+                c3 = uiconfirm(app.UIFigure, char(msg), 'Missing parameter declarations', ...
+                    'Options', {'Start anyway','Cancel'}, 'DefaultOption', 2, 'CancelOption', 2, 'Icon', 'warning');
+                if strcmp(c3, 'Cancel'), ok = false; return; end
             end
         end
 
         function loadCustomFunctions(app)
             % Import a custom-functions folder and make it callable right now.
+            % Add the chosen folder (recursively) to the path so the functions
+            % work this session even if selected loosely, and copy them into
+            % .Custom_Functions so they persist across restarts.
             folder = uigetdir('~/Documents', 'select the folder with custom functions');
             if isequal(folder, 0), return; end
             try
-                copyfile(folder, '.Custom_Functions');
-                addpath('.Custom_Functions'); rehash;
+                addpath(genpath(folder));
+                if ~exist('.Custom_Functions', 'dir'), mkdir('.Custom_Functions'); end
+                copyfile(fullfile(folder, '*'), '.Custom_Functions');
+                addpath('.Custom_Functions');
+                rehash;
                 app.insToTxtbox(['loaded custom functions from ' folder]);
             catch cfErr
                 uialert(app.UIFigure, ['Could not load custom functions: ' cfErr.message], ...
                     'Custom functions', 'Icon', 'error');
-                return
-            end
-            try
-                rep = validateTasks(app.mhpass, '.Tasks_Internal');
-                if isempty(rep.customTasks)
-                    app.insToTxtbox('custom functions loaded; all tasks satisfied.');
-                else
-                    uialert(app.UIFigure, sprintf('Still missing: %s\n(needed by %s)', ...
-                        strjoin(rep.missingFns, ', '), strjoin(rep.customTasks, ', ')), ...
-                        'Custom functions', 'Icon', 'warning');
-                end
-            catch
             end
         end
 
@@ -1454,7 +1459,6 @@ classdef MHost2_exported < matlab.apps.AppBase
             clc
             system('clear');
             disp('-----Trial Handler-----')
-            app.validateLoadedTasks;
             try %app throws error here when closed
                 app.idle_loop;
             end
@@ -1556,6 +1560,10 @@ classdef MHost2_exported < matlab.apps.AppBase
 
         % Button pushed function: STARTButton
         function STARTButtonPushed(app, event)
+            if ~app.validateLoadedTasks
+                app.insToTxtbox('start cancelled by validation');
+                return
+            end
             app.running=1;
             pause(0.1)% pause to let mh to be assigned in
 
@@ -1711,7 +1719,6 @@ classdef MHost2_exported < matlab.apps.AppBase
         function ParameterFileValueChanged(app, event)
             copyfile(fullfile(app.ParameterFile.Value),'.Parameters_Internal')
             app.makeparams
-            app.validateLoadedTasks;
         end
 
         % Menu selected function: ImportCustomFunctionsMenu

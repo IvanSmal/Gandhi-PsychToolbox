@@ -77,6 +77,10 @@ classdef TrellisScope < handle
         metaMap             % shared-memory slot: current trial name from MonkeyHost
         lastTrialName = ''  % last trial name read from the slot
 
+        % spike raster (#5)
+        chanKind            % cell{nCh}: 'cont' (line) or 'spike' (raster)
+        spikeAccum          % containers.Map: channel name -> vector of recent spike times (source clock, s)
+
         % other-state markers (#3) and controls (#2,#4)
         stateHist           % struct(name,t): recent state onsets, to mark the non-aligned ones
         markLines           % cell{nCh}: pool of vertical lines for other-state onsets
@@ -158,8 +162,9 @@ classdef TrellisScope < handle
             app.chAxes = gobjects(1,nCh); app.traceLines = cell(1,nCh);
             app.liveLines = gobjects(1,nCh); app.markLines = cell(1,nCh);
             for c = 1:nCh
+                isSpk = numel(app.chanKind) >= c && strcmp(app.chanKind{c},'spike');
                 ax = uiaxes(pg); grid(ax,'on'); hold(ax,'on');
-                ylabel(ax, chNames{c});
+                if isSpk, ylabel(ax, [chNames{c} ' (trials)']); else, ylabel(ax, chNames{c}); end
                 if c == nCh, xlabel(ax,'time from alignment (ms)'); end
                 xline(ax, 0, 'Color',[0 0 0 0.6], 'LineWidth', 1);
                 % pool of vertical lines (xline spans the axes and never affects
@@ -169,12 +174,22 @@ classdef TrellisScope < handle
                     M(k) = xline(ax, NaN, 'LineWidth', 0.5); M(k).Visible = 'off';
                 end
                 app.markLines{c} = M;
+                % one line per held trial: a signal (cont) or a row of ticks (spike)
                 L = gobjects(1, app.nHold);
                 for k = 1:app.nHold
-                    L(k) = plot(ax, nan, nan, 'LineWidth', 1);   % coloured per task in redraw
+                    if isSpk
+                        L(k) = plot(ax, nan, nan, 'LineStyle','none','Marker','|','MarkerSize',6,'LineWidth',1);
+                    else
+                        L(k) = plot(ax, nan, nan, 'LineWidth', 1);   % coloured per task in redraw
+                    end
                 end
                 app.traceLines{c} = L;
-                app.liveLines(c) = plot(ax, nan, nan, 'LineWidth', 1.8);
+                if isSpk
+                    app.liveLines(c) = plot(ax, nan, nan, 'LineStyle','none','Marker','|','MarkerSize',7,'LineWidth',1.5);
+                    ylim(ax, [0.5 app.nHold+1.5]);   % top row (nHold+1) is the live capture
+                else
+                    app.liveLines(c) = plot(ax, nan, nan, 'LineWidth', 1.8);
+                end
                 try, enableDefaultInteractivity(ax); ax.Toolbar.Visible = 'on'; catch, end
                 app.chAxes(c) = ax;
             end
@@ -198,11 +213,17 @@ classdef TrellisScope < handle
             app.preMs = app.preField.Value; app.postMs = app.postField.Value;
             app.nHold = app.holdField.Value; app.alignState = app.alignDrop.Value;
 
+            app.chanKind = cell(1, numel(app.channels));
+            for c = 1:numel(app.channels)
+                if app.isSpikeChan(app.channels{c}), app.chanKind{c} = 'spike'; else, app.chanKind{c} = 'cont'; end
+            end
+            app.spikeAccum = containers.Map('KeyType','char','ValueType','any');
+
             app.buildAxes(app.chAxes(1).Parent.Parent, app.channels);
             for c = 1:numel(app.chAxes), xlim(app.chAxes(c), [-app.preMs app.postMs]); end
 
             app.resetBuffers();
-            app.held = struct('name',{},'t',{},'y',{},'marks',{});
+            app.held = struct('name',{},'t',{},'y',{},'marks',{},'spk',{});
             app.pending = struct('name',{},'t0',{},'endT',{});
             app.stateHist = struct('name',{},'t',{});
             app.typeColors = containers.Map('KeyType','char','ValueType','any');
@@ -272,8 +293,12 @@ classdef TrellisScope < handle
                 w = app.pending(i);
                 if app.lastAcqT >= w.endT
                     [t, y] = app.extractWindow(w.t0);
+                    spk = cell(1, numel(app.channels));
+                    for c = 1:numel(app.channels)
+                        if strcmp(app.chanKind{c},'spike'), spk{c} = app.extractSpikes(w.t0, c); end
+                    end
                     if ~isempty(t)
-                        rec.name = w.name; rec.t = t; rec.y = y;
+                        rec.name = w.name; rec.t = t; rec.y = y; rec.spk = spk;
                         rec.marks = app.windowMarks(w.t0);   % other-state onsets in this window
                         app.held(end+1) = rec; %#ok<AGROW>
                     end
@@ -298,23 +323,55 @@ classdef TrellisScope < handle
             for c = 1:numel(app.channels), yc = app.buf(c).y(idx); y(c,:) = yc(sel); end
         end
 
+        function accumSpikes(app, name, sp)
+            % Append spike times (source clock, s) for a spike channel to the
+            % rolling accumulator, trimmed to the last 60 s to bound memory.
+            if ~isKey(app.spikeAccum, name), app.spikeAccum(name) = zeros(1,0); end
+            tv = [app.spikeAccum(name), sp(:)'];
+            cutoff = app.sourceNow() - 60;
+            tv = tv(tv >= cutoff);
+            app.spikeAccum(name) = tv;
+        end
+
+        function sp = extractSpikes(app, t0, c)
+            % Spike times within [-pre, +post] of t0, relative to t0, in ms.
+            sp = zeros(1,0);
+            nm = app.channels{c};
+            if ~isKey(app.spikeAccum, nm), return; end
+            tv = app.spikeAccum(nm);
+            sel = tv >= t0 - app.preMs/1000 & tv <= t0 + app.postMs/1000;
+            sp = (tv(sel) - t0) * 1000;
+        end
+
         % --------------------------------------------------------- drawing
         function redraw(app)
             nCh = numel(app.channels);
             for c = 1:nCh
                 L = app.traceLines{c}; nh = numel(app.held);
+                isSpk = strcmp(app.chanKind{c},'spike');
                 for k = 1:app.nHold
                     if k <= nh
                         rec = app.held(k);
-                        set(L(k),'XData',rec.t,'YData',rec.y(c,:),'Color',app.colorForType(rec.name));
+                        if isSpk
+                            sp = rec.spk{c};
+                            set(L(k),'XData',sp,'YData',k*ones(1,numel(sp)),'Color',app.colorForType(rec.name));
+                        else
+                            set(L(k),'XData',rec.t,'YData',rec.y(c,:),'Color',app.colorForType(rec.name));
+                        end
                     else
                         set(L(k),'XData',nan,'YData',nan);
                     end
                 end
                 if ~isempty(app.pending)
-                    [t, y] = app.extractWindow(app.pending(end).t0);
-                    if ~isempty(t)
-                        set(app.liveLines(c),'XData',t,'YData',y(c,:),'Color',app.colorForType(app.pending(end).name));
+                    if isSpk
+                        sp = app.extractSpikes(app.pending(end).t0, c);
+                        set(app.liveLines(c),'XData',sp,'YData',(app.nHold+1)*ones(1,numel(sp)), ...
+                            'Color',app.colorForType(app.pending(end).name));
+                    else
+                        [t, y] = app.extractWindow(app.pending(end).t0);
+                        if ~isempty(t)
+                            set(app.liveLines(c),'XData',t,'YData',y(c,:),'Color',app.colorForType(app.pending(end).name));
+                        end
                     end
                 else
                     set(app.liveLines(c),'XData',nan,'YData',nan);
@@ -336,7 +393,11 @@ classdef TrellisScope < handle
                 for k = mi+1:app.markPool, M(k).Visible = 'off'; M(k).Label = ''; end
             end
             if app.yAutoBox.Value
-                for c = 1:nCh, if isgraphics(app.chAxes(c)), app.chAxes(c).YLimMode = 'auto'; end, end
+                for c = 1:nCh
+                    if ~strcmp(app.chanKind{c},'spike') && isgraphics(app.chAxes(c))
+                        app.chAxes(c).YLimMode = 'auto';   % spike axes keep their row-based ylim
+                    end
+                end
             end
             drawnow limitrate
         end
@@ -379,8 +440,8 @@ classdef TrellisScope < handle
         function applyYLimits(app)
             if app.yAutoBox.Value, return; end
             for c = 1:numel(app.chAxes)
-                if isgraphics(app.chAxes(c))
-                    app.chAxes(c).YLim = [app.yMinField.Value app.yMaxField.Value];
+                if isgraphics(app.chAxes(c)) && ~(numel(app.chanKind)>=c && strcmp(app.chanKind{c},'spike'))
+                    app.chAxes(c).YLim = [app.yMinField.Value app.yMaxField.Value];   % skip raster axes
                 end
             end
         end
@@ -418,8 +479,14 @@ classdef TrellisScope < handle
 
         % =============================================== DATA SOURCE (pluggable)
         function names = listChannels(app)
-            if app.sim, names = {'eyeX','eyeY','neural01','neural02','neural03'};
+            if app.sim, names = {'eyeX','eyeY','neural01','neural02','spikes01','spikes02'};
             else,       names = app.xippmexChannels(); end
+        end
+
+        function tf = isSpikeChan(app, name)
+            if app.sim, tf = startsWith(name,'spikes');
+            elseif isKey(app.chanMap, name), tf = strcmp(app.chanMap(name).kind, 'spike');
+            else, tf = false; end
         end
         function t = sourceNow(app)
             if app.sim, t = now*86400; else, t = app.xippmexNow(); end %#ok<TNOW1>
@@ -445,6 +512,7 @@ classdef TrellisScope < handle
             s = app.simState; tnow = app.sourceNow(); dt = 1/app.fs;
             tvec = (app.lastAcqT + dt) : dt : tnow; if isempty(tvec), tvec = zeros(1,0); end
             nCh = numel(app.channels); ymat = zeros(nCh, numel(tvec));
+            inBurst = false(1, numel(tvec));
             events = struct('kind',{},'name',{},'t',{});
             for k = 1:numel(tvec)
                 tt = tvec(k); trialT = tt - s.trialStart;
@@ -460,11 +528,22 @@ classdef TrellisScope < handle
                 end
                 hasTarget = any(strcmp(s.cur.states,'target'));
                 tOnset = 0; if hasTarget, tOnset = s.cur.offsets(strcmp(s.cur.states,'target')); end
+                inBurst(k) = hasTarget && trialT > tOnset && trialT < tOnset+0.15;
                 for c = 1:nCh
-                    ymat(c,k) = app.simChannel(app.channels{c}, tt, trialT, hasTarget, tOnset);
+                    if ~strcmp(app.chanKind{c},'spike')
+                        ymat(c,k) = app.simChannel(app.channels{c}, tt, trialT, hasTarget, tOnset);
+                    end
                 end
             end
             app.simState = s;
+            % synthetic spikes for spike channels: baseline + a burst after target
+            for c = 1:nCh
+                if strcmp(app.chanKind{c},'spike') && ~isempty(tvec)
+                    rate = 20 + 250*inBurst;                 % Hz
+                    sp = tvec(rand(1,numel(tvec)) < rate*dt);
+                    app.accumSpikes(app.channels{c}, sp);
+                end
+            end
         end
 
         function v = simChannel(~, name, tt, trialT, hasTarget, tOnset)
@@ -491,12 +570,19 @@ classdef TrellisScope < handle
             for e = an
                 if isKey(friendly, e), nm = friendly(e); else, nm = sprintf('analog %d', e); end
                 unit = 'adc'; if any(e == [10241 10242]), unit = 'deg'; end
-                app.chanMap(nm) = struct('elec',e,'type','1ksps','unit',unit);
+                app.chanMap(nm) = struct('elec',e,'type','1ksps','unit',unit,'kind','cont');
                 names{end+1} = nm; %#ok<AGROW>
             end
-            for e = xippmex('elec','micro')
+            micro = xippmex('elec','micro');
+            for e = micro
                 nm = sprintf('lfp %d', e);
-                app.chanMap(nm) = struct('elec',e,'type','lfp','unit','uV');
+                app.chanMap(nm) = struct('elec',e,'type','lfp','unit','uV','kind','cont');
+                names{end+1} = nm; %#ok<AGROW>
+            end
+            % one raster channel per micro electrode (sorted units combined)
+            for e = micro
+                nm = sprintf('spk %d', e);
+                app.chanMap(nm) = struct('elec',e,'type','spike','unit','','kind','spike');
                 names{end+1} = nm; %#ok<AGROW>
             end
         end
@@ -526,10 +612,13 @@ classdef TrellisScope < handle
             N = app.nPull; nCh = numel(app.channels);
             % group selected channels by stream type; always read the eye pair
             % if any eye channel is shown (pix2deg needs both x and y)
-            need1k = []; needLfp = [];
+            need1k = []; needLfp = []; needSpk = [];
             for c = 1:nCh
                 m = app.chanMap(app.channels{c});
-                if strcmp(m.type,'lfp'), needLfp(end+1) = m.elec; else, need1k(end+1) = m.elec; end %#ok<AGROW>
+                if strcmp(m.kind,'spike'),      needSpk(end+1) = m.elec; %#ok<AGROW>
+                elseif strcmp(m.type,'lfp'),    needLfp(end+1) = m.elec; %#ok<AGROW>
+                else,                           need1k(end+1) = m.elec; %#ok<AGROW>
+                end
             end
             wantEye = any(ismember(app.channels,{'eyeX','eyeY'}));
             if wantEye, need1k = unique([need1k 10241 10242]); end
@@ -566,6 +655,7 @@ classdef TrellisScope < handle
             ymat = zeros(nCh, sum(keep));
             for c = 1:nCh
                 m = app.chanMap(app.channels{c}); nm = app.channels{c};
+                if strcmp(m.kind,'spike'), continue; end   % raster channels carry no continuous row
                 switch nm
                     case 'eyeX', row = deg(:,1)';
                     case 'eyeY', row = deg(:,2)';
@@ -574,6 +664,20 @@ classdef TrellisScope < handle
                         else,                     row = d1(e1==m.elec, :); end
                 end
                 ymat(c,:) = row(keep);
+            end
+
+            % drain new spikes from Trellis into the accumulator (source clock, s)
+            se = unique(needSpk);
+            if ~isempty(se)
+                [~, tss] = xippmex('spike', se, zeros(1,numel(se)));
+                for c = 1:nCh
+                    m = app.chanMap(app.channels{c});
+                    if ~strcmp(m.kind,'spike'), continue; end
+                    ii = find(se == m.elec, 1);
+                    if ~isempty(ii) && ~isempty(tss{ii})
+                        app.accumSpikes(app.channels{c}, double(tss{ii}(:)')/30000);
+                    end
+                end
             end
             events = app.readDigin();
             % current trial name from MonkeyHost -> a 'trial' event when it changes

@@ -912,11 +912,27 @@ classdef MHost2_exported < matlab.apps.AppBase
             app.paramsloaded=1;
         end
 
+        function toggleMouseMode(app, src)
+            % Toggle mouse mode: the cursor in the monitor window simulates the
+            % eye position (see GraphicsHandler / eyeinfo). The eye follows the
+            % cursor only while the left mouse button is held down.
+            newval = ~logical(src.Checked);
+            src.Checked = newval;
+            try
+                app.mhpass.evalgraphics(sprintf('gr.mousemode=%d;', double(newval)));
+            catch
+            end
+            if newval, state = 'ON'; else, state = 'OFF'; end
+            app.insToTxtbox(['mouse mode ' state]);
+        end
+
         function createUtilsMenu(app)
             % Add Trellis Scope to the existing Utils menu (added at startup so
             % the design-time component tree is untouched).
             uimenu(app.UtilsMenu, 'Text', 'Trellis Scope', ...
                 'MenuSelectedFcn', @(~,~) app.launchTrellisScope());
+            mm = uimenu(app.FileMenu, 'Text', 'Mouse Mode', 'Checked', 'off');
+            mm.MenuSelectedFcn = @(src,~) app.toggleMouseMode(src);
         end
 
         function launchTrellisScope(app)

@@ -48,6 +48,7 @@ classdef graphics < handle
         
         %% Eye tracking
         eye                         % Eye tracking information
+        mousemode = 0               % Mouse mode: simulate eye with the mouse (off by default; set via evalgraphics)
         eyehistory                  % History of eye positions
         
         %% Trial state management
@@ -90,6 +91,7 @@ classdef graphics < handle
         resourceKind = {}           % logical id -> 'texture' / 'movie' / 'failed'
         movieLastTex = []           % most recent frame fetched per movie on the DISPLAY, reused when no new frame is ready
         movieLastTexMon = []        % same, for the monitor's own copy of the movie
+        moviePlaying = []           % per movie id: is it currently playing (rate>0)? gates the resume flush-seek
         resourcePath = {}           % logical id -> path it was loaded from, so a recycled id cannot masquerade
         lastOneShot  = 0            % highest one-shot token (PlayMovie/CloseMovie) already run
         lastFrameSeq = -1           % newest frame seq seen; a drop means the state machine restarted

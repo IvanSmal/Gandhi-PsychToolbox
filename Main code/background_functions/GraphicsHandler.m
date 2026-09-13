@@ -189,9 +189,34 @@ statsMap   = sceneOpen(true, renderStatsPath());
 statsSeq   = 0;
 statsLastT = 0;
 vblRing    = nan(1,120);            % last ~2 s of display flips at 60 Hz
+% Mouse mode: publish the cursor (in the monitor window) as a simulated eye
+% position. The slot is created lazily on first use, so normal sessions never
+% touch it. heldX/heldY latch the last position so the eye only moves while the
+% left button is held.
+mouseMap = []; mouseSeq = 0; heldX = []; heldY = [];
 while 1
     try %error handler
         getCommands(graphicsport)          % low-rate control only (dumpdata, exit, seteye)
+
+        % Mouse mode (toggled via evalgraphics gr.mousemode): map the cursor in
+        % the monitor window to DISPLAY pixels and publish it as the eye
+        % position. The eye follows the cursor only while the LEFT button is
+        % held, so releasing it freezes the eye instead of snapping to an edge.
+        if isprop(gr,'mousemode') && gr.mousemode
+            if isempty(mouseMap), mouseMap = sceneOpen(true, mousePath()); end
+            [mmx, mmy, mbtn] = GetMouse(gr.window_monitor);
+            r = Screen('Rect', gr.window_monitor);          % window-local pixels
+            dx = (mmx - r(1)) / max(1, r(3)-r(1)) * gr.screenXpixels;   % -> display px
+            dy = (mmy - r(2)) / max(1, r(4)-r(2)) * gr.screenYpixels;
+            if isempty(heldX), heldX = dx; heldY = dy; end  % start at the cursor
+            if mbtn(1), heldX = dx; heldY = dy; end          % move only while left held
+            mouseSeq = mouseSeq + 1;
+            sceneWrite(mouseMap, mouseSeq, struct('on',1,'x',heldX,'y',heldY));
+        elseif ~isempty(mouseMap)
+            mouseSeq = mouseSeq + 1;
+            sceneWrite(mouseMap, mouseSeq, struct('on',0,'x',0,'y',0));   % announce off
+            heldX = []; heldY = [];
+        end
 
         [frame, ok] = sceneRead(sceneMap);
         if ~ok

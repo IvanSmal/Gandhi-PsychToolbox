@@ -36,6 +36,12 @@ classdef graphics < handle
         toconvert                   % Coordinate conversion table
         pixelsforlines              % Pixel positions for grid lines
         gridlinesmatrix             % Matrix of grid line coordinates
+        gridmode = 'degrees'        % Grid units: 'degrees' | 'mm' | 'both'
+        mmgrid = 100                % mm grid spacing (millimetres)
+        gridlinesmatrix_mm          % mm grid line coordinates
+        mmpixels                    % pixel positions for mm grid lines
+        mmvals                      % mm grid label values
+        cursors = {}                % cursorinfo objects the renderer draws (mouse/analog); udp skipped
         center_circle = [0 0 0 0]   % Center circle coordinates
         
         %% Experimental stimuli
@@ -49,6 +55,7 @@ classdef graphics < handle
         %% Eye tracking
         eye                         % Eye tracking information
         mousemode = 0               % Mouse mode: simulate eye with the mouse (off by default; set via evalgraphics)
+        mousetarget = 'eye'         % Mouse-mode target: 'eye' or 'cursor1'..'cursor5'
         eyehistory                  % History of eye positions
         
         %% Trial state management
@@ -100,5 +107,10 @@ classdef graphics < handle
         actualFlipCount
         actualCommandCount
         stateCount
+    end
+    methods
+        function setgridmode(obj, val)
+            obj.gridmode = val;   % Grid-units dropdown callback target
+        end
     end
 end

@@ -24,6 +24,19 @@ end
 
 % do the calculations
 for iRow=1:size(degIn,1)
+    % 'mm' / 'mmsize': physical screen millimetres, mapped LINEARLY (no
+    % visual-angle tangent). Origin is the same true center as 'cart', with +y
+    % up. Additive: 'cart'/'pol'/'size'/'speed' below are unchanged.
+    if matches(coordType,'mm',IgnoreCase=1)
+        out(iRow,1)=floor(centerXY(1)+(degIn(iRow,1)/pixelSize(1)));
+        out(iRow,2)=floor(centerXY(2)-(degIn(iRow,2)/pixelSize(2)));
+        continue
+    elseif matches(coordType,'mmsize',IgnoreCase=1)
+        out(iRow,1)=0; out(iRow,2)=0;
+        out(iRow,3)=floor(degIn(iRow,1)/pixelSize(1));
+        out(iRow,4)=floor(degIn(iRow,2)/pixelSize(2));
+        continue
+    end
     if matches(coordType,'cart',IgnoreCase=1) ||...
             matches(coordType,'cartesian',IgnoreCase=1)
         desiredXY=degIn(iRow,:);

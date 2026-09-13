@@ -27,6 +27,8 @@ classdef internal < matlab.mixin.Copyable
 
         % for eye movement detection
         eye;
+        cursors = {};                % cursorinfo objects (1..5): mm-calibrated pointers tracked alongside the eye
+        checkcursor_counter = {};    % per-cursor 3-sample grace counter (parallel to checkeye_counter)
         targhistory=zeros(4,10);
         autocalibrationmatrix=[];
         autocalibrationmatrix_buffer=[];

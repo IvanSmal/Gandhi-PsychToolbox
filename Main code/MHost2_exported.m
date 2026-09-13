@@ -926,13 +926,123 @@ classdef MHost2_exported < matlab.apps.AppBase
             app.insToTxtbox(['mouse mode ' state]);
         end
 
+        function setMouseTarget(app, src)
+            % Mouse Mode submenu (radio): Off / Eye / Cursor 1..5. Chooses which
+            % input the monitor-window cursor drives, via evalgraphics.
+            set(src.Parent.Children, 'Checked', 'off');
+            src.Checked = 'on';
+            t = src.Text;
+            try
+                if strcmpi(t, 'Off')
+                    app.mhpass.evalgraphics('gr.mousemode=0;');
+                    app.insToTxtbox('mouse mode OFF');
+                else
+                    if strcmpi(t, 'Eye')
+                        tgt = 'eye';
+                    else
+                        tgt = ['cursor' regexprep(t, '\D', '')];
+                    end
+                    app.mhpass.evalgraphics(sprintf('gr.mousetarget=''%s''; gr.mousemode=1;', tgt));
+                    app.insToTxtbox(['mouse mode ON -> ' tgt]);
+                end
+            catch
+            end
+        end
+
+        function openCursorAssignment(app)
+            % File > Cursor Assignment: analog channels for the eye and cursors
+            % 1..5 (or a UDP joystick per cursor). Saved to the state ini.
+            ini = rigIni('state');
+            f = uifigure('Name', 'Cursor Assignment', 'Position', [300 250 760 420]);
+            gl = uigridlayout(f, [4 1]); gl.RowHeight = {24, 34, '1x', 40};
+            try, an = xippmex('elec', 'analog'); catch, an = []; end
+            if isempty(an), an = [1 2]; end   % fallback if Trellis is not connected
+            dx = app.iniNum(ini, 'eye calibration', 'xchan', an(1));            % channels the eye class uses now
+            dy = app.iniNum(ini, 'eye calibration', 'ychan', an(min(2,numel(an))));
+            uilabel(gl, 'Text', 'Eye analog channels (what the eye class uses; edit to change)', 'FontWeight', 'bold');
+            eg = uigridlayout(gl, [1 4]); eg.ColumnWidth = {70, 70, 70, 70};
+            uilabel(eg, 'Text', 'Eye X:');
+            exf = uieditfield(eg, 'numeric', 'Value', dx, 'ValueDisplayFormat', '%d');
+            uilabel(eg, 'Text', 'Eye Y:');
+            eyf = uieditfield(eg, 'numeric', 'Value', dy, 'ValueDisplayFormat', '%d');
+            cols = {'Enabled', 'Source', 'Xchan', 'Ychan', 'UDPport', 'Xgain', 'Ygain', 'Xoffset', 'Yoffset'};
+            data = cell(5, 9);
+            for i = 1:5
+                s = sprintf('cursor%d', i);
+                data(i, :) = {logical(app.iniNum(ini, s, 'enabled', 0)), app.iniStr(ini, s, 'source', 'analog'), ...
+                    app.iniNum(ini, s, 'xchan', 0), app.iniNum(ini, s, 'ychan', 0), app.iniNum(ini, s, 'udpport', 0), ...
+                    app.iniNum(ini, s, 'xgain', 1), app.iniNum(ini, s, 'ygain', 1), ...
+                    app.iniNum(ini, s, 'xoffset', 0), app.iniNum(ini, s, 'yoffset', 0)};
+            end
+            tb = uitable(gl, 'Data', data, 'ColumnName', cols, ...
+                'RowName', {'Cursor 1', 'Cursor 2', 'Cursor 3', 'Cursor 4', 'Cursor 5'}, ...
+                'ColumnEditable', true(1, 9));
+            tb.ColumnFormat = {'logical', {'analog', 'udp'}, 'numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'numeric'};
+            uibutton(gl, 'Text', 'Save & Apply', 'ButtonPushedFcn', @(~,~) app.saveCursorAssignment(f, exf, eyf, tb));
+        end
+
+        function saveCursorAssignment(app, f, exf, eyf, tb)
+            ini = rigIni('state');
+            app.iniSet(ini, 'eye calibration', 'xchan', exf.Value);
+            app.iniSet(ini, 'eye calibration', 'ychan', eyf.Value);
+            d = tb.Data;
+            for i = 1:5
+                s = sprintf('cursor%d', i);
+                app.iniSet(ini, s, 'enabled', double(d{i, 1}));
+                app.iniSet(ini, s, 'source',  d{i, 2});
+                app.iniSet(ini, s, 'xchan',   d{i, 3});
+                app.iniSet(ini, s, 'ychan',   d{i, 4});
+                app.iniSet(ini, s, 'udpport', d{i, 5});
+                app.iniSet(ini, s, 'xgain',   d{i, 6});
+                app.iniSet(ini, s, 'ygain',   d{i, 7});
+                app.iniSet(ini, s, 'xoffset', d{i, 8});
+                app.iniSet(ini, s, 'yoffset', d{i, 9});
+            end
+            ok = ini.WriteFile(rigIniPath('state'));
+            try, app.mhpass.cursors = {}; catch, end
+            try, app.mhpass.evalgraphics('gr.cursors={};'); catch, end   % renderer rebuilds its cursors
+            close(f);
+            if ok
+                app.insToTxtbox('cursor assignment saved (cursors rebuild on next use; eye channels next trial)');
+            else
+                app.insToTxtbox('cursor assignment: WRITE FAILED');
+            end
+        end
+
+        function iniSet(~, ini, sec, key, val)
+            % Set an ini key, creating the section and/or key when they do not
+            % exist yet (IniConfig.SetValues only updates keys that already exist).
+            if ~ini.IsSections(sec), ini.AddSections(sec); end
+            if ini.IsKeys(sec, key)
+                ini.SetValues(sec, key, val);
+            else
+                ini.InsertKeys(sec, 1, key, val);
+            end
+        end
+
+        function v = iniNum(~, ini, sec, key, def)
+            try, v = ini.GetValues(sec, key); catch, v = []; end
+            if isempty(v) || ~isnumeric(v), v = def; end
+        end
+
+        function v = iniStr(~, ini, sec, key, def)
+            try, v = ini.GetValues(sec, key); catch, v = ''; end
+            if isempty(v), v = def; end
+            v = char(v);
+        end
+
         function createUtilsMenu(app)
             % Add Trellis Scope to the existing Utils menu (added at startup so
             % the design-time component tree is untouched).
             uimenu(app.UtilsMenu, 'Text', 'Trellis Scope', ...
                 'MenuSelectedFcn', @(~,~) app.launchTrellisScope());
-            mm = uimenu(app.FileMenu, 'Text', 'Mouse Mode', 'Checked', 'off');
-            mm.MenuSelectedFcn = @(src,~) app.toggleMouseMode(src);
+            mm = uimenu(app.FileMenu, 'Text', 'Mouse Mode');
+            uimenu(mm, 'Text', 'Off', 'Checked', 'on', 'MenuSelectedFcn', @(s,~) app.setMouseTarget(s));
+            uimenu(mm, 'Text', 'Eye', 'MenuSelectedFcn', @(s,~) app.setMouseTarget(s));
+            for ci = 1:5
+                uimenu(mm, 'Text', sprintf('Cursor %d', ci), 'MenuSelectedFcn', @(s,~) app.setMouseTarget(s));
+            end
+            uimenu(app.FileMenu, 'Text', 'Cursor Assignment', 'MenuSelectedFcn', @(~,~) app.openCursorAssignment());
         end
 
         function launchTrellisScope(app)

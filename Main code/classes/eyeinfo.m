@@ -11,6 +11,9 @@ classdef eyeinfo < handle
         xoffset (1,1) double = 1
         yoffset (1,1) double = 1
 
+        xchan = []           % analog channel id for eye x ([] -> first analog channel; legacy default)
+        ychan = []           % analog channel id for eye y ([] -> second analog channel)
+
         mousemap = []        % reader handle for the mouse-mode shared slot (lazy)
     end
 
@@ -27,6 +30,10 @@ classdef eyeinfo < handle
 
             obj.xoffset=ini.GetValues('eye calibration','xoffset');
             obj.yoffset=ini.GetValues('eye calibration','yoffset');
+            % optional eye channel assignment (File > Cursor Assignment). Absent
+            % on a legacy rig -> stays [] and geteye uses the first two analog.
+            try, obj.xchan=ini.GetValues('eye calibration','xchan'); catch, end
+            try, obj.ychan=ini.GetValues('eye calibration','ychan'); catch, end
         catch
             failcount=0;
             while failcount < 50
@@ -81,18 +88,10 @@ classdef eyeinfo < handle
         end
 
         function out = mousepos(obj)
-            % [x y] display pixels if mouse mode is currently on, else []. The
-            % slot only reports on==1 while GraphicsHandler is publishing it.
-            out = [];
-            m = obj.getmouseslot();
-            if isempty(m), return; end
-            try
-                [md, ok] = sceneRead(m);
-                if ok && isstruct(md) && isfield(md,'on') && md.on == 1
-                    out = round([md.x md.y]);
-                end
-            catch
-            end
+            % [x y] display pixels if mouse mode is on AND aimed at the eye,
+            % else []. Shared with cursorinfo via readMouseSlot; the mouse-mode
+            % target ('eye' or 'cursorN') decides which input the mouse drives.
+            out = readMouseSlot('eye');
         end
 
         function out = geteye(obj,t)
@@ -105,17 +104,19 @@ classdef eyeinfo < handle
                 return
             end
             chidx=xippmex('elec','analog');
+            xc=obj.xchan; if isempty(xc), xc=chidx(1); end   % selectable eye channels
+            yc=obj.ychan; if isempty(yc), yc=chidx(2); end   % ([] -> legacy first two analog)
             if nargin == 1
-                xeye=xippmex('cont', chidx(1),1,'1ksps')*...
+                xeye=xippmex('cont', xc,1,'1ksps')*...
                     obj.xgain+obj.xoffset;
-                yeye=xippmex('cont', chidx(2),1,'1ksps')*...
+                yeye=xippmex('cont', yc,1,'1ksps')*...
                     obj.ygain+obj.yoffset;
                 seteyepos(obj,xeye,yeye);
                 out=[xeye,yeye];
             else
-                xeye=xippmex('cont', chidx(1),t,'1ksps')*...
+                xeye=xippmex('cont', xc,t,'1ksps')*...
                     obj.xgain+obj.xoffset;
-                yeye=xippmex('cont', chidx(2),t,'1ksps')*...
+                yeye=xippmex('cont', yc,t,'1ksps')*...
                     obj.ygain+obj.yoffset;
                 seteyepos(obj,xeye(end),yeye(end));
                 out=[xeye;yeye];
@@ -131,9 +132,10 @@ classdef eyeinfo < handle
                 return
             end
             chidx=xippmex('elec','analog');
-
-            xeye=xippmex('cont', chidx(1),1,'1ksps');
-            yeye=xippmex('cont', chidx(2),1,'1ksps');
+            xc=obj.xchan; if isempty(xc), xc=chidx(1); end
+            yc=obj.ychan; if isempty(yc), yc=chidx(2); end
+            xeye=xippmex('cont', xc,1,'1ksps');
+            yeye=xippmex('cont', yc,1,'1ksps');
             out=[xeye,yeye];
         end
     end

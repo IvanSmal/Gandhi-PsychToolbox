@@ -36,6 +36,16 @@ for iRow=1:size(pixIn,1)
     xMm=xyIn(1)*pixelSize(1);
     yMm=xyIn(2)*pixelSize(2);
 
+    % 'mm' / 'mmsize': physical millimetres (linear inverse of deg2pix mm).
+    % 'mm' is a position relative to the true center; 'mmsize' is an extent.
+    if matches(coordType,'mm',IgnoreCase=1)
+        out(iRow,:)=[xMm, yMm];
+        continue
+    elseif matches(coordType,'mmsize',IgnoreCase=1)
+        out(iRow,:)=[abs(pixIn(iRow,1))*pixelSize(1), abs(pixIn(iRow,2))*pixelSize(2)];
+        continue
+    end
+
     xDeg=round(atand(xMm/distFromScreen),2);
     yDeg=round(atand(yMm/distFromScreen),2);
 

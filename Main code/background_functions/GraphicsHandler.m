@@ -194,6 +194,10 @@ vblRing    = nan(1,120);            % last ~2 s of display flips at 60 Hz
 % touch it. heldX/heldY latch the last position so the eye only moves while the
 % left button is held.
 mouseMap = []; mouseSeq = 0; heldX = []; heldY = [];
+% Keep the monitor window a fixed size: PTB has no non-resizable GUI flag, so
+% if the operator resizes it we snap the size back (position left free, so it
+% stays movable). Target size is captured on the first idle frame.
+monTargetW = []; monTargetH = []; lastSnapT = 0;
 while 1
     try %error handler
         getCommands(graphicsport)          % low-rate control only (dumpdata, exit, seteye)
@@ -203,6 +207,7 @@ while 1
         % position. The eye follows the cursor only while the LEFT button is
         % held, so releasing it freezes the eye instead of snapping to an edge.
         if isprop(gr,'mousemode') && gr.mousemode
+            tgt = 'eye'; if isprop(gr,'mousetarget'), tgt = gr.mousetarget; end   % eye or cursorN
             if isempty(mouseMap), mouseMap = sceneOpen(true, mousePath()); end
             [mmx, mmy, mbtn] = GetMouse(gr.window_monitor);
             r = Screen('Rect', gr.window_monitor);          % window-local pixels
@@ -211,10 +216,10 @@ while 1
             if isempty(heldX), heldX = dx; heldY = dy; end  % start at the cursor
             if mbtn(1), heldX = dx; heldY = dy; end          % move only while left held
             mouseSeq = mouseSeq + 1;
-            sceneWrite(mouseMap, mouseSeq, struct('on',1,'x',heldX,'y',heldY));
+            sceneWrite(mouseMap, mouseSeq, struct('on',1,'target',tgt,'x',heldX,'y',heldY));
         elseif ~isempty(mouseMap)
             mouseSeq = mouseSeq + 1;
-            sceneWrite(mouseMap, mouseSeq, struct('on',0,'x',0,'y',0));   % announce off
+            sceneWrite(mouseMap, mouseSeq, struct('on',0,'target','eye','x',0,'y',0));   % announce off
             heldX = []; heldY = [];
         end
 
@@ -283,6 +288,10 @@ while 1
                 drawMonitorExtras(gr);
                 Screen('Flip', gr.window_monitor, [], [], 1);   % dontsync: never block the display flip
                 updategui(gr);
+                % Service the Graphics Info uifigure's event queue so it renders
+                % and stays interactive; throttled, and only when the info window
+                % is enabled, so it never disturbs display-flip timing otherwise.
+                if strcmp(gr.TurnthisoffifthiswindowslowsdowngraphicsSwitch.Value,'On'), drawnow limitrate; end
                 flipcount = 0;
             end
         else
@@ -292,23 +301,46 @@ while 1
             try, seteye; catch, end
             setgrid(gr);
             try, Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]); catch, end
+            drawcursors(gr);
 
             gr.newsize=Screen('GlobalRect',gr.window_monitor);
             gr.newsize_true(1)=gr.newsize(3)-gr.newsize(1);
             gr.newsize_true(2)=gr.newsize(4)-gr.newsize(2);
-            gr.winparams=Screen('PanelFitter', gr.window_monitor);
-            gr.winparams(1:4)=ceil(gr.winparams(1:4)*gr.scalefactor);
-            gr.scalefactor=1;
-            gr.winparams([1,3])=ceil(gr.winparams([1,3])+gr.left_right);
-            gr.left_right=0;
-            gr.winparams([2,4])=ceil(gr.winparams([2,4])+gr.up_down);
-            gr.up_down=0;
-            Screen('PanelFitter', gr.window_monitor, gr.winparams);
+            % Fixed-size monitor window: if it was resized, snap the size back
+            % (leave X/Y at -1 = unchanged, so it can still be moved). wmctrl
+            % runs in the background and is rate-limited so it never stalls the
+            % loop or oscillates. Target = the size the window opened at.
+            if isempty(monTargetW), monTargetW = gr.newsize_true(1); monTargetH = gr.newsize_true(2); end
+            if (abs(gr.newsize_true(1)-monTargetW) > 8 || abs(gr.newsize_true(2)-monTargetH) > 8) && (GetSecs - lastSnapT > 1)
+                lastSnapT = GetSecs;
+                try
+                    system(sprintf('wmctrl -r "PTB Onscreen Window [%d]" -e 0,-1,-1,%d,%d &', ...
+                        gr.window_monitor, monTargetW, monTargetH));
+                catch
+                end
+            end
+            % Only re-drive the PanelFitter when a pan/zoom is actually pending.
+            % The window opened with UsePanelFitter(...,'Full'), which re-fits the
+            % content to the window on its own; overriding it every frame pinned a
+            % stale source/dest rect, so a plain OS resize tiled instead of
+            % re-fitting. Leaving it alone unless the operator panned/zoomed lets
+            % resize work while preserving pan/zoom.
+            if gr.scalefactor ~= 1 || gr.left_right ~= 0 || gr.up_down ~= 0
+                gr.winparams=Screen('PanelFitter', gr.window_monitor);
+                gr.winparams(1:4)=ceil(gr.winparams(1:4)*gr.scalefactor);
+                gr.scalefactor=1;
+                gr.winparams([1,3])=ceil(gr.winparams([1,3])+gr.left_right);
+                gr.left_right=0;
+                gr.winparams([2,4])=ceil(gr.winparams([2,4])+gr.up_down);
+                gr.up_down=0;
+                Screen('PanelFitter', gr.window_monitor, gr.winparams);
+            end
 
             Screen('Flip',gr.window_monitor, [], [], 1);
             vblIdle = Screen('Flip',gr.window_main);
             noteDisplayFlip(vblIdle);
             updategui(gr);
+            drawnow limitrate;   % out of trial: keep the info window painted & interactive (timing not critical here)
         end
     catch e
         grlog('LOOP ERROR: %s', e.message);
@@ -362,20 +394,8 @@ end
     function seteye
         try
             gr.eye=eyeinfo;
-            toconvert(:,1)=-40:10:40;
-            toconvert(:,2)=-40:10:40;
-            pixelsforlines=deg2pix(toconvert,'cart');
-            xlines=reshape(repmat(pixelsforlines(:,1),2)',1,[]);
-            fully=reshape(repmat([0 1080], length(xlines)/2,1)',1,[]);
-            ylines = reshape(repmat(pixelsforlines(:,2),2)',1,[]);
-            fullx=reshape(repmat([0 3000], length(ylines)/2,1)',1,[]);
-            gr.gridlinesmatrix=[xlines fullx;fully ylines];
-            truezero=deg2pix([0 0]);
-            degadds=deg2pix([10 10;20 20; 30 30; 40 40; 50 50],'cart')-truezero;
-            degadds(:,2)=[];
-
-            gr.center_circle=[truezero-10 truezero+10;...
-                truezero-degadds truezero+degadds]';
+            % The monitor grid (degrees + mm) is rebuilt every frame by
+            % makegridlines, so there is nothing else to do here.
         catch e
             disp(e.message)
         end
@@ -813,7 +833,47 @@ end
     function drawMonitorExtras(gr)
         setgrid(gr);
         try, Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]); catch, end
+        drawcursors(gr);
         Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
+    end
+
+    function drawcursors(grobj)
+        % Draw each ACTIVE cursor on the monitor as a coloured dot (distinct
+        % from the white eye dot). "Active" = a cursor the mouse is driving in
+        % mouse mode, or an enabled (assigned) analog cursor. UDP cursors are
+        % skipped here so the renderer never binds the port the task process
+        % already listens on; a mouse-driven cursor reads the shared mouse slot.
+        if isempty(grobj.cursors)
+            grobj.cursors = cell(1,5);
+            for ci = 1:5, grobj.cursors{ci} = cursorinfo(ci); end
+        end
+        cols = [0 255 255; 255 0 255; 255 255 0; 255 160 0; 120 255 120];
+        W = grobj.screenXpixels; H = grobj.screenYpixels; m = 12;   % edge margin
+        for ci = 1:5
+            c = grobj.cursors{ci};
+            active = c.enabled && ~strcmpi(c.source,'udp');
+            if isprop(grobj,'mousemode') && grobj.mousemode && ...
+               strcmpi(grobj.mousetarget, sprintf('cursor%d',ci))
+                active = true;   % mouse mode is driving this cursor
+            end
+            if ~active, continue; end
+            try
+                p = c.getcursor; px = p(1); py = p(2);
+                offscreen = px < 0 || px > W || py < 0 || py > H;
+                cx = min(max(px, m), W-m);   % clamp the drawn dot to the screen
+                cy = min(max(py, m), H-m);   % so an off-screen cursor is findable
+                Screen('DrawDots', grobj.window_monitor, [cx; cy], 14, cols(ci,:), [], 2);
+                if offscreen
+                    % pin to the edge and label with its real coordinates (deg)
+                    dg = pix2deg([px py], 'cart');
+                    Screen('TextSize', grobj.window_monitor, grobj.fontsize);
+                    Screen('DrawText', grobj.window_monitor, ...
+                        sprintf('c%d off (%.1f, %.1f)', ci, dg(1), dg(2)), ...
+                        min(max(cx+10, 2), W-160), min(max(cy-10, 12), H-12), cols(ci,:));
+                end
+            catch
+            end
+        end
     end
 
     function gr=makegridlines(gr)
@@ -830,25 +890,52 @@ end
 
         gr.center_circle=[truezero-10 truezero+10;...
             truezero-degadds truezero+degadds]';
+
+        % mm grid (spacing gr.mmgrid mm; linear via deg2pix ...,'mm'), drawn
+        % when gridmode is 'mm' or 'both'. Spans ~700 mm each way to cover the
+        % panel about the true center.
+        mmspan = ceil(700/gr.mmgrid)*gr.mmgrid;
+        gr.mmvals = -mmspan:gr.mmgrid:mmspan;
+        gr.mmpixels = deg2pix([gr.mmvals(:) gr.mmvals(:)],'mm');
+        mmx = reshape(repmat(gr.mmpixels(:,1),2)',1,[]);
+        mmfully = reshape(repmat([0 1080], length(mmx)/2,1)',1,[]);
+        mmy = reshape(repmat(gr.mmpixels(:,2),2)',1,[]);
+        mmfullx = reshape(repmat([0 3000], length(mmy)/2,1)',1,[]);
+        gr.gridlinesmatrix_mm = [mmx mmfullx; mmfully mmy];
     end
 %%set grid
     function gr=setgrid(gr)
         Screen('TextSize', gr.window_monitor,gr.fontsize);
+        gm = gr.gridmode; if isempty(gm), gm='degrees'; end
         try
             Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 960, 5 , [255,255,255]);
-
-            for i=1:length(gr.toconvert(:,1))
-                Screen('DrawText', gr.window_monitor, num2str(gr.toconvert(i,1)), gr.pixelsforlines(i,1),...
-                    gr.pixelsforlines(ceil(length(gr.toconvert(:,1))/2),2), [.5,.5,.5]);
-                Screen('DrawText', gr.window_monitor, num2str(gr.toconvert(i,2)),...
-                    gr.pixelsforlines(ceil(length(gr.toconvert(:,1))/2),1), gr.pixelsforlines(i,2),  [.5,.5,.5]);
-            end
         catch
         end
-
-
-        Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix,1,[.3 .3 .3]);
-        Screen('FrameOval',gr.window_monitor,[0.2 0.2 0.2]',gr.center_circle,3);
+        if any(strcmpi(gm,{'degrees','both'}))
+            try
+                for i=1:length(gr.toconvert(:,1))
+                    Screen('DrawText', gr.window_monitor, num2str(gr.toconvert(i,1)), gr.pixelsforlines(i,1),...
+                        gr.pixelsforlines(ceil(length(gr.toconvert(:,1))/2),2), [.5,.5,.5]);
+                    Screen('DrawText', gr.window_monitor, num2str(gr.toconvert(i,2)),...
+                        gr.pixelsforlines(ceil(length(gr.toconvert(:,1))/2),1), gr.pixelsforlines(i,2),  [.5,.5,.5]);
+                end
+            catch
+            end
+            Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix,1,[.3 .3 .3]);
+            Screen('FrameOval',gr.window_monitor,[0.2 0.2 0.2]',gr.center_circle,3);
+        end
+        if any(strcmpi(gm,{'mm','both'}))
+            try
+                for i=1:length(gr.mmvals)
+                    Screen('DrawText', gr.window_monitor, num2str(gr.mmvals(i)), gr.mmpixels(i,1),...
+                        gr.mmpixels(ceil(length(gr.mmvals)/2),2), [.4,.4,.7]);
+                    Screen('DrawText', gr.window_monitor, num2str(gr.mmvals(i)),...
+                        gr.mmpixels(ceil(length(gr.mmvals)/2),1), gr.mmpixels(i,2), [.4,.4,.7]);
+                end
+            catch
+            end
+            Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix_mm,1,[.25 .25 .5]);
+        end
     end
 
     function createInfoWindow(gr)
@@ -914,6 +1001,17 @@ end
         gr.TurnthisoffifthiswindowslowsdowngraphicsSwitch = uiswitch(gr.UIFigure, 'slider');
         gr.TurnthisoffifthiswindowslowsdowngraphicsSwitch.Position = [199 67 45 20];
         gr.TurnthisoffifthiswindowslowsdowngraphicsSwitch.Value = 'On';
+
+        % Create Grid units dropdown (switch the monitor grid: degrees / mm / both)
+        gridLbl = uilabel(gr.UIFigure);
+        gridLbl.HorizontalAlignment = 'right';
+        gridLbl.Position = [222 138 68 22];
+        gridLbl.Text = 'Grid units';
+        gridDD = uidropdown(gr.UIFigure);
+        gridDD.Items = {'degrees', 'mm', 'both'};
+        gridDD.Position = [295 138 105 22];
+        gridDD.Value = gr.gridmode;
+        gridDD.ValueChangedFcn = @(src,~) gr.setgridmode(src.Value);
 
         % Show the figure after all components are created
         gr.UIFigure.Visible = 'on';

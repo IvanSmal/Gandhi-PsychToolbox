@@ -377,19 +377,28 @@ end
 %% low-rate control channel (still UDP: dumpdata, exit, seteye once a trial)
     function getCommands(graphicsport,~)
         try
+            % Drain EVERY pending command this frame, not just one. The control
+            % channel is one-way UDP with no ack: a command left in the buffer
+            % (a burst of menu actions, or gr.mousemode=0 arriving behind other
+            % evals) would otherwise be applied many frames late, or lost when
+            % the backlog overflows the socket buffer -- which is how a Mouse
+            % Mode "Off" or a cursor-assignment apply could silently not stick.
             % NumBytesAvailable first: a bare readline blocks for the port
-            % timeout (20 ms) when idle, which would cap this loop at 50 Hz.
-            if graphicsport.NumBytesAvailable == 0
-                return
-            end
-            command=readline(graphicsport);
-            if strlength(command)==0
-                return
-            end
-            if contains(command,'SetEye','IgnoreCase',true)
-                seteye;
-            elseif contains(command,'execute','IgnoreCase',true)
-                rawexecute(command);
+            % timeout (20 ms) when idle, which would cap this loop at 50 Hz. The
+            % iteration cap keeps a flood from stalling the render loop.
+            for iCmd = 1:64
+                if graphicsport.NumBytesAvailable == 0
+                    return
+                end
+                command=readline(graphicsport);
+                if strlength(command)==0
+                    return
+                end
+                if contains(command,'SetEye','IgnoreCase',true)
+                    seteye;
+                elseif contains(command,'execute','IgnoreCase',true)
+                    rawexecute(command);
+                end
             end
         catch
         end
@@ -843,25 +852,29 @@ end
     function drawcursors(grobj)
         % Draw each ACTIVE cursor on the monitor as a coloured dot (distinct
         % from the white eye dot). "Active" = a cursor the mouse is driving in
-        % mouse mode, or an enabled (assigned) analog cursor. UDP cursors are
-        % skipped here so the renderer never binds the port the task process
-        % already listens on; a mouse-driven cursor reads the shared mouse slot.
+        % mouse mode, or an enabled (assigned) cursor. The renderer OWNS each
+        % udp cursor's socket (cursorinfo.owner = true): reading it here pumps
+        % the joystick and republishes the shared slot (cursorSlotPath) that the
+        % task process reads, so exactly one process ever binds the port.
         if isempty(grobj.cursors)
             grobj.cursors = cell(1,5);
-            for ci = 1:5, grobj.cursors{ci} = cursorinfo(ci); end
+            for ci = 1:5, grobj.cursors{ci} = cursorinfo(ci); grobj.cursors{ci}.owner = true; end
         end
         cols = [0 255 255; 255 0 255; 255 255 0; 255 160 0; 120 255 120];
         W = grobj.screenXpixels; H = grobj.screenYpixels; m = 12;   % edge margin
         for ci = 1:5
             c = grobj.cursors{ci};
-            active = c.enabled && ~strcmpi(c.source,'udp');
-            if isprop(grobj,'mousemode') && grobj.mousemode && ...
-               strcmpi(grobj.mousetarget, sprintf('cursor%d',ci))
-                active = true;   % mouse mode is driving this cursor
-            end
+            ismouse = isprop(grobj,'mousemode') && grobj.mousemode && ...
+                      strcmpi(grobj.mousetarget, sprintf('cursor%d',ci));
+            active = c.enabled || ismouse;   % udp cursors included (renderer owns the port)
             if ~active, continue; end
             try
+                % Always read enabled cursors: for a udp owner this pumps the
+                % socket and republishes the shared slot even between draws.
                 p = c.getcursor; px = p(1); py = p(2);
+                % a udp cursor with no packet yet has no real position -- skip
+                % drawing its (0,0) default until the joystick has sent one.
+                if strcmpi(c.source,'udp') && ~c.gotdata && ~ismouse, continue; end
                 offscreen = px < 0 || px > W || py < 0 || py > H;
                 cx = min(max(px, m), W-m);   % clamp the drawn dot to the screen
                 cy = min(max(py, m), H-m);   % so an off-screen cursor is findable

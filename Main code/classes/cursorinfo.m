@@ -10,6 +10,13 @@ classdef cursorinfo < handle
 %   the state ini section [cursorN] in the constructor, so File > Cursor
 %   Assignment just writes the ini and rebuilds. Everything here is additive:
 %   eye-only tasks never construct a cursorinfo.
+%
+%   UDP ownership: a UDP port can be bound by only ONE process. GraphicsHandler
+%   (the renderer) constructs its cursors with owner=true, so it alone binds the
+%   socket; every frame it reads the joystick and publishes the position to a
+%   shared slot (cursorSlotPath). The task process's cursorinfo (owner=false, the
+%   default) reads that slot instead of binding the port. Analog cursors ignore
+%   owner entirely -- both processes can read the DAQ.
 
     properties
         id      = 1              % 1..5; matches the mouse-mode target 'cursorN' and the ini section
@@ -29,6 +36,14 @@ classdef cursorinfo < handle
         y = 0
         screenparams = []        % passed to deg2pix; [] -> read the rig config
         udpobj = []              % lazily-opened udpport for the udp source
+
+        owner   = false          % true: this process owns the UDP socket and publishes the slot
+        gotdata = false          % true once a real position has been read (so the renderer
+                                 % does not draw a udp cursor at its (0,0) default before the
+                                 % joystick has ever sent)
+        slotMap     = []         % owner: memmap for publishing the shared cursor slot
+        slotSeq     = 0          % owner: seqlock counter
+        slotReadMap = []         % non-owner: memmap for reading the shared cursor slot
     end
 
     methods
@@ -58,12 +73,13 @@ classdef cursorinfo < handle
             % Mouse mode aimed at this cursor wins (returns display pixels).
             mp = readMouseSlot(sprintf('cursor%d', obj.id));
             if ~isempty(mp)
-                obj.x = mp(1); obj.y = mp(2); out = round(mp); return
+                obj.x = mp(1); obj.y = mp(2); obj.gotdata = true; out = round(mp); return
             end
             mm = obj.rawmm();
             if isempty(mm)
                 out = round([obj.x obj.y]); return    % unassigned / no packet: hold last
             end
+            obj.gotdata = true;
             pix = deg2pix([mm(1) mm(2)], 'mm', obj.screenparams);
             obj.x = pix(1); obj.y = pix(2);
             out = round(pix);
@@ -78,8 +94,18 @@ classdef cursorinfo < handle
         function mm = rawmm(obj)
             mm = [];
             if strcmpi(obj.source, 'udp')
-                pkt = obj.readudp();
-                if ~isempty(pkt), mm = pkt; end
+                if obj.owner
+                    % this process owns the socket: read it and share the value
+                    pkt = obj.readudp();
+                    if ~isempty(pkt)
+                        mm = pkt;
+                        obj.publishslot(pkt);
+                    end
+                else
+                    % the renderer owns the socket: read the value it published
+                    s = obj.readslot();
+                    if ~isempty(s), mm = s; end
+                end
             else
                 if isempty(obj.xchan) || isempty(obj.ychan), return; end
                 rawx = xippmex('cont', obj.xchan, 1, '1ksps');
@@ -106,6 +132,42 @@ classdef cursorinfo < handle
                     mm = [v(1)*obj.xgain + obj.xoffset, v(2)*obj.ygain + obj.yoffset];
                 end
             catch
+            end
+        end
+
+        function publishslot(obj, mm)
+            % Owner only: publish this cursor's mm position to its shared slot so
+            % the task process can read it without binding the UDP port.
+            try
+                if isempty(obj.slotMap)
+                    obj.slotMap = sceneOpen(true, cursorSlotPath(obj.id));
+                end
+                obj.slotSeq = obj.slotSeq + 1;
+                sceneWrite(obj.slotMap, obj.slotSeq, ...
+                    struct('on',1,'x',mm(1),'y',mm(2),'t',getsecs));
+            catch
+                obj.slotMap = [];   % slot went away: reopen next call
+            end
+        end
+
+        function mm = readslot(obj)
+            % Non-owner: newest mm from the shared cursor slot, or [] if the
+            % renderer has not published a fresh value (>1 s old = stale, so a
+            % dead renderer never leaves the cursor stuck at an old position).
+            mm = [];
+            try
+                if isempty(obj.slotReadMap)
+                    p = cursorSlotPath(obj.id);
+                    if ~isfile(p), return; end
+                    obj.slotReadMap = sceneOpen(false, p);
+                end
+                [d, ok] = sceneRead(obj.slotReadMap);
+                if ok && isstruct(d) && isfield(d,'on') && d.on == 1 ...
+                        && isfield(d,'t') && (getsecs - d.t) < 1
+                    mm = [d.x d.y];
+                end
+            catch
+                obj.slotReadMap = [];   % slot went away: reopen next call
             end
         end
     end

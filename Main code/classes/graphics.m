@@ -41,7 +41,7 @@ classdef graphics < handle
         gridlinesmatrix_mm          % mm grid line coordinates
         mmpixels                    % pixel positions for mm grid lines
         mmvals                      % mm grid label values
-        cursors = {}                % cursorinfo objects the renderer draws (mouse/analog); udp skipped
+        cursors = {}                % cursorinfo objects the renderer draws and owns (mouse/analog/udp)
         center_circle = [0 0 0 0]   % Center circle coordinates
         
         %% Experimental stimuli

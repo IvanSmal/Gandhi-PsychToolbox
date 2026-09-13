@@ -497,6 +497,41 @@ classdef MHost2_exported < matlab.apps.AppBase
                     gotinfo=0;
                     xippmex('digout', 1, 1)
                     [eyeandphotodiode, xippmextstart]=xippmex('cont',app.chidx([1,2,4]),1000,'1ksps');
+                    % ---- cursor recording setup (batched, parallel to the eye) ----
+                    % Record every ENABLED cursor 1..5 alongside the eye, timestamped in the same
+                    % millisecond frame as d.timestamps so a cursor trace aligns to trial start.
+                    % To keep the state loop fast, ALL analog cursor channels are read in ONE
+                    % batched xippmex('cont',...) call per pass (not one call per cursor); udp
+                    % cursors are read from their shared slot (a cheap memmap). Every cursor block
+                    % is guarded by recHasCursors, so eye-only tasks add ZERO per-pass work.
+                    recA_id=[]; recA_xi=[]; recA_yi=[]; recA_xg=[]; recA_yg=[]; recA_xo=[]; recA_yo=[];
+                    recU_id=[]; recU_obj={}; recChans=[]; CURSMAX=20000;
+                    for ci = 1:5
+                        try
+                            if numel(mh.cursors) < ci || isempty(mh.cursors{ci})
+                                cobj = cursorinfo(ci);
+                                if ~cobj.enabled, continue; end
+                                mh.cursors{ci} = cobj;
+                            else
+                                cobj = mh.cursors{ci};
+                                if ~cobj.enabled, continue; end
+                            end
+                        catch
+                            continue
+                        end
+                        if strcmpi(cobj.source,'udp')
+                            recU_id(end+1)=ci; recU_obj{end+1}=cobj; %#ok<AGROW>
+                        elseif any(app.chidx==cobj.xchan) && any(app.chidx==cobj.ychan)
+                            recChans(end+1)=cobj.xchan; recA_xi(end+1)=numel(recChans); %#ok<AGROW>
+                            recChans(end+1)=cobj.ychan; recA_yi(end+1)=numel(recChans); %#ok<AGROW>
+                            recA_id(end+1)=ci; %#ok<AGROW>
+                            recA_xg(end+1)=cobj.xgain; recA_yg(end+1)=cobj.ygain; %#ok<AGROW>
+                            recA_xo(end+1)=cobj.xoffset; recA_yo(end+1)=cobj.yoffset; %#ok<AGROW>
+                        end
+                    end
+                    Ka=numel(recA_id); Ku=numel(recU_id); recHasCursors=(Ka>0)||(Ku>0);
+                    recN=0; recTs=nan(1,CURSMAX);
+                    recA_mm=nan(CURSMAX,2,max(Ka,1)); recU_mm=nan(CURSMAX,2,max(Ku,1));
 
                     % ITI check
                     gotiti=0;
@@ -547,6 +582,28 @@ classdef MHost2_exported < matlab.apps.AppBase
                             tsshift = 0;
                         end
                         eyeandphotodiode(:,tsshift+1:300+tsshift)=eyeandphotodiode_temp;
+                        % record cursors: ONE batched analog read for all analog cursors + a cheap
+                        % slot read per udp cursor. Guarded so eye-only passes cost nothing.
+                        if recHasCursors && recN < CURSMAX
+                            recN = recN + 1;
+                            recTs(recN) = floor(getsecs*1000);
+                            if ~isempty(recChans)
+                                try
+                                    craw = xippmex('cont', recChans, 1, '1ksps');
+                                    for kk = 1:Ka
+                                        recA_mm(recN,1,kk) = craw(recA_xi(kk))*recA_xg(kk) + recA_xo(kk);
+                                        recA_mm(recN,2,kk) = craw(recA_yi(kk))*recA_yg(kk) + recA_yo(kk);
+                                    end
+                                catch
+                                end
+                            end
+                            for kk = 1:Ku
+                                mmk = recU_obj{kk}.rawmm;
+                                if numel(mmk) >= 2
+                                    recU_mm(recN,1,kk) = mmk(1); recU_mm(recN,2,kk) = mmk(2);
+                                end
+                            end
+                        end
 
                         if ~gotinfo
                             app.gettrialinfo(mh) %this gets all the targets and intervals from the trial to display on the GUI
@@ -618,6 +675,31 @@ classdef MHost2_exported < matlab.apps.AppBase
                     % the commands that were displayed.
                     d.graphics_commands.id         = mh.cmdLogId(1:mh.cmdLogN);
                     d.graphics_commands.tGenerated = mh.cmdLogTime(1:mh.cmdLogN);
+                    % cursors -> d.cursor: convert mm to DEGREES (via pixels), vectorised, one
+                    % entry per enabled cursor. Timestamps share d.timestamps' ms frame, so eye
+                    % and cursor align to trial start by subtracting floor(mh.trial.tstarttime*1000).
+                    cur = struct('id',{},'pos',{},'timestamps',{});
+                    for kk = 1:Ka
+                        mm = recA_mm(1:recN,:,kk);
+                        deg = nan(size(mm));
+                        g = ~any(isnan(mm),2);
+                        if any(g)
+                            dd = pix2deg(deg2pix(mm(g,:),'mm',mh.screenparams),'cart',mh.screenparams);
+                            if size(dd,1)==sum(g), deg(g,:) = dd; end
+                        end
+                        cur(end+1) = struct('id',recA_id(kk),'pos',deg,'timestamps',recTs(1:recN)); %#ok<AGROW>
+                    end
+                    for kk = 1:Ku
+                        mm = recU_mm(1:recN,:,kk);
+                        deg = nan(size(mm));
+                        g = ~any(isnan(mm),2);
+                        if any(g)
+                            dd = pix2deg(deg2pix(mm(g,:),'mm',mh.screenparams),'cart',mh.screenparams);
+                            if size(dd,1)==sum(g), deg(g,:) = dd; end
+                        end
+                        cur(end+1) = struct('id',recU_id(kk),'pos',deg,'timestamps',recTs(1:recN)); %#ok<AGROW>
+                    end
+                    d.cursor = cur;
                     clear eyeandphotodiode;
                     fprintf('(493-508) inserting data to structure finished at %f \n' , toc(app.post_trial_timer))                    
 

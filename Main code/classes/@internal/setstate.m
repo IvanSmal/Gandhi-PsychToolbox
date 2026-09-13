@@ -13,10 +13,11 @@ if ~strcmp(mh.activestatename,name)
     mh.activestatetime = mh.trial.state.(name).time(end);
     mh.activestatename = name;
 end
-%send to datastream:
-name_hex=dec2hex(name); %convert to hex
-
-for i=1:size(name_hex,1); xippmex('digout', 5, hex2dec(name_hex(i,:)));end%convert hex to numbers and send as digital stamp
+% Event marker: one unique integer code per state name (see stateEventCode).
+% A single parallel-port digout (output 5) creates a NIP-timestamped digital
+% marker (digin reason bit 32) that Trellis records, so this state's onset is
+% timestamped in the neural data; the code<->name table is saved in trial.data.
+xippmex('digout', 5, stateEventCode(name));
 
 disp(name)
 end

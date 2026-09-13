@@ -664,6 +664,11 @@ classdef MHost2_exported < matlab.apps.AppBase
                         end
                     end
                     d.neural_data='placeholder';
+                    % event-code lookup table for this session (state name <-> parallel-port code
+                    % that setstate sends). Saved so the recorded digout markers decode to state
+                    % names offline.
+                    [~, scNames, scCodes] = stateEventCode();
+                    d.stateCodes = struct('name', {scNames}, 'code', scCodes);
                     d.photodiode(1,:)=eyeandphotodiode(3,:);
                     ts_temp=1:length(d.eyepos);
                     d.timestamps=ts_temp+floor(mh.trial.tstarttime*1000);

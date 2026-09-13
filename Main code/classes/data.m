@@ -8,6 +8,7 @@ classdef data
         graphics_commands;    % state-machine side: every command ID generated, and when
         DiodeFlipStates;
         timestamps;
+        stateCodes;           % state-name <-> digout code table (event markers)
     end
 
     methods

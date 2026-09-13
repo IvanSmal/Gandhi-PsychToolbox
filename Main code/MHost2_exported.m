@@ -415,7 +415,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                     for i=1:size(ttable,1)
                         eval(['temp=[' ttable{i,2} '];']); % I have no idea why I do it this way but if i change it it breaks
                         mh.targets.(ttable{i,1}).position=temp;
-                        if any(matches(["cart","cartesian","pol","polar"],ttable{i,3},Ignorecase=1))
+                        if any(matches(["cart","cartesian","pol","polar","mm"],ttable{i,3},Ignorecase=1))
                             mh.targets.(ttable{i,1}).degreestype=ttable{i,3};
                         else
                             warndlg('One of the targets has an invalid degrees type')

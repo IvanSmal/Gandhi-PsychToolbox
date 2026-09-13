@@ -1031,6 +1031,48 @@ classdef MHost2_exported < matlab.apps.AppBase
             v = char(v);
         end
 
+        function checkTrellisOrDemo(app)
+            % If xippmex cannot connect to Trellis, offer demo mode (simulated
+            % xippmex). A real connection clears any stale demo flag so a
+            % connected launch is never forced into demo.
+            try, s = xippmex(); catch, s = 0; end
+            if isequal(s, 1)
+                try, delete(demoFlagPath()); catch, end
+                return;
+            end
+            try
+                sel = uiconfirm(app.UIFigure, ...
+                    sprintf(['xippmex() returned %s -- Trellis is not connected.' ...
+                    newline newline 'Launch in DEMO mode with simulated data? ' ...
+                    '(Drive eye/cursor with Mouse Mode; analog channels return a sine wave.)'], mat2str(s)), ...
+                    'Trellis not found', 'Options', {'Demo mode','Continue anyway'}, ...
+                    'DefaultOption', 1, 'CancelOption', 2);
+                if strcmp(sel, 'Demo mode')
+                    enableDemoXippmex(app.filepaths.GetValues('paths','xippmex'));
+                    app.insToTxtbox('DEMO MODE: xippmex is simulated (no Trellis hardware).');
+                end
+            catch
+            end
+        end
+
+        function toggleDemoMode(app, src)
+            % Manually enter/leave demo mode (simulated xippmex). Swaps this
+            % process and, if running, GraphicsHandler; a process restart is
+            % cleanest for switching back to live Trellis.
+            on = ~logical(src.Checked);
+            src.Checked = on;
+            xp = app.filepaths.GetValues('paths','xippmex');
+            if on
+                enableDemoXippmex(xp);
+                try, app.mhpass.evalgraphics(sprintf('enableDemoXippmex(''%s'');', xp)); catch, end
+                app.insToTxtbox('DEMO MODE ON: xippmex is simulated. Restart Graphics/Scope if already running for a clean swap.');
+            else
+                disableDemoXippmex(xp);
+                try, app.mhpass.evalgraphics(sprintf('disableDemoXippmex(''%s'');', xp)); catch, end
+                app.insToTxtbox('DEMO MODE OFF: using the real xippmex (restart processes if needed).');
+            end
+        end
+
         function createUtilsMenu(app)
             % Add Trellis Scope to the existing Utils menu (added at startup so
             % the design-time component tree is untouched).
@@ -1043,6 +1085,8 @@ classdef MHost2_exported < matlab.apps.AppBase
                 uimenu(mm, 'Text', sprintf('Cursor %d', ci), 'MenuSelectedFcn', @(s,~) app.setMouseTarget(s));
             end
             uimenu(app.FileMenu, 'Text', 'Cursor Assignment', 'MenuSelectedFcn', @(~,~) app.openCursorAssignment());
+            dmItem = uimenu(app.FileMenu, 'Text', 'Demo Mode', 'MenuSelectedFcn', @(s,~) app.toggleDemoMode(s));
+            if isfile(demoFlagPath()), dmItem.Checked = 'on'; end
         end
 
         function launchTrellisScope(app)
@@ -1541,6 +1585,7 @@ classdef MHost2_exported < matlab.apps.AppBase
 
             app.filepaths.ReadFile(app.filepaths_path);
             addpath(genpath(app.filepaths.GetValues('paths','xippmex')));
+            app.checkTrellisOrDemo();
             movegui(app.UIFigure,[1100 100]);
 
             evalin('base','clear'); %clear world

@@ -19,6 +19,9 @@ filepaths_ini=IniConfig();
 filepaths_ini.ReadFile(filepaths_path);
 addpath(genpath(filepaths_ini.GetValues('paths','home')));
 addpath(filepaths_ini.GetValues('paths','xippmex'));
+% Demo mode: if MonkeyHost set the demo flag, swap to the simulated xippmex so
+% this renderer runs without Trellis too.
+if isfile(demoFlagPath()), enableDemoXippmex(filepaths_ini.GetValues('paths','xippmex')); end
 xippmex;
 vblhis=0;
 vbl=0;

@@ -76,6 +76,13 @@ classdef TrellisScope < handle
         nPull = 300         % samples to pull per tick (100 ms of history at 1 kHz)
         metaMap             % shared-memory slot: current trial name from MonkeyHost
         lastTrialName = ''  % last trial name read from the slot
+
+        % other-state markers (#3) and controls (#2,#4)
+        stateHist           % struct(name,t): recent state onsets, to mark the non-aligned ones
+        markLines           % cell{nCh}: pool of vertical lines for other-state onsets
+        markColors          % containers.Map: state name -> RGB
+        markPool = 80       % vertical-line pool size per axes
+        refreshBtn; yAutoBox; yMinField; yMaxField
     end
 
     methods
@@ -85,6 +92,7 @@ classdef TrellisScope < handle
             app.palette = lines(12);
             app.typeColors = containers.Map('KeyType','char','ValueType','any');
             app.proxyLines = containers.Map('KeyType','char','ValueType','any');
+            app.markColors = containers.Map('KeyType','char','ValueType','any');
             app.chanList = app.listChannels();
             app.bufN = 20000;                    % 20 s of history at 1 kHz
             app.resetBuffers();
@@ -98,8 +106,8 @@ classdef TrellisScope < handle
             g.ColumnWidth = {240, '1x'}; g.RowHeight = {'1x'};
 
             cp = uipanel(g, 'Title','Scope'); cp.Layout.Column = 1;
-            cg = uigridlayout(cp, [16 2]);
-            cg.RowHeight = repmat({26}, 1, 16); cg.ColumnWidth = {90, '1x'};
+            cg = uigridlayout(cp, [20 2]);
+            cg.RowHeight = repmat({26}, 1, 20); cg.ColumnWidth = {90, '1x'};
 
             hL = uilabel(cg,'Text','Channels (1-5):','FontWeight','bold'); hL.Layout.Column = [1 2];
             app.chDropdowns = gobjects(1,5);
@@ -121,8 +129,20 @@ classdef TrellisScope < handle
             uilabel(cg,'Text','Hold trials:');
             app.holdField = uieditfield(cg,'numeric','Value',app.nHold,'Limits',[1 50],'RoundFractionalValues','on');
 
+            % Y-axis controls (#4): auto by default; when off, apply [min max] to all plots
+            app.yAutoBox = uicheckbox(cg,'Text','Y auto','Value',true, ...
+                'ValueChangedFcn',@(s,~) app.onYAuto(s));
+            app.yAutoBox.Layout.Column = [1 2];
+            uilabel(cg,'Text','Y min:');
+            app.yMinField = uieditfield(cg,'numeric','Value',-1,'Enable','off','ValueChangedFcn',@(~,~) app.applyYLimits());
+            uilabel(cg,'Text','Y max:');
+            app.yMaxField = uieditfield(cg,'numeric','Value', 1,'Enable','off','ValueChangedFcn',@(~,~) app.applyYLimits());
+
             app.startBtn = uibutton(cg,'state','Text','Start','ValueChangedFcn',@(s,~) app.onStartStop(s));
             app.startBtn.Layout.Column = [1 2];
+            % Refresh (#2): apply control changes in one click (stop + start)
+            app.refreshBtn = uibutton(cg,'push','Text','Refresh','ButtonPushedFcn',@(~,~) app.onRefresh());
+            app.refreshBtn.Layout.Column = [1 2];
             app.trialLbl = uilabel(cg,'Text','trial: --'); app.trialLbl.Layout.Column = [1 2];
             app.statusLbl = uilabel(cg,'Text','idle','FontColor',[0.4 0.4 0.4]); app.statusLbl.Layout.Column = [1 2];
 
@@ -135,18 +155,27 @@ classdef TrellisScope < handle
             remove(app.proxyLines, app.proxyLines.keys);   % proxies live on the old axes
             nCh = numel(chNames);
             pg = uigridlayout(parent, [nCh 1]);
-            app.chAxes = gobjects(1,nCh); app.traceLines = cell(1,nCh); app.liveLines = gobjects(1,nCh);
+            app.chAxes = gobjects(1,nCh); app.traceLines = cell(1,nCh);
+            app.liveLines = gobjects(1,nCh); app.markLines = cell(1,nCh);
             for c = 1:nCh
                 ax = uiaxes(pg); grid(ax,'on'); hold(ax,'on');
                 ylabel(ax, chNames{c});
                 if c == nCh, xlabel(ax,'time from alignment (ms)'); end
-                xline(ax, 0, 'Color',[0 0 0 0.5]);
+                xline(ax, 0, 'Color',[0 0 0 0.6], 'LineWidth', 1);
+                % pool of vertical lines (xline spans the axes and never affects
+                % auto-scale) for the OTHER (non-aligned) state onsets (#3)
+                M = gobjects(1, app.markPool);
+                for k = 1:app.markPool
+                    M(k) = xline(ax, NaN, 'LineWidth', 0.5); M(k).Visible = 'off';
+                end
+                app.markLines{c} = M;
                 L = gobjects(1, app.nHold);
                 for k = 1:app.nHold
                     L(k) = plot(ax, nan, nan, 'LineWidth', 1);   % coloured per task in redraw
                 end
                 app.traceLines{c} = L;
                 app.liveLines(c) = plot(ax, nan, nan, 'LineWidth', 1.8);
+                try, enableDefaultInteractivity(ax); ax.Toolbar.Visible = 'on'; catch, end
                 app.chAxes(c) = ax;
             end
         end
@@ -173,8 +202,9 @@ classdef TrellisScope < handle
             for c = 1:numel(app.chAxes), xlim(app.chAxes(c), [-app.preMs app.postMs]); end
 
             app.resetBuffers();
-            app.held = struct('name',{},'t',{},'y',{});
+            app.held = struct('name',{},'t',{},'y',{},'marks',{});
             app.pending = struct('name',{},'t0',{},'endT',{});
+            app.stateHist = struct('name',{},'t',{});
             app.typeColors = containers.Map('KeyType','char','ValueType','any');
             app.lastAcqT = app.sourceNow();
             if app.sim, app.initSim();
@@ -226,6 +256,8 @@ classdef TrellisScope < handle
                         if ~any(strcmp(app.seenStates, ev.name))
                             app.seenStates{end+1} = ev.name; app.refreshStateDropdown(); %#ok<AGROW>
                         end
+                        app.stateHist(end+1) = struct('name',ev.name,'t',ev.t);  %#ok<AGROW>
+                        if numel(app.stateHist) > 500, app.stateHist = app.stateHist(end-499:end); end
                         if strcmp(ev.name, app.alignState)
                             w.name = app.curTrialName; w.t0 = ev.t; w.endT = ev.t + app.postMs/1000;
                             app.pending(end+1) = w; %#ok<AGROW>
@@ -241,7 +273,9 @@ classdef TrellisScope < handle
                 if app.lastAcqT >= w.endT
                     [t, y] = app.extractWindow(w.t0);
                     if ~isempty(t)
-                        rec.name = w.name; rec.t = t; rec.y = y; app.held(end+1) = rec; %#ok<AGROW>
+                        rec.name = w.name; rec.t = t; rec.y = y;
+                        rec.marks = app.windowMarks(w.t0);   % other-state onsets in this window
+                        app.held(end+1) = rec; %#ok<AGROW>
                     end
                     keep(i) = false;
                 end
@@ -266,7 +300,8 @@ classdef TrellisScope < handle
 
         % --------------------------------------------------------- drawing
         function redraw(app)
-            for c = 1:numel(app.channels)
+            nCh = numel(app.channels);
+            for c = 1:nCh
                 L = app.traceLines{c}; nh = numel(app.held);
                 for k = 1:app.nHold
                     if k <= nh
@@ -279,13 +314,75 @@ classdef TrellisScope < handle
                 if ~isempty(app.pending)
                     [t, y] = app.extractWindow(app.pending(end).t0);
                     if ~isempty(t)
-                        set(app.liveLines(c),'XData',t,'YData',y(c,:),'Color',app.colorForType(app.curTrialName));
+                        set(app.liveLines(c),'XData',t,'YData',y(c,:),'Color',app.colorForType(app.pending(end).name));
                     end
                 else
                     set(app.liveLines(c),'XData',nan,'YData',nan);
                 end
+
+                % other-state markers (#3): every held window's non-aligned
+                % onsets, coloured per state; only the newest window is labelled
+                M = app.markLines{c}; mi = 0; nh = numel(app.held);
+                for k = 1:nh
+                    mk = app.held(k).marks;
+                    for j = 1:numel(mk)
+                        mi = mi + 1; if mi > app.markPool, break; end
+                        M(mi).Value = mk(j).rel; M(mi).Color = app.colorForMark(mk(j).name);
+                        M(mi).Visible = 'on';
+                        if k == nh && c == 1, M(mi).Label = mk(j).name; else, M(mi).Label = ''; end
+                    end
+                    if mi > app.markPool, break; end
+                end
+                for k = mi+1:app.markPool, M(k).Visible = 'off'; M(k).Label = ''; end
+            end
+            if app.yAutoBox.Value
+                for c = 1:nCh, if isgraphics(app.chAxes(c)), app.chAxes(c).YLimMode = 'auto'; end, end
             end
             drawnow limitrate
+        end
+
+        function marks = windowMarks(app, t0)
+            marks = struct('name',{},'rel',{});
+            if isempty(app.stateHist), return; end
+            tt = [app.stateHist.t];
+            sel = tt >= t0-app.preMs/1000 & tt <= t0+app.postMs/1000 & abs(tt-t0) > 0.001;
+            for j = find(sel)
+                marks(end+1) = struct('name',app.stateHist(j).name, ...
+                    'rel',(app.stateHist(j).t-t0)*1000); %#ok<AGROW>
+            end
+        end
+
+        function col = colorForMark(app, name)
+            if ~isKey(app.markColors, name)
+                idx = app.markColors.Count + 1;
+                base = app.palette(mod(idx-1,size(app.palette,1))+1,:);
+                app.markColors(name) = 0.45*base + 0.55*[1 1 1];   % muted
+            end
+            col = app.markColors(name);
+        end
+
+        function onRefresh(app)
+            if app.running, app.endRun(); end
+            app.startBtn.Value = true; app.startBtn.Text = 'Stop';
+            app.beginRun();
+        end
+
+        function onYAuto(app, s)
+            man = ~s.Value;
+            app.yMinField.Enable = man; app.yMaxField.Enable = man;
+            if man && ~isempty(app.chAxes) && isgraphics(app.chAxes(1))
+                yl = app.chAxes(1).YLim; app.yMinField.Value = yl(1); app.yMaxField.Value = yl(2);
+                app.applyYLimits();
+            end
+        end
+
+        function applyYLimits(app)
+            if app.yAutoBox.Value, return; end
+            for c = 1:numel(app.chAxes)
+                if isgraphics(app.chAxes(c))
+                    app.chAxes(c).YLim = [app.yMinField.Value app.yMaxField.Value];
+                end
+            end
         end
 
         function col = colorForType(app, name)

@@ -913,9 +913,9 @@ classdef MHost2_exported < matlab.apps.AppBase
         end
 
         function createUtilsMenu(app)
-            % Built at startup (design-time component tree untouched).
-            m = uimenu(app.UIFigure, 'Text', 'Utils');
-            uimenu(m, 'Text', 'Trellis Scope', ...
+            % Add Trellis Scope to the existing Utils menu (added at startup so
+            % the design-time component tree is untouched).
+            uimenu(app.UtilsMenu, 'Text', 'Trellis Scope', ...
                 'MenuSelectedFcn', @(~,~) app.launchTrellisScope());
         end
 

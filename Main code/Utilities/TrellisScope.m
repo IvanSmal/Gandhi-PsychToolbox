@@ -75,6 +75,8 @@ classdef TrellisScope < handle
         lastNipTick = []    % NIP tick of the last appended sample (dedup)
         nPull = 300         % samples to pull per tick (100 ms of history at 1 kHz)
         metaMap             % shared-memory slot: current trial name from MonkeyHost
+        stateOnsetMap       % shared-memory slot: state onsets (name + NIP tick) from setstate
+        lastOnsetSeq = 0    % highest state-onset seq already emitted
         lastTrialName = ''  % last trial name read from the slot
 
         % spike raster (#5)
@@ -171,7 +173,7 @@ classdef TrellisScope < handle
                 % auto-scale) for the OTHER (non-aligned) state onsets (#3)
                 M = gobjects(1, app.markPool);
                 for k = 1:app.markPool
-                    M(k) = xline(ax, NaN, 'LineWidth', 0.5); M(k).Visible = 'off';
+                    M(k) = xline(ax, NaN, 'LineWidth', 0.5, 'Interpreter', 'none'); M(k).Visible = 'off';
                 end
                 app.markLines{c} = M;
                 % one line per held trial: a signal (cont) or a row of ticks (spike)
@@ -226,6 +228,15 @@ classdef TrellisScope < handle
             app.held = struct('name',{},'t',{},'y',{},'marks',{},'spk',{});
             app.pending = struct('name',{},'t0',{},'endT',{});
             app.stateHist = struct('name',{},'t',{});
+            app.stateOnsetMap = []; app.lastOnsetSeq = 0;
+            try   % skip onsets already in the ring so only NEW ones show
+                m0 = sceneOpen(false, stateOnsetPath());
+                [f0,ok0] = sceneRead(m0);
+                if ok0 && isstruct(f0) && isfield(f0,'onsets') && ~isempty(f0.onsets)
+                    app.lastOnsetSeq = max([f0.onsets.seq]);
+                end
+            catch
+            end
             app.typeColors = containers.Map('KeyType','char','ValueType','any');
             app.lastAcqT = app.sourceNow();
             if app.sim, app.initSim();
@@ -455,7 +466,7 @@ classdef TrellisScope < handle
                 if ~isempty(app.chAxes) && isgraphics(app.chAxes(1))
                     app.proxyLines(name) = plot(app.chAxes(1), nan, nan, 'Color', col, 'LineWidth', 2);
                     ph = app.proxyLines.values; ph = [ph{:}];
-                    legend(app.chAxes(1), ph, app.proxyLines.keys, 'Location','northeast', 'AutoUpdate','off');
+                    legend(app.chAxes(1), ph, app.proxyLines.keys, 'Location','northeast', 'AutoUpdate','off', 'Interpreter','none');
                 end
             end
             col = app.typeColors(name);
@@ -699,19 +710,28 @@ classdef TrellisScope < handle
         end
 
         function events = readDigin(app)
-            % Decode state markers written by MonkeyHost on digout 5. Each state
-            % name arrives as a burst of parallel bytes; group bytes by their
-            % NIP timestamp so one burst = one state onset.
+            % State onsets from the shared state-onset slot: setstate publishes
+            % each transition (name + NIP tick) there, so onsets are marked with
+            % PRECISE NIP timestamps (the same clock as the eye/spike data) and
+            % none are missed between polls (a 32-deep ring). Independent of the
+            % digout event codes, which timestamp states in the neural recording.
             events = struct('kind',{},'name',{},'t',{});
-            [cnt, tstamps, ev] = xippmex('digin');
-            if cnt == 0 || isempty(ev) || ~isfield(ev,'parallel'), return; end
-            par = double([ev.parallel]); ts = double(tstamps);
-            grp = [0 find(diff(ts) > 150) numel(ts)];         % split on >5 ms gaps
-            for g = 1:numel(grp)-1
-                idx = grp(g)+1 : grp(g+1);
-                nm = char(par(idx));
-                if isempty(nm), continue; end
-                events(end+1) = struct('kind','state','name',nm,'t',ts(idx(1))/30000); %#ok<AGROW>
+            try
+                if isempty(app.stateOnsetMap)
+                    app.stateOnsetMap = sceneOpen(false, stateOnsetPath());
+                end
+                [fr, ok] = sceneRead(app.stateOnsetMap);
+                if ~ok || ~isstruct(fr) || ~isfield(fr,'onsets'), return; end
+                ons = fr.onsets;
+                for i = 1:numel(ons)
+                    if ons(i).seq > app.lastOnsetSeq
+                        app.lastOnsetSeq = ons(i).seq;
+                        events(end+1) = struct('kind','state','name',char(ons(i).name), ...
+                            't', double(ons(i).tick)/30000); %#ok<AGROW>
+                    end
+                end
+            catch
+                app.stateOnsetMap = [];
             end
         end
     end

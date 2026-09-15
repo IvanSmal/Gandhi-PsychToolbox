@@ -19,5 +19,19 @@ end
 % timestamped in the neural data; the code<->name table is saved in trial.data.
 xippmex('digout', 5, stateEventCode(name));
 
+% Publish this onset (name + NIP tick) to the live-monitor slot so TrellisScope
+% marks state onsets with PRECISE NIP timestamps (same clock as its eye/spike
+% data). A 32-deep ring means no onset is missed between the monitor's polls.
+persistent soMap soRing soN
+if isempty(soN), soN = 0; soRing = struct('name',{},'tick',{},'seq',{}); end
+soN = soN + 1;
+soRing(end+1) = struct('name',char(name),'tick',double(xippmex('time')),'seq',soN); %#ok<AGROW>
+if numel(soRing) > 32, soRing = soRing(end-31:end); end
+try
+    if isempty(soMap), soMap = sceneOpen(true, stateOnsetPath()); end
+    sceneWrite(soMap, soN, struct('onsets', {soRing}));
+catch
+end
+
 disp(name)
 end

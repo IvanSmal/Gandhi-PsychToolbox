@@ -911,6 +911,30 @@ classdef MHost2_exported < matlab.apps.AppBase
             end
         end
 
+        function reloadScreenParams(app)
+            % Re-read the hand-written rig config into the state machine's cached
+            % screen params (tasks pass them to deg2pix, so target geometry uses
+            % them) and nudge the renderer, so a Screen Info edit takes effect
+            % without restarting anything. The renderer's own deg2pix already
+            % re-reads the config on every call.
+            try
+                cfg = rigIni('config');
+                mh = app.mhpass;
+                mh.eccentricity_gain    = cfg.GetValues('target window parameters','eccentricity_gain');
+                mh.trailing_window_time = cfg.GetValues('target window parameters','trailing_window_time');
+                mh.screenparams.xPixelSize       = cfg.GetValues('for deg2pix','xPixelSize');
+                mh.screenparams.yPixelSize       = cfg.GetValues('for deg2pix','yPixelSize');
+                mh.screenparams.true_center      = cfg.GetValues('for deg2pix','true center');
+                mh.screenparams.subject_distance = cfg.GetValues('for deg2pix','subject distance');
+                app.mhpass = mh;
+                try, app.mhbackup.screenparams = mh.screenparams; catch, end
+                try, app.mhpass.evalgraphics('gr.eye=eyeinfo; gr.cursors={};'); catch, end
+                app.insToTxtbox('screen parameters reloaded from config');
+            catch e
+                app.insToTxtbox(['could not reload screen parameters: ' e.message]);
+            end
+        end
+        
         function calibration_check(app,mh)
             try     % this 'try' is here because for some unknown reason this fnction is run after app is closed.
                 if app.SetCalibrationButton.Value
@@ -1387,10 +1411,21 @@ classdef MHost2_exported < matlab.apps.AppBase
                     mh.rewcheck(app);
                     app.calibration_check(mh);
                     if onceinawhile == 100
-                        setupDAQ(app);
+                        % Liveness probe that KEEPS the connection open. The old setupDAQ +
+                        % xippmex('close') pair left xippmex disconnected between checks, so
+                        % idle digout (stop reward) and eye reads silently failed.
+                        try
+                            ok = ~isempty(xippmex('time'));
+                        catch
+                            ok = false;
+                        end
+                        if ok
+                            app.XippmexLamp.Color=[0,1,0];
+                        else
+                            setupDAQ(app);      % reconnect (with its retry/dialog) only when actually lost
+                        end
                         app.CheckGraphics(10);
                         onceinawhile=0;
-                        xippmex('close');
                     end
                     app.mhpass=mh;
                     app.drainRewardPort;
@@ -1573,6 +1608,15 @@ classdef MHost2_exported < matlab.apps.AppBase
             end
             for i=1:howmany
                 try
+                    % Never block on the port: readline waited its full 1 s timeout
+                    % whenever nothing was queued, so an absent (or stuck) renderer
+                    % turned CheckGraphics(10) into a 10 s stall per idle cycle --
+                    % starving the reward button and the calibration check. Poll
+                    % briefly and bounded instead.
+                    if app.mhpass.graphicsport.NumBytesAvailable == 0
+                        pause(0.02);
+                        continue
+                    end
                     com=readline(app.mhpass.graphicsport);
                     eval(com)
                     flush(app.mhpass.graphicsport)
@@ -1580,6 +1624,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                 if exist('isGraphicsReady','var') % checking if graphics are still working
                     if isGraphicsReady==1
                         app.GraphicsLamp.Color=[0,1,0];
+                        break                      % answered: no need to keep polling
                     end
                 end
             end

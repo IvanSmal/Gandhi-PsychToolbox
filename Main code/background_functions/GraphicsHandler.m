@@ -122,7 +122,10 @@ gr.newsize_true(2)=gr.newsize(4)-gr.newsize(2);
 
 
 % diode stuff
+% diode in bottom-left corner
 gr.diode_pos=[0,gr.screenYpixels-20,20,gr.screenYpixels];
+% diode in bottom-right corner
+%gr.diode_pos=[gr.screenXpixels-20,gr.screenYpixels-20,gr.screenXpixels,gr.screenYpixels];
 
 % for some reason draw a circle for a frame idk why i need to do this, but
 % otherwise it will not display circles
@@ -197,6 +200,17 @@ vblRing    = nan(1,120);            % last ~2 s of display flips at 60 Hz
 % touch it. heldX/heldY latch the last position so the eye only moves while the
 % left button is held.
 mouseMap = []; mouseSeq = 0; heldX = []; heldY = [];
+% Startup: clear any mouse-mode slot left by a previous session. /dev/shm
+% survives app restarts, so a slot left at on=1 made the eye/cursors follow a
+% stale mouse position until Mouse Mode was toggled on and off again. Opening
+% the map here also makes the idle branch below keep asserting on=0.
+try
+    if isfile(mousePath())
+        mouseMap = sceneOpen(true, mousePath()); mouseSeq = mouseSeq + 1;
+        sceneWrite(mouseMap, mouseSeq, struct('on',0,'target','eye','x',0,'y',0));
+    end
+catch
+end
 % Keep the monitor window a fixed size: PTB has no non-resizable GUI flag, so
 % if the operator resizes it we snap the size back (position left free, so it
 % stays movable). Target size is captured on the first idle frame.
@@ -232,7 +246,23 @@ while 1
                 'setEye',false,'resources',{{}},'oneShots',{{}},'cmds',{{}});
         end
 
-        gr.trialstarted = frame.trialStarted;
+        % In-trial follows the newest scene frame -- but a frame the state
+        % machine stopped refreshing (a task error, a force-stop before its
+        % final publish) must not pin the renderer in the trial. Treat a frame
+        % older than 1 s as out of trial (a trial publishes every ~1 ms). GetSecs is system-wide, so the
+        % frame's tGenerated compares directly to ours.
+        wasInTrial = gr.trialstarted;
+        stale = isfield(frame,'tGenerated') && frame.tGenerated > 0 && (GetSecs - frame.tGenerated) > 1.0;
+        gr.trialstarted = logical(frame.trialStarted) && ~stale;
+        if wasInTrial && ~gr.trialstarted
+            % Leaving the trial: blank the stimulus window once, so the last
+            % task frame never lingers into the idle state.
+            try
+                Screen('FillRect', gr.window_main, bgcolor);
+                Screen('Flip', gr.window_main);
+            catch
+            end
+        end
 
         % state name travels with the frame; diode flips on transition
         nm = frame.stateName;

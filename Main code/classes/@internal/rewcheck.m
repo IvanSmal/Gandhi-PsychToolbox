@@ -15,5 +15,13 @@ if app.RewardButton.Value
     app.RewardButton.Value=0;
 end
 
+% stop-reward gui check: close the reward valve (SMA out 3) right now. This is
+% what the reward handler's own hardware stop does, and it takes effect even
+% mid-reward instead of waiting for the handler's duration loop to finish.
+if app.StopRewardButton.Value
+    try, xippmex('digout', 3, 0); catch, end
+    app.StopRewardButton.Value=0;
+end
+
 % [~,~,~]=xippmex('digin'); %clear digital buffer
 end

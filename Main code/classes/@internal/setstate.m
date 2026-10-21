@@ -20,12 +20,14 @@ end
 xippmex('digout', 5, stateEventCode(name));
 
 % Publish this onset (name + NIP tick) to the live-monitor slot so TrellisScope
-% marks state onsets with PRECISE NIP timestamps (same clock as its eye/spike
-% data). A 32-deep ring means no onset is missed between the monitor's polls.
+% marks state onsets with NIP timestamps (same clock as its eye/spike data, to
+% ~1 ms). The tick comes from nipTick, MHost2's cached NIP clock: calling
+% xippmex('time') here on every state change crashed MATLAB twice (Sep/Oct 2026).
+% A 32-deep ring means no onset is missed between the monitor's polls.
 persistent soMap soRing soN
 if isempty(soN), soN = 0; soRing = struct('name',{},'tick',{},'seq',{}); end
 soN = soN + 1;
-soRing(end+1) = struct('name',char(name),'tick',double(xippmex('time')),'seq',soN); %#ok<AGROW>
+soRing(end+1) = struct('name',char(name),'tick',nipTick,'seq',soN); %#ok<AGROW>
 if numel(soRing) > 32, soRing = soRing(end-31:end); end
 try
     if isempty(soMap), soMap = sceneOpen(true, stateOnsetPath()); end

@@ -497,6 +497,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                     gotinfo=0;
                     xippmex('digout', 1, 1)
                     [eyeandphotodiode, xippmextstart]=xippmex('cont',app.chidx([1,2,4]),1000,'1ksps');
+                    nipTick(xippmextstart, 1000); % cache the NIP clock for setstate (no per-state xippmex('time'))
                     % ---- cursor recording setup (batched, parallel to the eye) ----
                     % Record every ENABLED cursor 1..5 alongside the eye, timestamped in the same
                     % millisecond frame as d.timestamps so a cursor trace aligns to trial start.
@@ -575,6 +576,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                         mh.Screen('sendtogr')
                         mh.graphicssent=0; % check if needed
                         [eyeandphotodiode_temp, ts]=xippmex('cont',app.chidx([1,2,4]),300,'1ksps');
+                        nipTick(ts, 300);
                         tsshift=floor((ts-xippmextstart)/30);
                         if tsshift < 0 || tsshift > 600000 % NIP clock wrap/resync: >10 min of samples in one trial is impossible
                             app.insToTxtbox(['Implausible NIP timestamp shift (' num2str(tsshift) ' ms). Resyncing trial clock.'])
@@ -785,7 +787,10 @@ classdef MHost2_exported < matlab.apps.AppBase
 
                     flush(mh.graphicsport);% flush the graphics
 
-                    xippmex('close'); %this might prevent xippmex errors
+                    % Keep xippmex connected across trials (no close here): each close tore down
+                    % xippmex's data cache and each reopen re-requested the NIP's full config,
+                    % the pattern behind most xippmex crashes in the 2024-26 crash dumps.
+                    % setupDAQ at trial start reconnects only if the link actually dropped.
                     
                     app.last_trial_ITI=mh.intervals.iti.duration;
                     app.last_trial_timestamp=mh.trial.tstoptime;
@@ -1413,9 +1418,11 @@ classdef MHost2_exported < matlab.apps.AppBase
                     if onceinawhile == 100
                         % Liveness probe that KEEPS the connection open. The old setupDAQ +
                         % xippmex('close') pair left xippmex disconnected between checks, so
-                        % idle digout (stop reward) and eye reads silently failed.
+                        % idle digout (stop reward) and eye reads silently failed. Bare xippmex()
+                        % only reports the connection (it opens one just if none exists);
+                        % xippmex('time') read every stream's buffer and crashed MATLAB.
                         try
-                            ok = ~isempty(xippmex('time'));
+                            ok = isequal(xippmex(), 1);
                         catch
                             ok = false;
                         end

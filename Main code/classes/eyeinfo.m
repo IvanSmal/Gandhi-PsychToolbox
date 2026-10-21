@@ -19,25 +19,14 @@ classdef eyeinfo < handle
 
     methods
         function obj=eyeinfo
-            % eye calibration is machine-written state, not hand config
-            ini = rigIni('state');
-
-        try
-            obj.xgain=ini.GetValues('eye calibration','xgain');
-            obj.ygain=ini.GetValues('eye calibration','ygain');
-
-            % true_center=ini.GetValues('for deg2pix','true center');
-
-            obj.xoffset=ini.GetValues('eye calibration','xoffset');
-            obj.yoffset=ini.GetValues('eye calibration','yoffset');
-            % optional eye channel assignment (File > Cursor Assignment). Absent
-            % on a legacy rig -> stays [] and geteye uses the first two analog.
-            try, obj.xchan=ini.GetValues('eye calibration','xchan'); catch, end
-            try, obj.ychan=ini.GetValues('eye calibration','ychan'); catch, end
-        catch
-            failcount=0;
-            while failcount < 50
+            % eye calibration is machine-written state, not hand config.
+            % MHost2 rewrites the file between trials while GraphicsHandler
+            % rebuilds this object every idle frame, so a read can land on a
+            % save in progress. Each retry re-reads the FILE: asking the same
+            % parsed copy again can never succeed.
+            for attempt = 1:50
                 try
+                    ini = rigIni('state');
                     obj.xgain=ini.GetValues('eye calibration','xgain');
                     obj.ygain=ini.GetValues('eye calibration','ygain');
 
@@ -45,17 +34,22 @@ classdef eyeinfo < handle
 
                     obj.xoffset=ini.GetValues('eye calibration','xoffset');
                     obj.yoffset=ini.GetValues('eye calibration','yoffset');
-                    failcount=10000;
-                catch
-                    failcount = failcount +1;
+                    % optional eye channel assignment (File > Cursor Assignment). Absent
+                    % on a legacy rig -> stays [] and geteye uses the first two analog.
+                    try, obj.xchan=ini.GetValues('eye calibration','xchan'); catch, end
+                    try, obj.ychan=ini.GetValues('eye calibration','ychan'); catch, end
+                    return
+                catch readerr
+                    pause(0.01)
                 end
             end
-            if failcount < 100
-                inipath=which('ScreenParams.ini');
-                waitfor(msgbox(['Something is wrong with the eye calibration parameters. Review the text file for strange inputs under the [eye calibration] section and restart the app. Path to file: ' inipath]))
-                quit
+            % still failing after ~0.5 s of fresh reads: the file itself is bad
+            if strcmp(readerr.identifier, 'rigIni:readFailed')
+                rethrow(readerr)   % missing/unreadable file: same error as before
             end
-        end
+            inipath=which('ScreenParams.ini');
+            waitfor(msgbox(['Something is wrong with the eye calibration parameters. Review the text file for strange inputs under the [eye calibration] section and restart the app. Path to file: ' inipath]))
+            quit
         end
 
         function obj = set(obj,prop,val)

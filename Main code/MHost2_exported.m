@@ -1201,8 +1201,31 @@ classdef MHost2_exported < matlab.apps.AppBase
                 uimenu(mm, 'Text', sprintf('Cursor %d', ci), 'MenuSelectedFcn', @(s,~) app.setMouseTarget(s));
             end
             uimenu(app.FileMenu, 'Text', 'Cursor Assignment', 'MenuSelectedFcn', @(~,~) app.openCursorAssignment());
+            cdm = uimenu(app.FileMenu, 'Text', 'Cursors on Display');
+            st = rigIni('state');
+            for ci = 1:5
+                it = uimenu(cdm, 'Text', sprintf('Cursor %d', ci), ...
+                    'MenuSelectedFcn', @(s,~) app.toggleCursorOnDisplay(s, ci));
+                it.Checked = logical(app.iniNum(st, sprintf('cursor%d', ci), 'display', 0));
+            end
             dmItem = uimenu(app.FileMenu, 'Text', 'Demo Mode', 'MenuSelectedFcn', @(s,~) app.toggleDemoMode(s));
             if isfile(demoFlagPath()), dmItem.Checked = 'on'; end
+        end
+
+        function toggleCursorOnDisplay(app, src, ci)
+            % File > Cursors on Display: also draw cursor ci on the animal's
+            % display during trials (the monitor always shows it). Saved as
+            % [cursorN] display in the state ini, and pushed to the renderer now.
+            on = ~logical(src.Checked);
+            src.Checked = on;
+            ini = rigIni('state');
+            app.iniSet(ini, sprintf('cursor%d', ci), 'display', double(on));
+            if ~ini.WriteFile(rigIniPath('state'))
+                app.insToTxtbox('cursors on display: WRITE FAILED');
+            end
+            try, app.mhpass.evalgraphics(sprintf('try, gr.cursors{%d}.ondisplay = %d; catch, end', ci, on)); catch, end
+            if on, word = 'ON'; else, word = 'off'; end
+            app.insToTxtbox(sprintf('cursor %d on display %s (during trials)', ci, word));
         end
 
         function launchTrellisScope(app)

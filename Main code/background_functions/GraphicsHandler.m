@@ -302,6 +302,7 @@ while 1
 
         if gr.trialstarted
             drawFrame(gr, frame);
+            drawDisplayCursors(gr);   % over the targets, under the diode; trials only
             Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
             Screen('DrawingFinished', gr.window_main);
             % Take the timestamps Psychtoolbox actually reports rather than
@@ -886,16 +887,12 @@ end
         % udp cursor's socket (cursorinfo.owner = true): reading it here pumps
         % the joystick and republishes the shared slot (cursorSlotPath) that the
         % task process reads, so exactly one process ever binds the port.
-        if isempty(grobj.cursors)
-            grobj.cursors = cell(1,5);
-            for ci = 1:5, grobj.cursors{ci} = cursorinfo(ci); grobj.cursors{ci}.owner = true; end
-        end
-        cols = [0 255 255; 255 0 255; 255 255 0; 255 160 0; 120 255 120];
+        ensureCursors(grobj);
+        cols = cursorColors();
         W = grobj.screenXpixels; H = grobj.screenYpixels; m = 12;   % edge margin
         for ci = 1:5
             c = grobj.cursors{ci};
-            ismouse = isprop(grobj,'mousemode') && grobj.mousemode && ...
-                      strcmpi(grobj.mousetarget, sprintf('cursor%d',ci));
+            ismouse = cursorMouseDriven(grobj, ci);
             active = c.enabled || ismouse;   % udp cursors included (renderer owns the port)
             if ~active, continue; end
             try
@@ -920,6 +917,49 @@ end
             catch
             end
         end
+    end
+
+    function drawDisplayCursors(grobj)
+        % Draw the cursors ticked in File > Cursors on Display on the animal's
+        % display. Called only in the in-trial branch, so the display stays
+        % blank between trials. Same dot and colour as on the monitor; an
+        % off-screen cursor is not drawn here (its edge label is a monitor aid).
+        ensureCursors(grobj);
+        cols = cursorColors();
+        W = grobj.screenXpixels; H = grobj.screenYpixels;
+        for ci = 1:5
+            c = grobj.cursors{ci};
+            ismouse = cursorMouseDriven(grobj, ci);
+            if ~c.ondisplay || ~(c.enabled || ismouse), continue; end
+            try
+                p = c.getcursor;
+                if strcmpi(c.source,'udp') && ~c.gotdata && ~ismouse, continue; end
+                if p(1) < 0 || p(1) > W || p(2) < 0 || p(2) > H, continue; end
+                Screen('DrawDots', grobj.window_main, [p(1); p(2)], 14, cols(ci,:), [], 2);
+            catch
+            end
+        end
+    end
+
+    function ensureCursors(grobj)
+        % Build the renderer's cursors 1..5 from the state ini on first use (and
+        % again after File > Cursor Assignment clears them).
+        if isempty(grobj.cursors)
+            grobj.cursors = cell(1,5);
+            for ci = 1:5, grobj.cursors{ci} = cursorinfo(ci); grobj.cursors{ci}.owner = true; end
+        end
+    end
+
+    function cols = cursorColors()
+        % One row per cursor, in the 0-1 colour range both windows use
+        % (PsychDefaultSetup(2)); 0-255 values were clipped to 1.
+        cols = [0 255 255; 255 0 255; 255 255 0; 255 160 0; 120 255 120] / 255;
+    end
+
+    function tf = cursorMouseDriven(grobj, ci)
+        % Mouse Mode is driving cursor ci.
+        tf = isprop(grobj,'mousemode') && grobj.mousemode && ...
+             strcmpi(grobj.mousetarget, sprintf('cursor%d',ci));
     end
 
     function gr=makegridlines(gr)

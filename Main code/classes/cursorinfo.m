@@ -21,6 +21,8 @@ classdef cursorinfo < handle
     properties
         id      = 1              % 1..5; matches the mouse-mode target 'cursorN' and the ini section
         enabled = false          % only enabled cursors are created/tracked
+        ondisplay = false        % also draw it on the animal's display during trials
+                                 % (File > Cursors on Display; the monitor always shows it)
         source  = 'analog'       % 'analog' | 'udp'
         xchan   = []             % analog channel id for x (analog source)
         ychan   = []             % analog channel id for y
@@ -53,6 +55,7 @@ classdef cursorinfo < handle
             try
                 ini = rigIni('state'); sec = sprintf('cursor%d', obj.id);
                 obj.enabled      = logical(cursorGet(ini,sec,'enabled',0));
+                obj.ondisplay    = logical(cursorGet(ini,sec,'display',0));
                 obj.source       = cursorGet(ini,sec,'source','analog');
                 obj.xchan        = cursorGet(ini,sec,'xchan',[]);
                 obj.ychan        = cursorGet(ini,sec,'ychan',[]);

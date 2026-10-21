@@ -1760,6 +1760,9 @@ classdef MHost2_exported < matlab.apps.AppBase
             addpath(genpath(app.filepaths.GetValues('paths','home')));
 
             app.LiveParameters = LiveParams(app); %launch params window
+            app.UIFigure.Name = 'MHost2';
+            windowIdentity('MHost2', 'mhost2', app.UIFigure);   % own dock icons
+            windowIdentity('Parameters', 'parameters', app.LiveParameters.ParametersUIFigure);
 
             %% set up daq. Modify the specifics in the setupDAQ function
             setupDAQ(app);

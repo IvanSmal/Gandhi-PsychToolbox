@@ -108,6 +108,7 @@ classdef TrellisScope < handle
         % ---------------------------------------------------------------- UI
         function buildUI(app)
             app.fig = uifigure('Name','Trellis Scope', 'Position',[200 150 1000 640]);
+            windowIdentity('Trellis Scope', 'trellisscope', app.fig);   % its own dock icon
             g = uigridlayout(app.fig, [1 2]);
             g.ColumnWidth = {240, '1x'}; g.RowHeight = {'1x'};
 

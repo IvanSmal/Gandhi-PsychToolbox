@@ -110,6 +110,7 @@ PsychImaging('PrepareConfiguration');
 PsychImaging('AddTask', 'General', 'UsePanelFitter', [gr.screenXpixels, gr.screenYpixels], 'Full');
 
 [gr.window_monitor, gr.monitor_rect]=PsychImaging('OpenWindow', 0, bgcolor,monitor_rect,[],[],[],[],[],kPsychGUIWindow);
+windowIdentity(sprintf('PTB Onscreen Window [%d]:', gr.window_monitor), 'monitor');   % its own dock icon
 
 gr.original_monitor_params=Screen('PanelFitter', gr.window_monitor);
 gr.winparams=gr.original_monitor_params;
@@ -1101,6 +1102,7 @@ end
 
         % Show the figure after all components are created
         gr.UIFigure.Visible = 'on';
+        windowIdentity('Graphics Info', 'graphicsinfo', gr.UIFigure);   % its own dock icon
     end
     function updategui(gr)
         if strcmp(gr.TurnthisoffifthiswindowslowsdowngraphicsSwitch.Value,'On')

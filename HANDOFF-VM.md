@@ -1,0 +1,426 @@
+# Handoff — Ubuntu_dev VM on batistaserver
+
+Last updated: 2026-10-22: all 7 note-list items done; items 2, 4–7 committed,
+the last one tagged `v0.1.0` (§8). Stimulus timing and the `d.timestamps`
+fix (§9) committed as `649fa08`. All of it, and the tag, pushed to GitHub
+on 2026-10-22.
+**Access details** (addresses, accounts, keys, sudo setup, ports, the licence,
+a security note) are not in this file because the GitHub repo is public. They
+are in `HANDOFF-VM.private.md`, kept outside the repo: `~/HANDOFF-VM.private.md`
+in the VM, and the Claude Code project folder on Windows. Ask the user if you
+do not have it.
+
+Written for a fresh Claude Code session with no prior context. Companion to
+`HANDOFF.md` (rig work); its hard constraints still apply — above all, never
+touch rig2.
+
+---
+
+## 1. What this is
+
+A libvirt/KVM Ubuntu VM that runs this repo's MHost2 + GraphicsHandler with no
+rig hardware, in MHost2's **Demo mode** (simulated xippmex). It is for task
+logic and layout, not timing: there is no GPU, Psychtoolbox renders in software
+at ~12 fps with no vsync.
+
+**Status: works end to end.** In demo mode, 45 trials of the GoNoGo test set
+ran, were saved, and GraphicsHandler drew T0 / T1 / photodiode square on the
+animal display (verified from a full-resolution capture: T0 at the true centre
+960,736).
+
+Since then the VM has been the test bed for the user's 7-point note list
+(§8, §9): seven commits on `ai-assisted-2` and the tag `v0.1.0`, made in the
+VM and pushed to GitHub on 2026-10-22. MHost2 and GraphicsHandler were left running in demo mode
+in the VM (started by the session; safe to close).
+
+---
+
+## 2. Access and locations
+
+| What | Value |
+|---|---|
+| Host | `batistaserver`, Ubuntu 24.04, reached over Tailscale (address, user, sudo rules: private notes) |
+| VM | libvirt domain `Ubuntu_dev`, Ubuntu 24.04.5 desktop, 2 vCPU / 16 GB, user `batista`, on the host's default NAT net (address: private notes) |
+| SSH | Windows `~/.ssh/config` aliases `batistaserver` and `ubuntu-dev` (ProxyJump); key: private notes |
+| sudo in VM | private notes |
+| Viewer | SPICE (address and port: private notes; autoport — ask `virsh -c qemu:///system domdisplay Ubuntu_dev`). Windows launcher: `Desktop\Ubuntu_dev VM.bat` (looks the port up, starts the VM if off, `--auto-resize=never`) |
+| Other consoles | private notes |
+| Repo in VM | `~/Documents/MATLAB/Gandhi-PsychToolbox`, branch `ai-assisted-2` @ `a8de13d` (§8-§10; tag `v0.1.0` is on `070ea05`), **= GitHub** (pushed 2026-10-22 from the Windows checkout). The VM has no GitHub credentials; to publish later VM commits, from the Windows checkout (which sits on `ai-debugged` with someone's uncommitted work: never check out or merge there): `git fetch ubuntu-dev:Documents/MATLAB/Gandhi-PsychToolbox +refs/heads/ai-assisted-2:refs/remotes/vm/ai-assisted-2` (add `refs/tags/<tag>:refs/tags/<tag>` for a new tag), check it fast-forwards GitHub's branch and holds no VM-only line, then `git push origin refs/remotes/vm/ai-assisted-2:refs/heads/ai-assisted-2` and delete the `vm/` ref. Push only when the user says so. The end-to-end test in §1 ran on `ai-debugged` @ `c3d7353` |
+| MATLAB | R2025b Update 4, `/usr/local/MATLAB/R2025b` |
+| PTB | 3.0.21 manual install, `~/Documents/MATLAB/Psychtoolbox` |
+| Test material | `~/Documents/Experiment/{Parameters,Tasks/CirCularGonoGO,Custom Functions}` (copied from `for claude/`) |
+| Session data | `~/Documents/Data_default/` |
+
+VM autostart is off. Start: `virsh -c qemu:///system start Ubuntu_dev` on the
+host (the host user is in the `libvirt` group, no sudo needed).
+
+---
+
+## 3. How to run it
+
+1. Double-click `Ubuntu_dev VM.bat` on the Windows desktop.
+2. Log in as `batista`, session **Ubuntu on Xorg** (gear icon; GDM remembers
+   it). PTB and the mouse/clipboard fixes need Xorg.
+3. Double-click **MHost2** on the VM desktop (`~/.local/bin/mhost2-launch.sh`:
+   starts `matlab -nodesktop -r MHost2` from `Main code` in a terminal that
+   stays open after exit).
+4. Click **Demo mode** in "Trellis not found".
+5. File → Import Custom Functions → `~/Documents/Experiment/Custom Functions`
+   (needed by the CW/CCW tasks; `.Custom_Functions` is per session).
+6. START.
+
+---
+
+## 4. What was changed (all VM-local, all reversible)
+
+### Host (batistaserver)
+- Rig key added to the host user's `~/.ssh/authorized_keys`.
+- Domain XML backup: `~/Ubuntu_dev.xml.bak-20261021`. Server mouse mode was
+  tried and reverted; the live XML equals that backup.
+
+### VM system
+- Packages: `openssh-server`, `spice-vdagent`, `mesa-utils`, `xdotool`,
+  `python3-tk`; the user also ran a full `apt upgrade`.
+- MATLAB toolboxes added with mpm (`~/Downloads/mpm/mpm`): Instrument Control
+  (`udpport`, required), Curve Fitting (`smooth` in LiveAnalysis), Statistics &
+  ML (`normrnd` in FakeSaccades).
+- `toolbox/local/pathdef.m` now owned by `batista` and holds PTB 3.0.21 and
+  `genpath("Main code")`. Original: `pathdef.m.orig-before-ptb`.
+- `/usr/lib/x86_64-linux-gnu/libglut.so.3 -> libglut.so.3.12.0` (PTB moglcore).
+- `/usr/local/bin/gnome-terminal`: wrapper that unsets `LD_LIBRARY_PATH`, then
+  runs `/usr/bin/gnome-terminal`.
+- `/etc/X11/xorg.conf.d/90-ptbxorg.conf` (PTB XOrgConfCreator file, two X
+  screens via ZaphodHeads) edited: `Screen1 Absolute 1360 0` instead of
+  `RightOf`; Virtual-1 `PreferredMode 1360x768` + `Enable`; Virtual-2
+  `PreferredMode 1920x1080` + `Enable`. Original: `~/90-ptbxorg.conf.bak-20261021`.
+- `/etc/X11/xorg.conf.d/91-vm-pointer.conf`: new, SPICE pointer mapping (§6).
+
+### VM user `batista`
+- `~/.ssh/authorized_keys` (rig key).
+- `~/.matlab/R2025b_licenses/`: the lab's MATLAB licence (details: private
+  notes). The expired one is still in `matlabroot/licenses` (harmless).
+- `~/.local/lib/vdagent-onescreen/` + `~/.config/autostart/spice-vdagent.desktop`
+  (clipboard fix, §6).
+- `~/.config/autostart/vm-screen1-mode.desktop`: `xrandr` screen 1 → 1920x1080
+  at login.
+- `~/Desktop/MHost2.desktop`, `~/.local/bin/mhost2-launch.sh`.
+- `~/.local/share/applications/gandhi-{mhost2,parameters,graphicsinfo,monitor,trellisscope}.desktop`:
+  written at run time by `windowIdentity` (§8, item 5), not by hand.
+- `~/mlapp_backups/`: a timestamped copy of `MHost2.mlapp` from before each
+  scripted edit.
+
+### Repo in the VM (do not commit any of this)
+- `Main code/inis/FilePaths.ini`, `ScreenParams.ini`, `RigConfig.ini` written
+  from the examples. **`RigConfig.ini` is not gitignored.** RigConfig uses
+  rig1's geometry plus `display_xres/yres/refresh = 1920/1080/60`, and a
+  `[stim]` section (new on `ai-assisted-2`) set to `127.0.0.1:2028` so a stim
+  task in the VM can never reach real hardware — without it
+  `stimDestination.m` defaults to the rig stim PC.
+- `GraphicsHandler.m`: one uncommitted line after `SkipSyncTests`:
+  `Screen('Preference', 'ConserveVRAM', 64); % this is only for vms`.
+  The VM's pre-existing copy of that edit is also in `stash@{0}`. Every commit
+  must leave it out (recipe in §8).
+- Local `main` was fast-forwarded to GitHub's `783f4a9` by the picker test
+  (it was 15 behind at `eecfd35`).
+- `HANDOFF-VM.md` (this file) is committed on `ai-assisted-2` since
+  2026-10-22, at the user's request. The repo is public: never put access
+  details in it (they go in `HANDOFF-VM.private.md`, outside the repo). Edit
+  it in the VM and commit it like any other file; the Windows checkout (on
+  `ai-debugged`) keeps an untracked copy in step.
+
+---
+
+## 5. Open items
+
+1. **MHost2 does not recover from a mid-trial error.** After any error in
+   `Run_Experiment` (e.g. custom functions not imported), every later trial
+   fails within a second with `target "T0" has not been fetched for this
+   trial. Fetched so far: (none)` — the new trial starts with the old trial's
+   state and skips its setup block. Only restarting MHost2 clears it. Also, the
+   first START after an error only runs the recovery path and returns. Leads in
+   `MHost2_exported.m`: catch block ~L822–842 (`app.mhpass =
+   copy(app.mhbackup)`), backup taken ~L779, `app.errored` branch ~L294.
+   `copy()` is shallow, so handle members (`mh.trial`) are shared with the
+   backup. Not fixed — user deferred it. This bug applies to the rig too.
+2. **Rendering is software, ~12 fps.** The VM's GL is llvmpipe. Only MATLAB's
+   bundled Mesa 17 (auto-selected by MATLAB's launcher) works with PTB 3.0.21;
+   on system Mesa 25.2 PTB segfaults inside `libGLX_mesa` (tried
+   `ConserveVRAM` 0/64/65/524288/2^27, `LIBGL_DRI3_DISABLE`, softpipe). Options:
+   newer PTB, or virgl/egl-headless via the host's RTX 3050 (host NVIDIA driver
+   reports a driver/library mismatch — needs a host reboot first).
+3. Compiled RewardHandler / SoundGenerator are not installed; their terminal
+   tabs fail at startup. Nothing else depends on them.
+4. GDM still defaults to Wayland (`WaylandEnable=false` in
+   `/etc/gdm3/custom.conf` would fix it). Screen lock + 5-min blank are on — the
+   user was asked to change those themselves.
+5. The fixed X layout in §4 was verified live, not yet across a fresh login.
+   If clicks drift after a login, re-run the calibration (§6).
+6. MHost2's `-logfile` stops capturing console output partway through a
+   session; use the error logs in `Main code/ErrorLogs/` instead.
+7. NeuroDebian PTB packages are installed but version-mismatched (3.0.19 MEX vs
+   3.0.22 M-files) and not on the path. Leave them off the path or remove.
+8. No libvirt snapshot exists yet; suggest one now that the VM works.
+9. **Before the §8/§9 commits run on a rig** (they are on GitHub; a rig gets
+   them with File → Switch Branch or `git fetch`, tags included): check the
+   stimulus timing against the photodiode and a Trellis recording (§9);
+   rebuild the compiled RewardHandler
+   (the Stop Reward fix is mostly in RewardHandler.m; UDP port 2026 must be
+   free), and `sudo apt install xdotool` (plus `x11-utils` for `xprop`) or the
+   windows keep the generic dock icon.
+10. The first reward after MHost2 starts never reaches "Total reward"
+    (pre-existing, minor, not fixed).
+11. A security issue in one of MHost2's UDP listeners (details: private
+    notes). Worth fixing.
+12. In the VM, GraphicsHandler's render loop sometimes stalls for up to 5 s
+    (software GL), so screen changes can lag well behind MHost2. Do not read
+    timing from the VM.
+13. `wmctrl` is not installed in the VM; use `xdotool` / `xprop`.
+
+---
+
+## 6. Why things are the way they are (learned the hard way)
+
+- **"Main code" must be on the saved path.** MHost2's property defaults call
+  `IniConfig()` before `startupFcn` adds anything, so a bare
+  `matlab -r MHost2` fails with `Invalid default value for property 'ini'`.
+- **Keep MATLAB's bundled libstdc++ and Mesa.** Removing
+  `sys/os/glnxa64/libstdc++.so.6` makes MATLAB pick system GL and PTB crashes
+  (open item 2). But that old libstdc++ also leaks into `system()` children, so
+  `gnome-terminal` dies with `GLIBCXX_3.4.31 not found (libvte)` and MHost2
+  can never start GraphicsHandler — hence the wrapper in `/usr/local/bin`.
+- **`ConserveVRAM 64` is VM-only.** On Linux it means "use the Mesa X11
+  software renderer"; without it PTB aborts on the VM.
+- **Clipboard:** stock spice-vdagent 0.22.1 segfaults with more than one X
+  screen (skips XRandR setup, then reads `res->noutput` through NULL on
+  graphics-device-info). The LD_PRELOAD shim makes it see screen 0 only;
+  selections are per display, so copy/paste still covers both screens.
+- **Mouse (client mode, never captured — by design):** X spreads absolute
+  pointers across the whole two-screen desktop, while SPICE sends display-1
+  coordinates. `91-vm-pointer.conf` scales by 1360/3280 and 768/1080 and adds a
+  2 px hotspot offset; a calibration run put every click within 0–2 px. The
+  matrix is only right for screen 0 1360x768 + screen 1 1920x1080 at x=1360.
+  `RightOf` placed screen 1 by screen 0's size at X start, which is the SPICE
+  window size (`Xorg.0.log`: `initial mode 1280x800`) — hence `Absolute`.
+  Server mouse mode was jumpy on Windows virt-viewer; do not go back to it.
+- **Display 2 "Display output is not active"** = Virtual-2 had no mode
+  (disconnected at X start). Fixed by `Enable` + `PreferredMode` + the login
+  `xrandr`.
+- Domain XML changes need a full stop/start (`systemctl poweroff` in the
+  guest, then `virsh start`), not a guest reboot.
+- Never `pkill -f` a pattern that appears in your own ssh command line — it
+  kills the ssh shell (happened twice). Use exact PIDs or a `^/path` anchor.
+- Windows batch `for /f` treats `=` as a separator: use `-o "BatchMode yes"`.
+- New scp (SFTP) wants paths with spaces quoted, not backslash-escaped.
+- **Editing `MHost2.mlapp` without App Designer** (from MATLAB in the VM): read
+  with `appdesigner.internal.serialization.FileReader` (`readMATLABCodeText`,
+  `readAppDesignerData`, `readAppMetadata`), write with `FileWriter(f).
+  writeMLAPPFile(code, ad, md)`, then read back and compare. Change both copies
+  of the code: the code text, and App Designer's own cell arrays of lines
+  (`ad.code.EditableSectionCode` for methods, `ad.code.StartupCallback.Code`
+  for startupFcn). Split with `split(string(txt), eol)`, never `strsplit` — it
+  drops every blank line (cost a restore from backup once). Back up to
+  `~/mlapp_backups/` first. `MHost2_exported.m` must equal the code text with
+  `MHost2_exported` for `MHost2`; patch it the same way.
+- Claude's Edit tool strips trailing whitespace on blank lines, and this repo
+  has a lot of it: check `git diff` for whitespace-only noise and restore it.
+- Run `checkcode` on any MHost2 change before restarting it: a broken edit
+  makes the idle loop error ~70 times a second.
+- Anything MATLAB starts with `system()` (gnome-terminal, xdotool, xprop)
+  needs `unset LD_LIBRARY_PATH` first, for the libstdc++ reason above.
+- GNOME's dock groups windows by X `WM_CLASS` and takes the icon from the
+  `.desktop` file whose `StartupWMClass` matches. A uifigure's `Icon` never
+  reaches the dock; `xdotool set_window --class` on a mapped window does.
+- MATLAB's `system()` gives commands a terminal (`[ -t 1 ]` is true), so
+  `git diff` / `log` / `show` start a pager and hang forever: always
+  `git --no-pager` from MATLAB.
+- A running MATLAB keeps the copy of a function file it already loaded:
+  edits to `branchPicker.m` etc. show only after MHost2 restarts.
+- `xdotool windowclose` destroys a MATLAB window without running its close
+  request: MHost2 stays alive invisibly and GraphicsHandler is never told to
+  exit. Close MHost2 from its own window or File → Exit.
+- Each picker switch leaves the previous terminal open at "Press Enter to
+  close" (the launcher keeps it for reading errors).
+- The user sometimes works in the VM while a session runs. Before killing a
+  MATLAB, check it is one you started (`ps -o lstart`) — a user's MHost2 was
+  killed by mistake once.
+
+---
+
+## 7. Driving the VM from a session
+
+- Screenshots: on the host, `virsh -c qemu:///system screenshot Ubuntu_dev
+  out.ppm --screen 0|1` (screen 1 = animal display), convert with PIL.
+- Clicks/keys: `xdotool` in the VM with `DISPLAY=:0
+  XAUTHORITY=/run/user/1000/gdm/Xauthority`; raise MHost2 by clicking its
+  title bar first — other windows open on top of START.
+- GUI processes started over SSH must run in the user session:
+  `systemd-run --user` with `XDG_RUNTIME_DIR=/run/user/1000` and
+  `DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus`.
+- What the state machine is sending: memmap `scenePath()` read-only and call
+  `sceneRead` from a separate MATLAB — `seq` should climb while trials run.
+- GraphicsHandler console: start it with `-logfile` (e.g. `/tmp/gh.log`);
+  MHost2 reconnects to a restarted GraphicsHandler without a restart of its own.
+- RewardHandler from source against the demo xippmex: `cd /tmp; matlab
+  -nodesktop -logfile /tmp/rh.log -r "addpath('<repo>/demo_xippmex');
+  RewardHandler"` (in the user session, as above).
+
+---
+
+## 8. The user's note list (2026-10-21)
+
+The user asked to go slow: investigate, propose, wait for a yes, implement,
+test in the VM, commit only when asked. "Gooey" in their notes was
+voice-to-text for GUI; all items are software. Commits are on `ai-assisted-2`,
+made in the VM and pushed to GitHub (§2).
+
+| # | Item | Result |
+|---|---|---|
+| 1 | Reward button at idle | Already works (6/6 in demo mode). Only the "Total reward" glitch (open item 10) |
+| 2 | Stop Reward button | Fixed, `f27ea6a` (`rewcheck.m`, `RewardHandler.m`). Stop closes the valve and sends `stop` to RewardHandler's new stop port **2026**; RewardHandler polls it while the valve is open, ends early, and logs/returns only the time the valve was open ("stopped early; Xs requested"). Its valve re-open branch is left as is, by the user's choice |
+| 3 | Targets left on screen at idle | Already fixed by `c3d7353` (stoptrial publishes the final frame, stale frames blank after 1 s, blank on leaving a trial). The VM clears ~0.5 s late (software rendering) |
+| 4 | Cursor visibility | `cafe606`. Cursors always draw on the monitor window. File → Cursors on Display ▸ Cursor 1–5 also draws a cursor on the animal display, during trials only (blank between trials). Saved as `display=0/1` under `[cursorN]` in `ScreenParams.ini`, applied live through `evalgraphics` |
+| 5 | One dock icon per window | `00f3688`. `background_functions/windowIdentity.m` gives MHost2, Parameters, Graphics Info, the PTB monitor window and Trellis Scope their own WM_CLASS and `.desktop` entry; icons are letter tiles in `assets/icons/` (replace a PNG to change it). MHost2's window title is now "MHost2" (was " ") |
+| 6 | Git branch picker in a menu | `4ac2b36`. File → Switch Branch… (`background_functions/branchPicker.m`): every local and GitHub branch, newest first, with status (current / same as GitHub / N behind: will update / N not on GitHub / on GitHub), refreshed from GitHub on open; refused while trials run. All checks run before anything closes: a branch with its own copy of an ignored rig file (`rig1`, `fps`, … track `ScreenParams.ini`) is refused; uncommitted changes → set aside (stash) / carry over (refused if the branch changes those files) / cancel. Then MHost2 closes through its own close request (GraphicsHandler exits with it), and a terminal waits for that MATLAB to exit, runs `git switch --no-overwrite-ignore` (+ `--track` or a fast-forward), and starts MHost2 again; on failure it restores the stash and restarts on the old branch. Tested in the VM: rig1 refused (and refused again by git itself in the terminal), carry-over refused / allowed, stash, restart, trials-running refusal, `main` fast-forwarded by 15. Only branches that contain it have the menu (not `main` / `ai-debugged` yet) |
+| 7 | Version number on the main screen | `070ea05`, tagged **`v0.1.0`**. `background_functions/codeVersion.m` works it out from git once per run (`describe --tags --match "v[0-9]*" --dirty` + branch). Title bar, for users (the user asked for version and branch only): `MHost2 v0.1.0 (ai-assisted-2)`; `MHost2 (main)` on a branch with no tag in its history. Full form, for tracing results to code, at the top of each `description.txt` when trials stop and in every error log: e.g. `v0.1.0+4 (ai-assisted-2, 4ac2b36)  modified` ("modified" = tracked files edited locally; the VM always shows it). Semantic versions, 0.x until 1.0.0; a new version = `git tag -a v0.2.0` on a commit + push the tag, nothing to edit in code |
+
+Also, after the list: `6b623d2` moves Graphics Info's Grid units dropdown onto
+the photodiode row (it overlapped the State box), at the user's request.
+
+**Committing in the VM** (keeps the ConserveVRAM line out): copy
+`GraphicsHandler.m` aside, drop the line with `grep -vxF "$VMLINE"`, `git add
+--` explicit paths only (never `-A`; `RigConfig.ini` is not ignored), commit
+with `-c user.name=IvanSmal -c user.email=smalianchuk.ivan@gmail.com -F msg`,
+copy the file back, then check `git show HEAD:<GraphicsHandler path> | grep -c
+ConserveVRAM` is 0 and `git diff` is that one line.
+
+---
+
+## 9. Stimulus timing (2026-10-22, `649fa08`)
+
+Goal (the user's): know exactly when each stimulus appeared on the display,
+without working backwards from command IDs. Designed with the user first
+(they chose: photodiode only on state changes; a `'Tag'` option on
+`mh.Screen`; NIP/Trellis time as well; column name `photon_tick`).
+
+Replaces `data.graphics_fliptimes`, `data.graphics_commands` and
+`data.DiodeFlipStates` (old trial files are plain structs, so they still load).
+Kept for now: target `timestamp`/`moving_position`, state times, `d.timestamps`
+(now correct, see below).
+
+New trial fields (structs of column arrays):
+- `stimulus_events`: one row per item appearing/disappearing and per state
+  change (`tag photodiode`, `event state`): tag, kind, event, state,
+  requested / displayed (Psychtoolbox `GetSecs`, which on Linux is Unix-epoch
+  seconds), delay, flip, frame_id, onset_tick (NIP 30 kHz), photon_tick (when
+  light appeared; NaN without a photodiode signal), x_deg, y_deg, rect_px,
+  missed. A change gone before the next flip keeps displayed = NaN.
+- `stimulus_frames.<item>`: one row per flip it was on screen (position as
+  drawn, both clocks, state); `stimulus_frames.photodiode`: one row per colour
+  change.
+- `clock_sync`: `[GetSecs tick]` pairs from every NIP read, the fit
+  (`tick = ticks_per_s*GetSecs + tick_at_0`), photodiode delay calibration,
+  `trace_start_tick` (NIP tick of `d.photodiode(1)` / `d.eyepos(:,1)`),
+  `trial_start_tick` (NIP tick of `start_autogenerated`) and
+  `trial_start_sample` (the eye/photodiode sample at the trial start).
+
+How: targets drawn at their `getpos` rectangle and `mh.Screen(..., 'Tag', name)`
+commands are listed per published frame (`background_functions/frameItems.m`,
+persistent state for speed); `publishFrame` logs changes (`stimulusRequests`);
+GraphicsHandler logs each flip (`gr.flipLog`) and, in `dumpdata`, builds the
+tables (`background_functions/buildStimulusTiming.m`, a pure function).
+`nipTick` now also logs the clock pairs. Files: Screen.m, internal.m,
+starttrial.m, stimulusRequests.m (new), target.m (one call in getpos),
+data.m, graphics.m, nipTick.m, frameItems.m (new), buildStimulusTiming.m
+(new), GraphicsHandler.m, MHost2 (.mlapp + export: end-of-trial block, and
+the `savestate` re-dump check, which was inverted).
+
+Tested: synthetic trial with known answers (`test_buildStimulusTiming.m` in
+the session scratchpad: delay 12.49 ms recovered from a 12 ms photodiode
+step, NIP onset within 6 ticks, blinks/short states never displayed, missed
+flips, leftovers, demo sine rejected); every drawing command's position;
+~100 demo trials in the VM with a temporary tagged cue and moving T1 (test
+task restored afterwards). Cost in MHost2's loop (VM): ~+35 us per frame
+without timed items, ~+75 us with a target and a tag (publish itself ~300 us).
+NOT tested: a real photodiode / Trellis recording (photon_tick is NaN in demo
+mode); check on rig1 against the .nev/.nsx files.
+
+`d.timestamps` fix (same commit): the eye/photodiode trace starts with the
+first NIP read, BEFORE the ITI wait, but `d.timestamps` assumed sample 1 =
+`start_autogenerated`, so eye/photodiode times were late by the remaining ITI
+plus setup (VM: median ~0.55 s, 0.05-0.75 s) and disagreed with cursor
+times. Now `starttrial` records the NIP tick of the trial start and the
+samples are placed by the NIP clock: pre-trial samples get earlier times
+(negative relative to `tstarttime`), and `clock_sync.trial_start_sample` is
+the sample at the trial start (for code that indexes samples). VM check,
+25/25 trials: that sample carries `floor(tstarttime*1000)`; the trial-start
+tick agrees with the clock fit of the first state frame within ~2 ms.
+Recordings made before this commit still have the shift; only the Trellis
+files (NIP-timed analog, state markers since 2026-09-13) can realign them.
+
+Gotchas from this work:
+- GraphicsHandler's helpers are NESTED functions: a variable name used in
+  both the main loop and a helper is the same variable (`nm` is overwritten
+  by `drawFrame`). Use fresh names or `frame.*` fields.
+- Object property access and struct-array growth are slow in the 1 kHz loop
+  (a few us each); keep per-frame state in a function's persistent variables
+  with fixed buffers, as `frameItems` does. Cross-process benchmarks in the VM
+  are noisy (background load); compare inside one process (stub swap).
+- MATLAB's current folder shadows the path: a stale copy of a function in the
+  working directory silently wins.
+
+---
+
+## 10. Trellis Scope rework, phase 1 (2026-10-22, `6465d07`, pushed)
+
+`Main code/Utilities/TrellisScope.m` rewritten (the data-source half is
+unchanged). The window opens with one plot; "+ Add plot" adds more; each plot
+has Modify / Remove. Modify docks the settings panel on the left for that
+plot: up to 5 channels drawn on the same axes, align state, pre/post, hold
+trials, colour by channel (default; older trials fainter) or by task, Y range,
+mark other states. Apply changes only that plot (its held trials restart).
+Spike channels are rasters on a right-hand axis, a block of rows per channel.
+One shared buffer holds the union of all plots' channels. Channel colours
+come from the name (eye/photodiode fixed), so they match across plots and
+sessions. The layout is saved per computer in
+`fullfile(prefdir, 'TrellisScopeLayout.mat')` (VM: `~/.matlab/R2025b/`) on
+every change and on close, and restored on open (channels the computer does
+not offer are dropped).
+
+Bug found while testing: a timer tick can run in the middle of any callback
+(seen between two property assignments), so every change to the plots or the
+acquired channels takes `holdTicks()` first; ticks skip while it is held.
+
+Tested: scripted runs with the synthetic source (add / apply / colour by task
+/ remove / save / restore, 6 runs, no tick errors), then live in the VM from
+MHost2's Utils menu with demo trials (eye, photodiode, spike rasters, real
+state onsets, Modify/Apply/Remove/Close, close and reopen restoring the
+layout). In the VM, clicks take 10-20 s to act while trials run (load ~14 on
+2 vCPUs); not a scope problem.
+
+Phase 2 (target positions as a function of time, a Targets button in
+Modify) is next and needs a proposal first (§ the session's design:
+renderer publishes each flip's targets; scope puts them on the NIP clock).
+
+### Phase 2: target positions (2026-10-22, `a8de13d`, pushed; user testing on a live rig)
+
+- **Renderer:** GraphicsHandler (`publishTargetFlips`, called from
+  `logFlip`) keeps the last second of display flips (counter, onset GetSecs,
+  each target / 'Tag'ged item's box centre in px) and publishes them about
+  every 100 ms and on the trial's blank flip to
+  `background_functions/targetFlipsPath.m` (`/dev/shm/gandhi_target_flips.bin`).
+  Cost: ~0.3 ms per publish in the VM. Its helper variables are `tf*`-prefixed
+  (nested-function sharing, §9 gotcha).
+- **Scope:** every read pairs GetSecs with the newest sample's NIP time; the
+  minimum difference over 20 s is the offset that puts flip onsets on the NIP
+  clock. Positions go through `pix2deg` with the rig geometry read once.
+  Modify → "Targets..." lists every target seen (plus saved ones); ticked
+  ones are drawn on the left axis (X dashed, Y dash-dot, a dot per flip),
+  applying at once, to held trials too. X/Y follows the eye channels unless
+  chosen. A line breaks only where a flip did not show the target (flip
+  counters). Each target in a plot gets its own colour. Selections are saved
+  with the layout. Windows are held 0.3 s longer while target data flows.
+- **Tested in the VM:** a scripted stand-in publisher (19-23 points per run,
+  0.000 ms placement error); live against MHost2 + the new GraphicsHandler
+  (3 runs: 51, 38 and 31 target points, every one matched to the trial file's
+  `stimulus_frames`, time within ±0.02 ms, positions identical); the Targets
+  list clicked through in the GUI; phase-1 regression run clean.

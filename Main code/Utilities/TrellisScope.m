@@ -12,8 +12,12 @@ classdef TrellisScope < handle
 %     - colour by channel (older trials fainter) or by task type
 %     - Y range (auto or fixed) and whether to mark the other states' onsets
 %   Apply changes only that plot (its held trials restart); the others keep
-%   running. The layout (plots and their settings) is saved in MATLAB's
-%   preferences folder on this computer and restored the next time.
+%   running. "Targets..." lists every target and 'Tag'ged item the display has
+%   shown; ticked ones are drawn as their position over time (degrees, on the
+%   left axis: X dashed, Y dash-dot), X or Y following the plot's eye channels
+%   unless chosen. Target changes apply at once, to held trials too. The
+%   layout (plots, settings and targets) is saved in MATLAB's preferences
+%   folder on this computer and restored the next time.
 %
 %   Overlay is BY STATE, not by task: every trial whose task contains a plot's
 %   alignment state is captured for that plot. A trial that never enters the
@@ -34,6 +38,11 @@ classdef TrellisScope < handle
 %     xippmex ('cont' for channels, 'spike' for rasters; state onsets with NIP
 %     ticks from the shared slot setstate writes). The acquire*/listChannels
 %     methods are the only pluggable seam.
+%   * Target positions come from GraphicsHandler (targetFlipsPath): the items
+%     each display flip showed, with the flip's onset in GetSecs. The scope
+%     puts those on its source clock itself: every read pairs GetSecs with
+%     the newest sample's time, and the smallest difference over the last
+%     20 s is the offset (the read that found the freshest sample).
 %
 %   Usage:  TrellisScope            % synthetic source (demo)
 %           TrellisScope('sim',0)   % real xippmex source (launchScope)
@@ -86,6 +95,21 @@ classdef TrellisScope < handle
         markPool = 80       % vertical-line pool per plot, for other-state onsets
         lastError           % the last error a tick caught (MException), for diagnosis
         busy = 0            % > 0 while plots or channels change: ticks wait (see holdTicks)
+
+        % target positions from the display (see targetFlipsPath, readTargets)
+        tgtPanel            % the Targets list (left column, in place of the settings)
+        tgtMap = []         % shared-memory slot, opened once it exists
+        tgtLastTry = -inf   % GetSecs of the last attempt to open it
+        tgtSession = NaN    % GraphicsHandler run the flip counters belong to
+        tgtLastCnt = 0      % newest flip already taken
+        tgtNames = {}       % every target / tag name seen, in order
+        tgtT = zeros(0,1)   % rows: time (source clock, s) ...
+        tgtK = zeros(0,1)   %   ... index into tgtNames ...
+        tgtXY = zeros(0,2)  %   ... and position (deg) ...
+        tgtC = zeros(0,1)   %   ... and the flip's counter (gaps: a flip without the item)
+        clockPairs = zeros(0,2) % [GetSecs, source time of the newest sample], one per read
+        pairNow = []        % this tick's pair, set by acquire
+        screenP = []        % screen geometry for pix2deg, read once
     end
 
     methods
@@ -115,6 +139,7 @@ classdef TrellisScope < handle
             app.mainGrid = uigridlayout(app.fig, [1 2], 'ColumnWidth', {0, '1x'}, ...
                 'RowHeight', {'1x'}, 'Padding', [6 6 6 6], 'ColumnSpacing', 6);
             app.buildModifyPanel();
+            app.buildTargetsPanel();
 
             right = uigridlayout(app.mainGrid, [3 1], 'RowHeight', {26, '1x', 28}, ...
                 'Padding', [0 0 0 0], 'RowSpacing', 4);
@@ -158,6 +183,8 @@ classdef TrellisScope < handle
             app.ctl.yMax = uieditfield(g, 'numeric');
             app.ctl.marks = uicheckbox(g, 'Text', 'Mark other states');
             app.ctl.marks.Layout.Column = [1 2];
+            app.ctl.tgtBtn = uibutton(g, 'Text', 'Targets...', 'ButtonPushedFcn', @(~,~) app.openTargets());
+            app.ctl.tgtLbl = uilabel(g, 'Text', 'none shown', 'FontColor', [0.4 0.4 0.4]);
             b = uigridlayout(g, [1 2], 'Padding', [0 0 0 0]); b.Layout.Column = [1 2];
             uibutton(b, 'Text', 'Apply', 'FontWeight', 'bold', 'ButtonPushedFcn', @(~,~) app.onApply());
             uibutton(b, 'Text', 'Close', 'ButtonPushedFcn', @(~,~) app.closeModify());
@@ -165,12 +192,27 @@ classdef TrellisScope < handle
             h.Layout.Column = [1 2];
         end
 
+        function buildTargetsPanel(app)
+            app.tgtPanel = uipanel(app.mainGrid, 'Title', 'Targets', 'Visible', 'off');
+            app.tgtPanel.Layout.Column = 1;
+            g = uigridlayout(app.tgtPanel, [5 1], 'RowHeight', {48, '1x', 22, 26, 30});
+            uilabel(g, 'Text', {'Tick a target to draw its position', 'over time (degrees, left axis).', ...
+                'Applies at once.'}, 'FontColor', [0.4 0.4 0.4]);
+            app.ctl.tgtTable = uitable(g, 'ColumnName', {'Show', 'Target'}, 'ColumnWidth', {45, 'auto'}, ...
+                'RowName', {}, 'ColumnEditable', [true false], 'CellEditCallback', @(~,~) app.onTargetsEdit());
+            uilabel(g, 'Text', 'Position shown:');
+            app.ctl.tgtXY = uidropdown(g, 'Items', {'X or Y, as the eye channels', 'X', 'Y', 'X and Y'}, ...
+                'ItemsData', {'match', 'x', 'y', 'both'}, 'ValueChangedFcn', @(~,~) app.onTargetsEdit());
+            uibutton(g, 'Text', 'Back to settings', 'ButtonPushedFcn', @(~,~) app.closeTargets());
+        end
+
         function P = newPlot(app, cfg)
             P = struct('id', app.nextId, 'cfg', cfg, 'ax', [], 'modBtn', [], 'remBtn', [], ...
-                'cont', [], 'spk', [], 'heldL', {{}}, 'liveL', [], 'spkHeldL', {{}}, 'spkLiveL', [], ...
-                'markL', [], 'taskProxy', [], ...
+                'cont', [], 'spk', [], 'contNames', {{}}, 'spkNames', {{}}, 'heldL', {{}}, 'liveL', [], 'spkHeldL', {{}}, 'spkLiveL', [], ...
+                'markL', [], 'taskProxy', [], 'tgtSpec', {cell(0, 2)}, 'tgtColor', [], 'tgtHeldL', {{}}, 'tgtLiveL', [], ...
+                'tgtProxy', [], 'tgtProxyNames', {{}}, ...
                 'pending', struct('name',{},'t0',{},'endT',{}), ...
-                'held', struct('name',{},'t',{},'y',{},'spk',{},'marks',{}), 'dirty', true);
+                'held', struct('name',{},'t0',{},'t',{},'y',{},'spk',{},'marks',{},'tg',{}), 'dirty', true);
             app.nextId = app.nextId + 1;
         end
 
@@ -178,7 +220,8 @@ classdef TrellisScope < handle
             ch = app.chanList(ismember(app.chanList, {'eyeX', 'eyeY'}));
             if isempty(ch) && ~isempty(app.chanList), ch = app.chanList(1); end
             c = struct('channels', {ch}, 'alignState', '', 'preMs', 200, 'postMs', 500, 'nHold', 10, ...
-                'colorBy', 'channel', 'yAuto', true, 'yMin', -1, 'yMax', 1, 'showMarks', true);
+                'colorBy', 'channel', 'yAuto', true, 'yMin', -1, 'yMax', 1, 'showMarks', true, ...
+                'targets', {{}}, 'targetXY', 'match');
         end
 
         function layoutPlots(app)
@@ -226,6 +269,8 @@ classdef TrellisScope < handle
             kinds = cellfun(@(nm) app.kindOf(nm), c.channels, 'UniformOutput', false);
             P.cont = find(strcmp(kinds, 'cont'));
             P.spk = find(strcmp(kinds, 'spike'));
+            P.contNames = c.channels(P.cont);    % the ticks use these, never cfg directly:
+            P.spkNames = c.channels(P.spk);      % cfg can change before the plot is rebuilt
             hasSpk = ~isempty(P.spk);
             grid(ax, 'on');
             if hasSpk, yyaxis(ax, 'left'); end
@@ -244,6 +289,26 @@ classdef TrellisScope < handle
                 for k = 1:c.nHold, L(k) = plot(ax, nan, nan, 'LineStyle', '-', 'Marker', 'none', 'LineWidth', 1); end
                 P.heldL{j} = L;
                 P.liveL(j) = plot(ax, nan, nan, 'LineStyle', '-', 'Marker', 'none', 'LineWidth', 2);
+            end
+            % targets: position over time on this (left, degrees) axis, X dashed
+            % and Y dash-dot, one line per held trial plus the live one
+            P.tgtSpec = app.targetSpec(c);
+            P.tgtColor = app.targetColors(c, unique(P.tgtSpec(:, 1)', 'stable'));
+            nT = size(P.tgtSpec, 1);
+            P.tgtHeldL = cell(1, nT); P.tgtLiveL = gobjects(1, nT);
+            P.tgtProxy = gobjects(1, nT); P.tgtProxyNames = cell(1, nT);
+            for j = 1:nT
+                ls = '--'; if strcmp(P.tgtSpec{j, 2}, 'y'), ls = '-.'; end
+                L = gobjects(1, c.nHold);
+                % a dot per display flip: one shown for a single frame is still seen
+                for k = 1:c.nHold
+                    L(k) = plot(ax, nan, nan, 'LineStyle', ls, 'Marker', '.', 'MarkerSize', 7, 'LineWidth', 1.2);
+                end
+                P.tgtHeldL{j} = L;
+                P.tgtLiveL(j) = plot(ax, nan, nan, 'LineStyle', ls, 'Marker', '.', 'MarkerSize', 10, 'LineWidth', 2.2);
+                P.tgtProxy(j) = plot(ax, nan, nan, 'Color', P.tgtColor(P.tgtSpec{j, 1}), ...
+                    'LineStyle', ls, 'Marker', 'none', 'LineWidth', 2);
+                P.tgtProxyNames{j} = sprintf('%s %s', P.tgtSpec{j, 1}, P.tgtSpec{j, 2});
             end
             % legend proxies (colour by channel: one per channel, now)
             proxies = gobjects(1, 0); names = {};
@@ -284,6 +349,7 @@ classdef TrellisScope < handle
             xlim(ax, [-c.preMs c.postMs]);
             xlabel(ax, 'time from alignment (ms)');
             app.setTitle(ax, c);
+            proxies = [proxies P.tgtProxy]; names = [names P.tgtProxyNames];
             if ~isempty(proxies)
                 legend(ax, proxies, names, 'Location', 'northeast', 'AutoUpdate', 'off', 'Interpreter', 'none');
             end
@@ -302,10 +368,13 @@ classdef TrellisScope < handle
             for i = 1:numel(app.plots)
                 b = app.plots(i).modBtn;
                 if isempty(b) || ~isgraphics(b), continue, end
-                if app.plots(i).id == app.editId
-                    b.Text = 'Editing'; b.FontWeight = 'bold';
-                else
-                    b.Text = 'Modify'; b.FontWeight = 'normal';
+                try
+                    if app.plots(i).id == app.editId
+                        b.Text = 'Editing'; b.FontWeight = 'bold';
+                    else
+                        b.Text = 'Modify'; b.FontWeight = 'normal';
+                    end
+                catch
                 end
             end
         end
@@ -329,8 +398,10 @@ classdef TrellisScope < handle
             app.ctl.yMin.Value = c.yMin; app.ctl.yMax.Value = c.yMax;
             app.ctl.yMin.Enable = ~c.yAuto; app.ctl.yMax.Enable = ~c.yAuto;
             app.ctl.marks.Value = c.showMarks;
+            app.updateTargetsLabel(c);
             app.modPanel.Title = sprintf('Plot %d settings', i);
             app.editId = id;
+            app.tgtPanel.Visible = 'off';
             app.modPanel.Visible = 'on';
             app.mainGrid.ColumnWidth = {270, '1x'};
             app.markEditing();
@@ -339,6 +410,7 @@ classdef TrellisScope < handle
         function closeModify(app)
             app.editId = 0;
             app.modPanel.Visible = 'off';
+            app.tgtPanel.Visible = 'off';
             app.mainGrid.ColumnWidth = {0, '1x'};
             app.markEditing();
         end
@@ -375,7 +447,8 @@ classdef TrellisScope < handle
             c = struct('channels', {ch}, 'alignState', st, 'preMs', app.ctl.pre.Value, ...
                 'postMs', app.ctl.post.Value, 'nHold', app.ctl.hold.Value, ...
                 'colorBy', app.ctl.colorBy.Value, 'yAuto', app.ctl.yAuto.Value, ...
-                'yMin', app.ctl.yMin.Value, 'yMax', app.ctl.yMax.Value, 'showMarks', app.ctl.marks.Value);
+                'yMin', app.ctl.yMin.Value, 'yMax', app.ctl.yMax.Value, 'showMarks', app.ctl.marks.Value, ...
+                'targets', {old.targets}, 'targetXY', old.targetXY);      % set in the Targets list
             app.plots(i).cfg = c;
             if ~isequal(old.channels, c.channels) || ~strcmp(old.alignState, c.alignState) || ...
                     old.preMs ~= c.preMs || old.postMs ~= c.postMs || old.nHold ~= c.nHold
@@ -406,6 +479,67 @@ classdef TrellisScope < handle
             app.updateAcquisition();
             app.layoutPlots();
             app.saveLayout();
+        end
+
+        % ------------------------------------------------------ Targets list
+        function openTargets(app)
+            i = app.plotIndex(app.editId); if isempty(i), return, end
+            app.fillTargetsTable();
+            app.tgtPanel.Title = sprintf('Plot %d targets', i);
+            app.modPanel.Visible = 'off';
+            app.tgtPanel.Visible = 'on';
+        end
+
+        function closeTargets(app)
+            i = app.plotIndex(app.editId);
+            if ~isempty(i), app.updateTargetsLabel(app.plots(i).cfg); end
+            app.tgtPanel.Visible = 'off';
+            app.modPanel.Visible = 'on';
+        end
+
+        function fillTargetsTable(app)
+            % Every target seen so far plus any this plot was saved with.
+            i = app.plotIndex(app.editId); if isempty(i), return, end
+            c = app.plots(i).cfg;
+            names = unique([reshape(app.tgtNames, 1, []) reshape(c.targets, 1, [])], 'stable');
+            app.ctl.tgtTable.Data = [num2cell(ismember(names, c.targets))' names'];
+            app.ctl.tgtXY.Value = c.targetXY;
+        end
+
+        function onTargetsEdit(app)
+            h = app.holdTicks(); %#ok<NASGU>
+            i = app.plotIndex(app.editId); if isempty(i), return, end
+            d = app.ctl.tgtTable.Data;
+            if isempty(d), show = {}; else, show = d([d{:, 1}], 2)'; end
+            app.plots(i).cfg.targets = show;
+            app.plots(i).cfg.targetXY = app.ctl.tgtXY.Value;
+            app.layoutPlots();                       % held trials keep every target's data
+            app.saveLayout();
+            app.updateTargetsLabel(app.plots(i).cfg);
+        end
+
+        function updateTargetsLabel(app, c)
+            if isempty(c.targets), app.ctl.tgtLbl.Text = 'none shown';
+            else, app.ctl.tgtLbl.Text = sprintf('%d shown', numel(c.targets)); end
+        end
+
+        function S = targetSpec(~, c)
+            % {target, 'x' or 'y'} per line to draw. 'match': X with eyeX only,
+            % Y with eyeY only, both otherwise.
+            xy = c.targetXY;
+            if strcmp(xy, 'match')
+                hx = any(strcmp(c.channels, 'eyeX')); hy = any(strcmp(c.channels, 'eyeY'));
+                if hx && ~hy, xy = 'x'; elseif hy && ~hx, xy = 'y'; else, xy = 'both'; end
+            end
+            switch xy
+                case 'x', comps = {'x'};
+                case 'y', comps = {'y'};
+                otherwise, comps = {'x', 'y'};
+            end
+            S = cell(0, 2);
+            for a = 1:numel(c.targets)
+                for b = 1:numel(comps), S(end+1, :) = {c.targets{a}, comps{b}}; end %#ok<AGROW>
+            end
         end
 
         function i = plotIndex(app, id)
@@ -470,6 +604,8 @@ classdef TrellisScope < handle
             app.stateHist = struct('name',{},'t',{});
             app.spikeAccum = containers.Map('KeyType','char','ValueType','any');
             app.stateOnsetMap = []; app.lastOnsetSeq = 0;
+            app.tgtT = zeros(0,1); app.tgtK = zeros(0,1); app.tgtXY = zeros(0,2); app.tgtC = zeros(0,1);
+            app.clockPairs = zeros(0,2);
             try   % skip onsets already in the ring so only NEW ones show
                 m0 = sceneOpen(false, stateOnsetPath());
                 [f0,ok0] = sceneRead(m0);
@@ -503,6 +639,8 @@ classdef TrellisScope < handle
             try
                 [chunkT, chunkY, events] = app.acquire();
                 app.pushSamples(chunkT, chunkY);
+                app.noteClockPair();
+                app.readTargets();
                 app.handleEvents(events);
                 app.completePending();
                 app.redraw(false);
@@ -573,20 +711,24 @@ classdef TrellisScope < handle
         end
 
         function completePending(app)
+            % Target flips arrive up to ~0.1 s late (published in batches), so
+            % while they are flowing a window is held a little longer.
+            extra = 0; if ~isempty(app.tgtT), extra = 0.3; end
             for i = 1:numel(app.plots)
                 P = app.plots(i); c = P.cfg;
                 keep = true(1, numel(P.pending));
                 for p = 1:numel(P.pending)
                     w = P.pending(p);
-                    if app.lastAcqT >= w.endT
-                        [t, y] = app.extractWindow(w.t0, c.preMs, c.postMs, c.channels(P.cont));
+                    if app.lastAcqT >= w.endT + extra
+                        [t, y] = app.extractWindow(w.t0, c.preMs, c.postMs, P.contNames);
                         spk = cell(1, numel(P.spk));
                         for j = 1:numel(P.spk)
-                            spk{j} = app.extractSpikes(w.t0, c.preMs, c.postMs, c.channels{P.spk(j)});
+                            spk{j} = app.extractSpikes(w.t0, c.preMs, c.postMs, P.spkNames{j});
                         end
                         if ~isempty(t) || ~isempty(P.spk)
-                            P.held(end+1) = struct('name', w.name, 't', t, 'y', y, 'spk', {spk}, ...
-                                'marks', app.windowMarks(w.t0, c.preMs, c.postMs));
+                            P.held(end+1) = struct('name', w.name, 't0', w.t0, 't', t, 'y', y, 'spk', {spk}, ...
+                                'marks', app.windowMarks(w.t0, c.preMs, c.postMs), ...
+                                'tg', app.targetWindow(w.t0, c.preMs, c.postMs));   % every target: toggles apply to held trials too
                             P.dirty = true;
                         end
                         keep(p) = false;
@@ -646,21 +788,28 @@ classdef TrellisScope < handle
                 % the trial being captured: every tick, full colour, thicker
                 if ~isempty(P.pending)
                     w = P.pending(end);
-                    [t, y] = app.extractWindow(w.t0, c.preMs, c.postMs, c.channels(P.cont));
+                    [t, y] = app.extractWindow(w.t0, c.preMs, c.postMs, P.contNames);
                     for j = 1:numel(P.cont)
-                        col = app.traceColor(c, c.channels{P.cont(j)}, w.name, 1, 1);
+                        col = app.traceColor(c, P.contNames{j}, w.name, 1, 1);
                         if isempty(t), set(P.liveL(j), 'XData', nan, 'YData', nan);
                         else, set(P.liveL(j), 'XData', t, 'YData', y(j, :), 'Color', col); end
                     end
                     B = c.nHold + 2;
                     for j = 1:numel(P.spk)
-                        sp = app.extractSpikes(w.t0, c.preMs, c.postMs, c.channels{P.spk(j)});
-                        col = app.traceColor(c, c.channels{P.spk(j)}, w.name, 1, 1);
+                        sp = app.extractSpikes(w.t0, c.preMs, c.postMs, P.spkNames{j});
+                        col = app.traceColor(c, P.spkNames{j}, w.name, 1, 1);
                         set(P.spkLiveL(j), 'XData', sp, 'YData', ((j-1)*B + c.nHold + 1) * ones(1, numel(sp)), 'Color', col);
+                    end
+                    if ~isempty(P.tgtSpec)
+                        tg = app.targetWindow(w.t0, c.preMs, c.postMs);
+                        for j = 1:size(P.tgtSpec, 1)
+                            app.setTargetLine(P.tgtLiveL(j), P.tgtSpec(j, :), tg, 1, 1, P.tgtColor(P.tgtSpec{j, 1}));
+                        end
                     end
                 else
                     set(P.liveL, 'XData', nan, 'YData', nan);
                     set(P.spkLiveL, 'XData', nan, 'YData', nan);
+                    set(P.tgtLiveL, 'XData', nan, 'YData', nan);
                 end
             end
             drawnow limitrate
@@ -674,7 +823,7 @@ classdef TrellisScope < handle
                     if k <= nh && ~isempty(P.held(k).t)
                         rec = P.held(k);
                         set(L(k), 'XData', rec.t, 'YData', rec.y(j, :), ...
-                            'Color', app.traceColor(c, c.channels{P.cont(j)}, rec.name, k, nh));
+                            'Color', app.traceColor(c, P.contNames{j}, rec.name, k, nh));
                     else
                         set(L(k), 'XData', nan, 'YData', nan);
                     end
@@ -686,10 +835,17 @@ classdef TrellisScope < handle
                     if k <= nh
                         rec = P.held(k); sp = rec.spk{j};
                         set(L(k), 'XData', sp, 'YData', ((j-1)*B + k) * ones(1, numel(sp)), ...
-                            'Color', app.traceColor(c, c.channels{P.spk(j)}, rec.name, k, nh));
+                            'Color', app.traceColor(c, P.spkNames{j}, rec.name, k, nh));
                     else
                         set(L(k), 'XData', nan, 'YData', nan);
                     end
+                end
+            end
+            for j = 1:size(P.tgtSpec, 1)
+                L = P.tgtHeldL{j};
+                for k = 1:c.nHold
+                    if k <= nh, app.setTargetLine(L(k), P.tgtSpec(j, :), P.held(k).tg, k, nh, P.tgtColor(P.tgtSpec{j, 1}));
+                    else, set(L(k), 'XData', nan, 'YData', nan); end
                 end
             end
             % other-state markers: every held window's non-aligned onsets,
@@ -722,8 +878,127 @@ classdef TrellisScope < handle
                 end
                 if newTask
                     ph = P.taskProxy.values; ph = [ph{:}];
-                    legend(P.ax, ph, P.taskProxy.keys, 'Location', 'northeast', 'AutoUpdate', 'off', 'Interpreter', 'none');
+                    legend(P.ax, [ph P.tgtProxy], [P.taskProxy.keys P.tgtProxyNames], 'Location', 'northeast', ...
+                        'AutoUpdate', 'off', 'Interpreter', 'none');
                 end
+            end
+        end
+
+        function setTargetLine(~, L, spec, tg, k, nh, base)
+            % One target's X or Y over time (spec = {name, 'x'|'y'}) in colour
+            % BASE, faded like the traces (k = 1 oldest .. nh newest).
+            j = [];
+            if ~isempty(tg), j = find(strcmp({tg.name}, spec{1}), 1); end
+            if isempty(j), set(L, 'XData', nan, 'YData', nan); return, end
+            w = 0.3 + 0.7 * (k - 1) / max(nh - 1, 1);
+            if nh <= 1, w = 1; end
+            col = base * w + [1 1 1] * (1 - w);
+            set(L, 'XData', tg(j).t, 'YData', tg(j).(spec{2}), 'Color', col);
+        end
+
+        % ---------------------------------------------- target positions
+        function t = getSecs(~)
+            try, t = GetSecs; catch, t = NaN; end
+        end
+
+        function noteClockPair(app)
+            % Keep [GetSecs, source time of the newest sample] for every read
+            % over the last 20 s (see clockOffset).
+            if isempty(app.pairNow) || any(~isfinite(app.pairNow)), app.pairNow = []; return, end
+            app.clockPairs(end+1, :) = app.pairNow;
+            app.pairNow = [];
+            old = app.clockPairs(:, 1) < app.clockPairs(end, 1) - 20;
+            if any(old), app.clockPairs(old, :) = []; end
+        end
+
+        function off = clockOffset(app)
+            % GetSecs minus source time. The read that found the freshest
+            % sample has the smallest difference; drift over 20 s is far
+            % below a millisecond.
+            off = NaN;
+            if ~isempty(app.clockPairs), off = min(app.clockPairs(:, 1) - app.clockPairs(:, 2)); end
+        end
+
+        function readTargets(app)
+            % New display flips from GraphicsHandler (targetFlipsPath): each
+            % shown item's position in degrees at the flip's onset, on the
+            % source clock.
+            if isempty(app.tgtMap)
+                gs = app.getSecs();
+                if ~(gs - app.tgtLastTry >= 2), return, end           % try every 2 s
+                app.tgtLastTry = gs;
+                if ~isfile(targetFlipsPath()), return, end
+                try, app.tgtMap = sceneOpen(false, targetFlipsPath()); catch, return, end
+            end
+            [fr, ok] = sceneRead(app.tgtMap);
+            if ~ok || ~isstruct(fr) || ~isfield(fr, 'flips') || isempty(fr.flips), return, end
+            if ~isequal(fr.session, app.tgtSession)                    % GraphicsHandler restarted
+                app.tgtSession = fr.session; app.tgtLastCnt = 0;
+            end
+            if max(fr.flips(:, 1)) <= app.tgtLastCnt, return, end
+            off = app.clockOffset();
+            if ~isfinite(off), return, end                             % no clock pairs yet
+            last = app.tgtLastCnt;
+            app.tgtLastCnt = max(fr.flips(:, 1));
+            it = fr.items;
+            if isempty(it), return, end
+            it = it(it(:, 1) > last, :);
+            if isempty(it), return, end
+            [~, fi] = ismember(it(:, 1), fr.flips(:, 1));
+            t = fr.flips(fi, 2) - off;
+            nm = fr.names(it(:, 2));
+            [u, ~, ui] = unique(nm);
+            [isOld, gi] = ismember(u, app.tgtNames);
+            if any(~isOld)
+                app.tgtNames = [app.tgtNames reshape(u(~isOld), 1, [])];
+                [~, gi] = ismember(u, app.tgtNames);
+                if strcmp(app.tgtPanel.Visible, 'on'), app.fillTargetsTable(); end
+            end
+            deg = pix2deg(it(:, 3:4), 'cart', app.screenGeom());
+            if size(deg, 1) ~= size(it, 1), return, end
+            app.tgtT = [app.tgtT; t(:)];
+            app.tgtK = [app.tgtK; reshape(gi(ui), [], 1)];
+            app.tgtXY = [app.tgtXY; deg];
+            app.tgtC = [app.tgtC; it(:, 1)];
+            old = app.tgtT < app.tgtT(end) - 30;                       % keep 30 s
+            if any(old), app.tgtT(old) = []; app.tgtK(old) = []; app.tgtXY(old, :) = []; app.tgtC(old) = []; end
+        end
+
+        function sp = screenGeom(app)
+            % This rig's screen geometry for pix2deg, read once (as pix2deg
+            % would read it on every call otherwise).
+            if isempty(app.screenP)
+                try
+                    ini = rigIni('config');
+                    app.screenP = struct( ...
+                        'xPixelSize',       ini.GetValues('for deg2pix', 'xPixelSize'), ...
+                        'yPixelSize',       ini.GetValues('for deg2pix', 'yPixelSize'), ...
+                        'true_center',      ini.GetValues('for deg2pix', 'true center'), ...
+                        'subject_distance', ini.GetValues('for deg2pix', 'subject distance'));
+                catch
+                end
+            end
+            sp = app.screenP;
+        end
+
+        function tg = targetWindow(app, t0, preMs, postMs)
+            % Each target's position in [-pre, +post] ms around t0: t (ms) and
+            % x, y (deg), broken (NaN) wherever a display flip did not show it
+            % (its flip counters are not consecutive), whatever the frame rate.
+            tg = struct('name', {}, 't', {}, 'x', {}, 'y', {});
+            if isempty(app.tgtT), return, end
+            sel = app.tgtT >= t0 - preMs/1000 & app.tgtT <= t0 + postMs/1000;
+            if ~any(sel), return, end
+            T = app.tgtT(sel); K = app.tgtK(sel); XY = app.tgtXY(sel, :); C = app.tgtC(sel);
+            for k = unique(K)'
+                r = K == k;
+                [cc, o] = sort(C(r)); t = T(r); t = t(o); xy = XY(r, :); xy = xy(o, :);
+                gap = find(diff(cc) ~= 1);
+                shift = zeros(numel(t), 1); shift(gap + 1) = 1; pos = (1:numel(t))' + cumsum(shift);
+                n = numel(t) + numel(gap);
+                tt = nan(n, 1); xx = tt; yy = tt;
+                tt(pos) = t; xx(pos) = xy(:, 1); yy(pos) = xy(:, 2);
+                tg(end+1) = struct('name', app.tgtNames{k}, 't', ((tt - t0) * 1000)', 'x', xx', 'y', yy'); %#ok<AGROW>
             end
         end
 
@@ -743,20 +1018,47 @@ classdef TrellisScope < handle
             % from the name (not from the order channels are first used).
             if ~isKey(app.chanColors, name)
                 fixed = struct('eyeX', [0 0.447 0.741], 'eyeY', [0.850 0.325 0.098], 'photodiode', [0.4 0.4 0.4]);
-                others = [0.494 0.184 0.556; 0.466 0.674 0.188; 0.301 0.745 0.933; 0.635 0.078 0.184; ...
-                          0.929 0.694 0.125; 0.85 0.10 0.60; 0.10 0.55 0.50; 0.55 0.35 0.15];
                 key = matlab.lang.makeValidName(name);
                 if isfield(fixed, key)
                     app.chanColors(name) = fixed.(key);
                 else
-                    h = 5381;                                   % djb2 string hash: names that differ
-                    for ch = double(name)                       % only in the last digit (spk 1, spk 2)
-                        h = mod(h * 33 + ch, 2^31);             % get neighbouring colours
-                    end
-                    app.chanColors(name) = others(mod(h, size(others, 1)) + 1, :);
+                    others = app.namePalette();
+                    app.chanColors(name) = others(app.nameIndex(name), :);
                 end
             end
             col = app.chanColors(name);
+        end
+
+        function P = namePalette(~)
+            % Colours for names (channels other than the eye/photodiode, targets).
+            P = [0.494 0.184 0.556; 0.466 0.674 0.188; 0.301 0.745 0.933; 0.635 0.078 0.184; ...
+                 0.929 0.694 0.125; 0.85 0.10 0.60; 0.10 0.55 0.50; 0.55 0.35 0.15];
+        end
+
+        function k = nameIndex(app, name)
+            % Palette row picked by the name: djb2 string hash, so names that
+            % differ only in the last digit (spk 1, spk 2) get neighbouring rows.
+            h = 5381;
+            for ch = double(name), h = mod(h * 33 + ch, 2^31); end
+            k = mod(h, size(app.namePalette(), 1)) + 1;
+        end
+
+        function M = targetColors(app, c, names)
+            % One colour per target in a plot: the one its name picks, or the
+            % next free one if a channel or another target there has it.
+            M = containers.Map('KeyType', 'char', 'ValueType', 'any');
+            pal = app.namePalette(); n = size(pal, 1);
+            used = zeros(0, 3);
+            for j = 1:numel(c.channels), used(end+1, :) = app.colorForChannel(c.channels{j}); end %#ok<AGROW>
+            for j = 1:numel(names)
+                k0 = app.nameIndex(names{j});
+                for step = 0:n-1
+                    col = pal(mod(k0 - 1 + step, n) + 1, :);
+                    if ~any(all(abs(used - col) < 1e-9, 2)), break, end
+                end
+                M(names{j}) = col;
+                used(end+1, :) = col; %#ok<AGROW>
+            end
         end
 
         function col = colorForType(app, name)
@@ -833,6 +1135,7 @@ classdef TrellisScope < handle
 
         function [tvec, ymat, events] = acquireSim(app)
             s = app.simState; tnow = app.sourceNow(); dt = 1/app.fs;
+            app.pairNow = [app.getSecs(), tnow];
             tvec = (app.lastAcqT + dt) : dt : tnow; if isempty(tvec), tvec = zeros(1,0); end
             nCh = numel(app.channels); ymat = zeros(nCh, numel(tvec));
             inBurst = false(1, numel(tvec));
@@ -947,16 +1250,19 @@ classdef TrellisScope < handle
             if wantEye, need1k = unique([need1k 10241 10242]); end
 
             refTick = []; d1 = []; e1 = unique(need1k); dL = []; eL = unique(needLfp);
+            gsRead = NaN;                                    % GetSecs right after the read refTick comes from
             if ~isempty(e1)
-                [d1, ts1] = xippmex('cont', e1, N, '1ksps'); refTick = double(ts1);
+                [d1, ts1] = xippmex('cont', e1, N, '1ksps'); gsRead = app.getSecs(); refTick = double(ts1);
             end
             if ~isempty(eL)
                 [dL, tsL] = xippmex('cont', eL, N, 'lfp');
-                if isempty(refTick), refTick = double(tsL); end
+                if isempty(refTick), gsRead = app.getSecs(); refTick = double(tsL); end
             end
             if isempty(refTick) || refTick == 0
                 refTick = double(xippmex('time')) - (N-1)*30;   % approximate: batch ends ~now
+                gsRead = app.getSecs();
             end
+            app.pairNow = [gsRead, (refTick + (N-1)*30) / 30000];   % clock pair for target positions
 
             ticks = refTick + (0:N-1)*30;                    % NIP tick per sample (1 kHz -> 30 ticks)
             keep = true(1,N);

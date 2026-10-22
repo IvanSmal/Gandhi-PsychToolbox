@@ -220,6 +220,11 @@ monTargetW = []; monTargetH = []; lastSnapT = 0;
 % showed and the items that frame drew (see buildStimulusTiming, dumpdata).
 noTags = struct('tag', {}, 'kind', {}, 'rect', {});
 gr.flipLog = emptyFlipLog();
+% Live target positions for TrellisScope: the last second of display flips,
+% published about every 100 ms (see targetFlipsPath, publishTargetFlips).
+tfMap = []; tfSession = GetSecs; tfCount = 0; tfLastPub = 0; tfLastTry = -inf;
+tfFlips = zeros(0, 2);                  % [counter onset]
+tfItemCnt = zeros(0, 1); tfItemXY = zeros(0, 2); tfItemName = {};
 while 1
     try %error handler
         getCommands(graphicsport)          % low-rate control only (dumpdata, exit, seteye)
@@ -558,6 +563,43 @@ end
         gr.flipLog.toggle(n)   = toggle;
         gr.flipLog.blank(n)    = blank;
         gr.flipLog.tags{n}     = tags;
+        publishTargetFlips(onset, tags, blank);
+    end
+    function publishTargetFlips(onset, tags, blank)
+        % Keep the last second of flips with the items each showed (centre of
+        % its box, display pixels) and publish them for TrellisScope about
+        % every 100 ms, and on the trial's last (blank) flip. A flip with no
+        % items still counts: it is where an item stopped being shown.
+        try
+            tfCount = tfCount + 1;
+            tfFlips(end+1, :) = [tfCount onset];
+            for tfQ = 1:numel(tags)
+                tfR = tags(tfQ).rect;
+                if numel(tfR) ~= 4 || any(~isfinite(tfR)), continue, end
+                tfItemCnt(end+1, 1) = tfCount; %#ok<AGROW>
+                tfItemXY(end+1, :) = [(tfR(1)+tfR(3))/2, (tfR(2)+tfR(4))/2]; %#ok<AGROW>
+                tfItemName{end+1, 1} = char(tags(tfQ).tag); %#ok<AGROW>
+            end
+            tfKeep = tfFlips(:, 2) >= onset - 1;
+            if ~all(tfKeep)
+                tfFirst = tfFlips(find(tfKeep, 1), 1);
+                tfFlips = tfFlips(tfKeep, :);
+                tfK = tfItemCnt >= tfFirst;
+                tfItemCnt = tfItemCnt(tfK); tfItemXY = tfItemXY(tfK, :); tfItemName = tfItemName(tfK);
+            end
+            if ~(blank || onset - tfLastPub >= 0.1), return, end
+            if isempty(tfMap)
+                if GetSecs - tfLastTry < 2, return, end          % not every flip
+                tfLastTry = GetSecs;
+                tfMap = sceneOpen(true, targetFlipsPath());
+            end
+            [tfNames, ~, tfIdx] = unique(tfItemName);
+            sceneWrite(tfMap, tfCount, struct('session', tfSession, 'counter', tfCount, ...
+                'flips', tfFlips, 'items', [tfItemCnt tfIdx(:) tfItemXY], 'names', {reshape(tfNames, 1, [])}));
+            tfLastPub = onset;
+        catch tfErr
+            grlogThrottled('target publish failed: %s', tfErr.message);
+        end
     end
 %%parse the commands without drawing'
 %% draw the scene onto both windows

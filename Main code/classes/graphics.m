@@ -68,10 +68,7 @@ classdef graphics < handle
         %% Command processing
         functionsbuffer = []        % Buffer for graphics commands
         lastarg                     % Last argument processed
-        fliptimes                   % VBL timestamp of each flip (PTB GetSecs clock)
-        flipOnsets                  % StimulusOnsetTime of each flip
-        flipMissed                  % PTB deadline-miss flag per flip (>0 = frame dropped)
-        commandIDs                  % IDs of processed commands
+        flipLog                     % one entry per display flip this trial: frame ID, times, state, photodiode, items shown (buildStimulusTiming)
         commid_udp                  % Current command ID from UDP
         movieplaying = 0            % Flag indicating movie is playing
         

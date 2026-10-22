@@ -111,6 +111,9 @@ classdef target %< handle
                 if matches(targ.shape,'square',IgnoreCase=true) ||...
                         matches(targ.shape,'circle',IgnoreCase=true)
                     out=targ.squarepos(pixPos);
+                    % remember the rectangle: mh.Screen matches a drawing command that
+                    % uses it to this target (stimulus timing, buildStimulusTiming)
+                    try, frameItems('target', targ.name, out); catch, end
                 end
             end
         end

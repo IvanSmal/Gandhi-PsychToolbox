@@ -4,10 +4,10 @@ classdef data
         cursor
         neural_data
         photodiode
-        graphics_fliptimes;   % renderer side: which command IDs actually reached the screen, and when
-        graphics_commands;    % state-machine side: every command ID generated, and when
-        DiodeFlipStates;
-        timestamps;
+        stimulus_events;      % one row per item appearing/disappearing and per state change: requested and displayed times (see buildStimulusTiming)
+        stimulus_frames;      % per target / tag, and the photodiode: position and times on every flip it was shown
+        clock_sync;           % Psychtoolbox <-> NIP (Trellis) clock pairs and fit, photodiode delay, NIP ticks of the first eye/photodiode sample and of the trial start
+        timestamps;           % ms (getsecs clock) of each eye/photodiode sample; samples before clock_sync.trial_start_sample are from before the trial (ITI)
         stateCodes;           % state-name <-> digout code table (event markers)
     end
 

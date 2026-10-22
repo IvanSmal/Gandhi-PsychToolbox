@@ -216,6 +216,10 @@ end
 % if the operator resizes it we snap the size back (position left free, so it
 % stays movable). Target size is captured on the first idle frame.
 monTargetW = []; monTargetH = []; lastSnapT = 0;
+% Stimulus timing: every display flip of a trial is logged with the frame it
+% showed and the items that frame drew (see buildStimulusTiming, dumpdata).
+noTags = struct('tag', {}, 'kind', {}, 'rect', {});
+gr.flipLog = emptyFlipLog();
 while 1
     try %error handler
         getCommands(graphicsport)          % low-rate control only (dumpdata, exit, seteye)
@@ -260,7 +264,9 @@ while 1
             % task frame never lingers into the idle state.
             try
                 Screen('FillRect', gr.window_main, bgcolor);
-                Screen('Flip', gr.window_main);
+                [vblB, onsetB, ~, missedB] = Screen('Flip', gr.window_main);
+                % logged: whatever was still on screen disappeared at this flip
+                logFlip(frame.seq, vblB, onsetB, missedB, frame.stateName, NaN, false, true, noTags);
             catch
             end
         end
@@ -268,10 +274,12 @@ while 1
         % state name travels with the frame; diode flips on transition
         nm = frame.stateName;
         if isempty(nm), nm = 'null'; end
+        toggled = false;
         if ~strcmp(gr.state_history{end}, nm)
             gr.state_history{end+1} = nm;
             gr.activestatename      = nm;
             gr.diode_color          = abs(gr.diode_color - 1);
+            toggled = true;         % this frame's flip changes the photodiode square
             disp(join(["changed diode for state: " nm]));
         end
 
@@ -311,12 +319,16 @@ while 1
             % and missed>0 means this flip overran its deadline.
             [vbl, onset, ~, missed] = Screen('Flip', gr.window_main);
             noteDisplayFlip(vbl);
-            % frame.seq is the ID the state machine assigned when it generated
-            % this command, so the two logs join on it.
-            gr.commandIDs = [gr.commandIDs frame.seq];
-            gr.fliptimes  = [gr.fliptimes  vbl];
-            gr.flipOnsets = [gr.flipOnsets onset];
-            gr.flipMissed = [gr.flipMissed missed];
+            % what this flip showed: frame.seq is the ID the state machine gave
+            % the frame, the join key to its change log (buildStimulusTiming)
+            % (frame.stateName, not nm: drawFrame, a nested function, reuses nm)
+            if isfield(frame, 'tagNames') && ~isempty(frame.tagNames)
+                shownTags = struct('tag', reshape(frame.tagNames, 1, []), ...
+                    'kind', reshape(frame.tagKinds, 1, []), 'rect', num2cell(frame.tagRects, 2)');
+            else
+                shownTags = noTags;
+            end
+            logFlip(frame.seq, vbl, onset, missed, frame.stateName, mean(gr.diode_color(:)), toggled, false, shownTags);
 
             flipcount = flipcount + 1;
             if flipcount >= 3
@@ -372,8 +384,14 @@ while 1
             end
 
             Screen('Flip',gr.window_monitor, [], [], 1);
-            vblIdle = Screen('Flip',gr.window_main);
+            [vblIdle, onsetIdle] = Screen('Flip',gr.window_main);
             noteDisplayFlip(vblIdle);
+            % First idle flip after trial flips, when the leaving-trial blank
+            % above did not run (gr.trialstarted cleared by MHost2 first): the
+            % display is clear from this flip on.
+            if ~isempty(gr.flipLog.blank) && ~gr.flipLog.blank(end)
+                logFlip(frame.seq, vblIdle, onsetIdle, 0, frame.stateName, NaN, false, true, noTags);
+            end
             updategui(gr);
             drawnow limitrate;   % out of trial: keep the info window painted & interactive (timing not critical here)
         end
@@ -466,30 +484,40 @@ end
         % next trial's file - one trial empty, the following one doubled.
         % Clearing up front means a failed dump can lose at most the trial it
         % belongs to, and can never corrupt a second trial.
-        rec = struct( ...
-            'commandIDs', gr.commandIDs, ...   % which command IDs reached the screen
-            'fliptimes',  gr.fliptimes,  ...   % VBL timestamp of each flip
-            'onsets',     gr.flipOnsets, ...   % StimulusOnsetTime of each flip
-            'missed',     gr.flipMissed, ...   % >0 means that flip overran its deadline
-            'states',     {{gr.state_history{2:end}}});
-        gr.commandIDs = []; gr.fliptimes = []; gr.flipOnsets = [];
-        gr.flipMissed = [];
+        % If the trial's end has not reached the screen yet (this loop was
+        % stalled), clear the display now, so the dump records when the last
+        % items disappeared instead of that flip landing in the next trial's log.
+        try
+            [fEnd, okEnd] = sceneRead(sceneMap);
+            if okEnd && ~fEnd.trialStarted && ~isempty(gr.flipLog.blank) && ~gr.flipLog.blank(end)
+                Screen('FillRect', gr.window_main, bgcolor);
+                [vblE, onsetE, ~, missedE] = Screen('Flip', gr.window_main);
+                logFlip(fEnd.seq, vblE, onsetE, missedE, fEnd.stateName, NaN, false, true, noTags);
+            end
+        catch
+        end
+        rec = gr.flipLog;                  % one entry per display flip this trial
+        gr.flipLog = emptyFlipLog();
         % Keep the current state as the new baseline (element 1 is never
         % recorded). Resetting to 'null' made the next iteration see the
         % previous trial's still-current 'stop_autogenerated' as a fresh
-        % transition: it led every trial's DiodeFlipStates and toggled the
-        % diode once between trials, offsetting the whole list by one.
+        % transition: it toggled the diode once between trials.
         gr.state_history = gr.state_history(end);
+        % screenparams []: pix2deg reads this rig's config, as for the eye
+        geom = struct('width', gr.screenXpixels, 'height', gr.screenYpixels, ...
+            'diode_rect', gr.diode_pos, 'screenparams', []);
 
         for attempt = 1:3
             try
                 temptr = load(fname);
                 trname = fields(temptr);
-                temptr.(trname{1}).data.graphics_fliptimes.commandIDs = rec.commandIDs;
-                temptr.(trname{1}).data.graphics_fliptimes.fliptimes  = rec.fliptimes;
-                temptr.(trname{1}).data.graphics_fliptimes.onsets     = rec.onsets;
-                temptr.(trname{1}).data.graphics_fliptimes.missed     = rec.missed;
-                temptr.(trname{1}).data.DiodeFlipStates               = rec.states;
+                % MHost2 saved what the task asked for (its change log) and the
+                % clock data; add what the display showed and when, on the
+                % Psychtoolbox and NIP clocks.
+                d = temptr.(trname{1}).data;
+                [d.stimulus_events, d.stimulus_frames, d.clock_sync] = buildStimulusTiming( ...
+                    rec, d.stimulus_events, d.clock_sync, d.photodiode, geom);
+                temptr.(trname{1}).data = d;
                 save(fname,'-struct','temptr');
                 disp(join(['saved ', trname{1}]))
                 return
@@ -510,6 +538,26 @@ end
         catch sideErr
             disp(['DUMPDATA FAILED and no sidecar could be written: ' sideErr.message]);
         end
+    end
+%% stimulus timing: one entry per display flip (see buildStimulusTiming)
+    function L = emptyFlipLog()
+        L = struct('frame_id', [], 'vbl', [], 'onset', [], 'missed', [], 'state', {{}}, ...
+            'diode', [], 'toggle', false(1,0), 'blank', false(1,0), 'tags', {{}});
+    end
+    function logFlip(id, vbl, onset, missed, state, diode, toggle, blank, tags)
+        % diode: the square's colour (0/1, NaN once the trial's blank removes
+        % it); toggle: it changed colour on this flip; blank: the flip that
+        % cleared the display at the end of the trial.
+        n = numel(gr.flipLog.frame_id) + 1;
+        gr.flipLog.frame_id(n) = id;
+        gr.flipLog.vbl(n)      = vbl;
+        gr.flipLog.onset(n)    = onset;
+        gr.flipLog.missed(n)   = missed;
+        gr.flipLog.state{n}    = char(state);
+        gr.flipLog.diode(n)    = diode;
+        gr.flipLog.toggle(n)   = toggle;
+        gr.flipLog.blank(n)    = blank;
+        gr.flipLog.tags{n}     = tags;
     end
 %%parse the commands without drawing'
 %% draw the scene onto both windows

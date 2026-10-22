@@ -20,6 +20,14 @@ function varargout = Screen(mh, varargin)
 %       mh  or 'windowPtr'  -> draw on BOTH the display and the monitor
 %       'monitoronly'       -> monitor (experimenter) window only
 %       'displayonly'       -> display (animal) window only
+%
+%   Timestamping: end any drawing call with 'Tag', name to get when it was
+%   asked for and when it reached the screen in data.stimulus_events and
+%   data.stimulus_frames (see buildStimulusTiming):
+%       mh.Screen('FillRect', 'windowPtr', [1 1 1], cueRect, 'Tag', 'cue')
+%   The pair is removed before drawing. Targets drawn at the rectangle getpos
+%   returned are tagged with their own name automatically. Only what is drawn
+%   on the display counts, not 'monitoronly'.
 
 if isempty(mh.sceneMap)
     mh.sceneMap = sceneOpen(true);
@@ -35,6 +43,7 @@ switch lower(string(cmd))
         return
     case "clearbuffer"
         mh.cmdList = {};
+        frameItems('clear');
         return
     case "seteye"
         mh.sceneSetEye = 1;
@@ -57,6 +66,11 @@ args = varargin;
 if numel(args) >= 2
     args{2} = windowToken(args{2});
 end
+tag = '';
+if numel(args) >= 4 && (ischar(args{end-1}) || isstring(args{end-1})) && strcmpi(args{end-1}, 'Tag')
+    tag = char(args{end});          % timestamp this item; Psychtoolbox never sees the pair
+    args(end-1:end) = [];
+end
 if any(strcmpi(string(cmd), ["PlayMovie","CloseMovie","SetMovieTimeIndex"]))
     mh.oneShotSeq = mh.oneShotSeq + 1;
     s = struct('token', mh.oneShotSeq);
@@ -70,42 +84,58 @@ if any(strcmpi(string(cmd), ["PlayMovie","CloseMovie","SetMovieTimeIndex"]))
     end
     return
 end
+if ischar(args{min(2, end)}) && any(strcmp(args{min(2, end)}, {'both', 'display'}))
+    frameItems('draw', args, tag);  % what the animal sees, for stimulus timing
+end
 mh.cmdList{end+1} = args;
 end
 
 % =========================================================================
 function publishFrame(mh)
-% Every published frame gets an ID and a generation timestamp. The ID is the
-% join key: the renderer records which IDs actually reached the screen, so
-% latency = flipTime(id) - tGenerated(id) for the frames that were displayed.
+% Every published frame gets an ID and a generation timestamp, and lists the
+% items it draws on the display (frameItems). The ID is the join key: the
+% renderer records which frame each flip showed, so the change log kept here
+% (when each item was asked for) meets the flips that showed it
+% (buildStimulusTiming).
 % GetSecs (PTB, monotonic, 0.48 us resolution) is used on BOTH sides -
 % getsecs is wall-clock seconds-since-midnight and is not comparable to
 % Psychtoolbox flip timestamps.
 tGen = GetSecs;
 mh.sceneSeq = mh.sceneSeq + 1;
 seq = mh.sceneSeq;
+state = char(mh.activestatename);
+[tagNames, tagKinds, tagRects, changes] = frameItems('take', state);
 
 frame = struct( ...
     'seq',          seq, ...
     'tGenerated',   tGen, ...
     'trialStarted', logical(mh.trialstarted), ...
-    'stateName',    char(mh.activestatename), ...
+    'stateName',    state, ...
     'setEye',       logical(mh.sceneSetEye), ...
     'resources',    {mh.resourceDecl}, ...
     'oneShots',     {mh.oneShots}, ...
     'cmds',         {mh.cmdList});
+if ~isempty(tagNames)                   % items drawn on the display (none: fields left out)
+    frame.tagNames = tagNames;
+    frame.tagKinds = tagKinds;
+    frame.tagRects = tagRects;
+end
 
 sceneWrite(mh.sceneMap, seq, frame);
 
-% log EVERY generated command, not only the ones that get displayed
-n = mh.cmdLogN + 1;
-if n > numel(mh.cmdLogId)
-    mh.cmdLogId(2*numel(mh.cmdLogId))     = 0;   % geometric growth
-    mh.cmdLogTime(2*numel(mh.cmdLogTime)) = 0;
+% The "requested" side of data.stimulus_events: every item appearing or
+% disappearing, and every state change (the photodiode square changes colour
+% on each), with this frame's ID and time. Rare, so grown on demand.
+for j = 1:size(changes, 1)
+    n = mh.stimReqN + 1;
+    mh.stimReqTag{n}   = changes{j, 1};
+    mh.stimReqKind{n}  = changes{j, 2};
+    mh.stimReqEvent{n} = changes{j, 3};
+    mh.stimReqState{n} = state;
+    mh.stimReqSeq(n)   = seq;
+    mh.stimReqTime(n)  = tGen;
+    mh.stimReqN        = n;
 end
-mh.cmdLogId(n)   = seq;
-mh.cmdLogTime(n) = tGen;
-mh.cmdLogN       = n;
 
 mh.cmdList     = {};
 mh.sceneSetEye = 0;

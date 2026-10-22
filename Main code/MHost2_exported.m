@@ -1223,6 +1223,12 @@ classdef MHost2_exported < matlab.apps.AppBase
             % File > Switch Branch: pick a Git branch, then MHost2 restarts on it
             uimenu(app.FileMenu, 'Text', 'Switch Branch...', 'Separator', 'on', ...
                 'MenuSelectedFcn', @(~,~) branchPicker(app.UIFigure, @() app.running));
+            % Exit last: the File items above are added here at startup, after the
+            % design-time Exit. Children lists the newest item first, so Exit goes
+            % first in it. Keep this the last thing that adds to the File menu.
+            app.ExitMenu.Separator = 'on';
+            k = app.FileMenu.Children ~= app.ExitMenu;
+            app.FileMenu.Children = [app.ExitMenu; app.FileMenu.Children(k)];
         end
 
         function toggleCursorOnDisplay(app, src, ci)

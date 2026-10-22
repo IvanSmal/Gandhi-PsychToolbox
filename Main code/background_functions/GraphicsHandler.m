@@ -1092,11 +1092,11 @@ end
         % Create Grid units dropdown (switch the monitor grid: degrees / mm / both)
         gridLbl = uilabel(gr.UIFigure);
         gridLbl.HorizontalAlignment = 'right';
-        gridLbl.Position = [222 138 68 22];
+        gridLbl.Position = [219 116 68 22];
         gridLbl.Text = 'Grid units';
         gridDD = uidropdown(gr.UIFigure);
         gridDD.Items = {'degrees', 'mm', 'both'};
-        gridDD.Position = [295 138 105 22];
+        gridDD.Position = [292 116 105 22];             % same row as the photodiode lamp
         gridDD.Value = gr.gridmode;
         gridDD.ValueChangedFcn = @(src,~) gr.setgridmode(src.Value);
 

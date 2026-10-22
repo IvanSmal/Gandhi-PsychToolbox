@@ -1210,6 +1210,9 @@ classdef MHost2_exported < matlab.apps.AppBase
             end
             dmItem = uimenu(app.FileMenu, 'Text', 'Demo Mode', 'MenuSelectedFcn', @(s,~) app.toggleDemoMode(s));
             if isfile(demoFlagPath()), dmItem.Checked = 'on'; end
+            % File > Switch Branch: pick a Git branch, then MHost2 restarts on it
+            uimenu(app.FileMenu, 'Text', 'Switch Branch...', 'Separator', 'on', ...
+                'MenuSelectedFcn', @(~,~) branchPicker(app.UIFigure, @() app.running));
         end
 
         function toggleCursorOnDisplay(app, src, ci)

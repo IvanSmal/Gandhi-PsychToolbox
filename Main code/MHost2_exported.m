@@ -175,6 +175,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                 copyfile(taskpath, fullfile(bckpname,'Tasks'))
 
                 fileID = fopen(fullfile(bckpname, 'description.txt'),'W');
+                fprintf(fileID,'\ncode version: %s\n', codeVersion());
                 fprintf(fileID,'\n%s\n%s\n%s','------------------','full info box text:','------------------');
                 boxtext=app.InformationTextArea.Value;
                 fprintf(fileID,'\n%s',string(boxtext));
@@ -1709,6 +1710,7 @@ classdef MHost2_exported < matlab.apps.AppBase
             fprintf(fid, 'SYSTEM INFORMATION:\n');
             fprintf(fid, '-----------------------------------------------------------------\n');
             fprintf(fid, 'MATLAB Version: %s\n', version);
+            fprintf(fid, 'Code Version: %s\n', codeVersion());
             fprintf(fid, 'Operating System: %s\n', computer);
             fprintf(fid, 'User: %s\n\n', getenv('USER'));
 
@@ -1763,8 +1765,8 @@ classdef MHost2_exported < matlab.apps.AppBase
             addpath(genpath(app.filepaths.GetValues('paths','home')));
 
             app.LiveParameters = LiveParams(app); %launch params window
-            app.UIFigure.Name = 'MHost2';
-            windowIdentity('MHost2', 'mhost2', app.UIFigure);   % own dock icons
+            app.UIFigure.Name = strtrim(['MHost2 ' codeVersion('short')]);   % version and branch, from git
+            windowIdentity(app.UIFigure.Name, 'mhost2', app.UIFigure);   % own dock icons
             windowIdentity('Parameters', 'parameters', app.LiveParameters.ParametersUIFigure);
 
             %% set up daq. Modify the specifics in the setupDAQ function

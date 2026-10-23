@@ -1,6 +1,7 @@
 # Handoff — Ubuntu_dev VM on batistaserver
 
-Last updated: 2026-10-23: the trial loop made faster (§12), on branch
+Last updated: 2026-10-23: exact repeats of failed trials with a per-task
+repeat count (§13), and before it the trial loop made faster (§12), on branch
 `steady-targets` (cut from `main` after PR #48 merged `ai-assisted-2`), pushed.
 Earlier that day: one timeline for every saved time (§11), with
 `documentation/timing.md`. Before it (2026-10-22): all 7
@@ -578,6 +579,54 @@ idle and in trials (reward handler from source). NOT tested on a rig yet:
 check `data.loop_ms` there. **Updating a rig:** close MHost2, GraphicsHandler
 and Trellis Scope and start them together; the slot files change format.
 
-Next on this branch (proposed, not started): steady targets, i.e. a steady
-60 fps (flip every other refresh at 120 Hz) and positions computed for the
-moment of display.
+Looked at next, not built: moving-target smoothness. In the rig data the
+path maths is exact; a shown position lags where it should be by the frame's
+age (median 3.9 ms, sd 3.8, r = 0.99 with the error), plus the 1-1-2 refresh
+rhythm. Proposed: a steady 60 fps and positions for the moment of display. The
+user decided none of this is serious enough to change.
+
+---
+
+## 13. Repeating failed trials exactly (2026-10-23, branch `steady-targets`)
+
+The user's requirement: a failed trial can be repeated X times, each repeat
+exactly the same as the failed trial. Before: the trial loop drew a new trial
+type, then restored `copy(app.mhbackup)` (the state at the END of the failed
+trial) and skipped the task's setup block. In the rig data parameters matched,
+but targets carried the failed trial's history (thousands of old `getpos`
+calls) and run-time state (e.g. the pong targets' `prevx` / `xdir`), the info
+box and Trellis Scope showed the newly drawn type, and the data did not say a
+trial was a repeat.
+
+Now:
+- `starttrial` sets `mh.snapshotPending`; the next `setstate` (the first state,
+  i.e. the end of the setup block) saves `mh.trialSnapshot`: ttype, trialnum,
+  first state, targets (histories emptied), intervals, userdefined. First
+  attempts only.
+- MHost2: a repeat takes the snapshot's ttype (no new draw), restores targets,
+  intervals and userdefined into a fresh trial object, calls `starttrial` and
+  `setstate(firstState)`. No more `copy(app.mhbackup)` or field clearing there.
+- `trial.repeat` (0 = first attempt, 1, 2, ...) and `trial.repeat_of` (the
+  first attempt's trialnum; its own for a first attempt). `trialRecord` sets
+  `repeat_of` of a first attempt from the number it is saved under, and the
+  snapshot takes it after `savestate`: the first trial after a restart is
+  renumbered when saved (found in testing: repeats pointed at "trial 1").
+- Per-task count: the Parameters window's trial-types table has a third
+  column, "Repeats if failed"; blank = the misc tab's "Repeat failed trials".
+  `app.repeatLimit(mh)` looks it up (in `mh.ttypeslogic`, column 3). Under the
+  table: Distribute (moved under the Occurrence column, its own row) and
+  "Repeats if failed, all: [box] [Set all]" (under the Repeats column): a
+  number fills every row, a blank box clears them all, anything else is
+  refused. The columns and positions are set in LiveParams' `setTaskTable` /
+  `startupFcn`, so App Designer's design view still shows the old layout.
+- The info-box line at each trial start showed the previous trial's task (the
+  Trial name field is filled later); it now prints the trial's own.
+
+Tested in the VM, three runs (227 demo trials): limits 0 / 4 / blank (= 2),
+Set all 3, all blank; every failed trial repeated until a success or its
+limit, never more. All 147 repeats had the first attempt's task, userdefined,
+target settings and every setup-block interval, and no carried history. The
+only difference: a repeat that succeeded also holds `reward`, fetched by the
+task with `getint` in its reward state; draws made while a trial runs cannot
+be replayed. Not changed: whether a trial ended by STOP is repeated after the
+next START.

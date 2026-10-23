@@ -35,6 +35,7 @@ compare them.
 | Everything that changed on screen, in one table | `data.stimulus_events` |
 | Every item on every frame, in one place | `data.stimulus_frames` |
 | How the times were made (clock fit, photodiode delay, raw values) | `data.clock_sync` |
+| How to check the photon times on a rig | *Checking photon times on a rig*, below |
 
 ### Examples
 
@@ -275,6 +276,8 @@ The item's height is the middle of the part of its box that is on the
 display. An item entirely off the display gets NaN. The frame duration is the
 median interval between this trial's flips (`clock_sync.frame_ms`).
 
+How to check photon times on a rig: *Checking photon times on a rig*, below.
+
 ### Positions
 
 `x_deg`, `y_deg` are degrees of visual angle, 0 at the display's true centre
@@ -295,6 +298,129 @@ output 1 goes high when MHost2 starts preparing a trial (before the
 inter-trial wait) and low when the trial loop ends, and digital output 4 goes
 high at the trial start and low about 50 ms later. These markers are when MHost2 sent them, not when the
 display changed: for that, use `displayed_ms` / `photon_ms`.
+
+## Checking photon times on a rig
+
+`photon_ms` depends on the photodiode, so it can only be checked on a rig
+with the photodiode connected (in demo mode, and in the VM, it is always
+NaN). Do the checks in this order: each one depends less on MHost2 than the
+one before.
+
+### 1. In the saved session
+
+**Did the photodiode calibrate in every trial?**
+
+```matlab
+P = arrayfun(@(t) t.data.clock_sync.photodiode, e.trial);
+fprintf('photodiode used in %d of %d trials\n', nnz([P.used]), numel(P));
+unique({P(~[P.used]).note})                            % why not, for the others
+fprintf('lag %.2f-%.2f ms (median %.2f), largest spread %.2f ms\n', min([P.lag_ms]), ...
+    max([P.lag_ms]), median([P.lag_ms], 'omitnan'), max([P.lag_spread_ms]));
+```
+
+Expect:
+- used in nearly every trial. A trial that ended after a fraction of a
+  second may have too few state changes ("too few photodiode edges near the
+  colour changes").
+- `lag_ms` the same from trial to trial, to within about a millisecond. It is
+  the display's own delay (its input lag, plus the time it takes to draw down
+  to the square), so it differs between displays. The 120 Hz display recorded
+  on 2026-10-22 gave 8.3-9.0 ms, median 8.5 ms.
+- `lag_spread_ms` well under 1 ms (0.1 ms on that display).
+
+A lag that jumps between trials, or a spread near the 3 ms limit, means the
+wrong crossings are being picked. Check the channel, that the sensor sits
+over the square, and that the trace is a clean two-level signal (next check).
+
+**Do the photon times sit on the photodiode's steps?** Plot one trial:
+
+```matlab
+t = e.trial(find([P.used], 1)); d = t.data;           % a trial where it was used
+st = struct2cell(t.state); st = [st{:}];             % all its states
+on = vertcat(st.displayed_ms); ph = vertcat(st.photon_ms);
+figure; plot(d.time_ms, d.photodiode); hold on
+xline(on(isfinite(on)), 'k:');                       % the flips
+xline(ph(isfinite(ph)), 'r');                        % the light
+xlabel('ms since the trial start')
+```
+
+The square changes between black and white at every state change, so the
+trace steps up or down at each one. Each red line should be on a step,
+halfway up it when you zoom in, and each dotted line should be the same
+`lag_ms` before its red line.
+
+**Are the items' photon times in range?** An item's photon time is not
+measured: it is the square's delay, shifted by where the item is on the
+display. An item higher up lights earlier than the square at the bottom, by
+up to one frame:
+
+```matlab
+C = d.clock_sync;
+F = d.stimulus_frames.T1_Moving_CW_12;                % any target or tag
+L = F.photon_ms - F.displayed_ms;
+fprintf('%.2f-%.2f ms, expected within %.2f-%.2f ms\n', min(L), max(L), ...
+    C.photodiode.lag_ms - C.frame_ms, C.photodiode.lag_ms);
+```
+
+### 2. Against the Trellis recording
+
+Trellis records the same signals on its own, so this checks what the session
+cannot check by itself: how MHost2 placed its photodiode samples on the NIP
+clock, how it found the steps, and its `GetSecs` -> NIP clock fit.
+
+Before recording:
+- In Trellis, save the photodiode's analog input, preferably at 30 kHz
+  (1 kHz works). MHost2 reads it as the fourth analog channel,
+  `app.chidx(4)`. Also save the digital (parallel port) input that carries
+  the state markers.
+- Tick RECORD NEURAL DATA. MHost2 then makes one Trellis recording per trial,
+  numbered `trial.trellis_trial_number`. Each starts before the inter-trial
+  wait and stops after the trial.
+
+Run 20 or more trials of a task with several states and a moving target.
+For each trial, open its Trellis files with Ripple's MATLAB tools for Trellis
+files (Neuroshare: `ns_OpenFile`, `ns_GetAnalogData`, `ns_GetEventData`).
+Get, in the file's own time:
+- **steps**: the photodiode crossings, found the way MHost2 finds them
+  (threshold halfway between the 2nd and 98th percentiles, each crossing
+  interpolated between samples);
+- **markers**: the digital events. Each one's value is a state's code,
+  `t.state.<name>.code` (the session's table is `data.stateCodes`). Entry *k*
+  of a state is that code's *k*-th marker; its step is the first step after
+  the marker. When the display is cleared at the end of the trial, a white
+  square disappearing makes one more step, after the last state's: ignore it.
+
+Compare only differences within a trial, so the file's time origin does not
+matter:
+
+| From Trellis | From the saved trial | Checks | Expect |
+|---|---|---|---|
+| step - first step | `photon_ms` - the first state's `photon_ms` | the photodiode samples' times; the step finding | equal to within about 0.5 ms |
+| marker - `start_autogenerated`'s marker | `requested_ms` | the clock fit | equal to within about 1 ms, with no drift over the trial |
+| step - the same state's marker | `photon_ms - requested_ms` | everything together | differ by the same amount for every state (the marker's own delay, a fraction of a ms) |
+
+If the files turn out to store the NIP's own ticks, rather than time since
+the file started, `photon_tick` and the markers can also be compared with the
+saved ticks directly.
+
+### 3. The correction for an item's height
+
+Items' photon times assume the display draws from top to bottom, at a steady
+speed, once per frame. To check that on a display, measure the square's
+delay at two heights:
+
+1. Record a few trials with the square at the bottom, where it normally is.
+   GraphicsHandler draws it at `gr.diode_pos = [0, H-20, 20, H]` (the
+   bottom-left 20 px; `H` is the display's height in pixels).
+2. Change that line in `GraphicsHandler.m` to the top-left, `[0, 0, 20, 20]`,
+   move the sensor there, restart, and record a few more. Put the line back
+   afterwards; do not commit it.
+3. At the top, `lag_ms` should be shorter by (H - 20) / H x `frame_ms`. For
+   a 1080-pixel display at 120 Hz, that is about 8.2 ms.
+
+If it does not match, item photon times can be off by up to a frame. Some
+displays update in a different order, or light the whole panel at once (a
+strobed backlight). States are measured directly and are not affected.
 
 ## What is not on the timeline
 

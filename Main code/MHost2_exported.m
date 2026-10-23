@@ -114,7 +114,7 @@ classdef MHost2_exported < matlab.apps.AppBase
         last_trial_timestamp = 0
         last_trial_ITI = 0
         ITI_first=1
-        post_trial_timer =0
+        post_trial_timer = uint64(0) % uint64 so toc() cannot throw if a post-trial tic was skipped
 
         % repeating failed trials
         trials_failed = 0
@@ -129,6 +129,12 @@ classdef MHost2_exported < matlab.apps.AppBase
         CheckBoxCounter = 0; % counting how many trials were ran without recording neural data
         homepath; % Description
         post_trial_procedure_complete = 1; % Check that post trial procedure actually happened
+        scopeMetaMap                       % shared-memory slot: publish trial name to TrellisScope
+        scopeMetaSeq = 0                    % seqlock counter for scopeMetaMap
+        % misc tab gauges (created by createMiscStats at startup, not in the design view)
+        miscStats = struct()          % handles: fps, loopMs
+        miscStatsTimer = uint64(0)    % throttles updateMiscStats to 2 Hz
+        renderStatsMap = []           % renderer -> state machine flip-rate slot, see renderStatsPath
     end
 
     methods (Access = public)
@@ -169,6 +175,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                 copyfile(taskpath, fullfile(bckpname,'Tasks'))
 
                 fileID = fopen(fullfile(bckpname, 'description.txt'),'W');
+                fprintf(fileID,'\ncode version: %s\n', codeVersion());
                 fprintf(fileID,'\n%s\n%s\n%s','------------------','full info box text:','------------------');
                 boxtext=app.InformationTextArea.Value;
                 fprintf(fileID,'\n%s',string(boxtext));
@@ -180,11 +187,16 @@ classdef MHost2_exported < matlab.apps.AppBase
                 else
                     app.insToTxtbox('No temporary data file for this trial number found. Attempting to fix trial numbers')
                     % get files in dir
-                    files=dir(fullfile(app.checkForDataDirectory,'temptrials'));
+                    files=dir(fullfile(app.checkForDataDirectory,'temptrials','*.mat'));
                     % load last file
-                    lastfile=load([files(end).folder,'/',files(end).name]);
-                    %get last trial number
-                    truetrnum=lastfile.(files(end).name(1:end-4)).trialnum;
+                    if isempty(files)
+                        app.insToTxtbox('No temptrial .mat files found; using persistent trial counter instead.')
+                        truetrnum=app.mhpass.trialnumpersistent;
+                    else
+                        lastfile=load(fullfile(files(end).folder,files(end).name));
+                        %get last trial number
+                        truetrnum=lastfile.(files(end).name(1:end-4)).trialnum;
+                    end
                     %add one
                     truetrnum =truetrnum+1;
                     % insert new trial number to the persistent trnumber
@@ -196,13 +208,13 @@ classdef MHost2_exported < matlab.apps.AppBase
                     trnumber=num2str([zeros(1,5) app.mhpass.trial.trialnum]);
                     trnumber = trnumber(find(~isspace(trnumber)));
                     trname=['tr_' trnumber(end-5:end)];
-                    eval([trname '=app.mhpass.trial;']);
+                    eval([trname '=trialRecord(app.mhpass.trial, app.mhpass.screenparams);']);   % saved form: every time on the trial's timeline
                     tempfname=fullfile(app.checkForDataDirectory,'temptrials',[trname '.mat']);
                     
                     app.insToTxtbox('fixed trial numbers.')
                 end
                 try
-                fliptimes_exist = isempty(temptr.(trname).data.graphics_fliptimes.fliptimes);
+                fliptimes_exist = ~isempty(temptr.(trname).data.stimulus_frames);   % the renderer's flip log is in
                 if ~fliptimes_exist
                     try %asking one more time for the graphics to dump the data please
                         mh.evalgraphics(join(['dumpdata("', tempfname, '");']))
@@ -216,18 +228,23 @@ classdef MHost2_exported < matlab.apps.AppBase
                 clear temptr
             else
                 %% back up data up to this point
-                eval([trname '=app.mhpass.trial;']);
+                eval([trname '=trialRecord(app.mhpass.trial, app.mhpass.screenparams);']);   % saved form: every time on the trial's timeline
 
                 response=0; %restet graphics response    
                 if exist(fullfile(app.checkForDataDirectory,'temptrials'),'dir')
                     if exist(tempfname,'file')
                         app.insToTxtbox(['trial file: ' tempfname ' already exists. Will attempt to fix trial numbers.'])
                         % get files in dir
-                        files=dir(fullfile(app.checkForDataDirectory,'temptrials'));
+                        files=dir(fullfile(app.checkForDataDirectory,'temptrials','*.mat'));
                         % load last file
-                        lastfile=load([files(end).folder,'/',files(end).name]);
-                        %get last trial number
-                        truetrnum=lastfile.(files(end).name(1:end-4)).trialnum;
+                        if isempty(files)
+                            app.insToTxtbox('No temptrial .mat files found; using persistent trial counter instead.')
+                            truetrnum=app.mhpass.trialnumpersistent;
+                        else
+                            lastfile=load(fullfile(files(end).folder,files(end).name));
+                            %get last trial number
+                            truetrnum=lastfile.(files(end).name(1:end-4)).trialnum;
+                        end
                         %add one
                         truetrnum =truetrnum+1;
                         % insert new trial number to the persistent trnumber
@@ -239,7 +256,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                         trnumber=num2str([zeros(1,5) app.mhpass.trial.trialnum]);
                         trnumber = trnumber(find(~isspace(trnumber)));
                         trname=['tr_' trnumber(end-5:end)];
-                        eval([trname '=app.mhpass.trial;']);
+                        eval([trname '=trialRecord(app.mhpass.trial, app.mhpass.screenparams);']);   % saved form: every time on the trial's timeline
                         tempfname=fullfile(app.checkForDataDirectory,'temptrials',[trname '.mat']);
                         
                         app.insToTxtbox('fixed trial numbers.')
@@ -272,6 +289,7 @@ classdef MHost2_exported < matlab.apps.AppBase
 
     methods (Access = private)
         function [mh,e] = Run_Experiment(app,mh)
+            e = []; % guarantee 'e' exists so the catch handler cannot fail on an undefined 'e'
             try
                 if app.errored
                     temptrialnumpersistent=mh.trialnumpersistent;
@@ -326,13 +344,14 @@ classdef MHost2_exported < matlab.apps.AppBase
                 end
 
                 %% update the eccenticity gain and screen parameters
-                app.ini.ReadFile('inis/ScreenParams.ini');
-                mh.eccentricity_gain = app.ini.GetValues('target window parameters','eccentricity_gain');
-                mh.trailing_window_time = app.ini.GetValues('target window parameters','trailing_window_time');
-                mh.screenparams.xPixelSize=app.ini.GetValues('for deg2pix','xPixelSize');
-                mh.screenparams.yPixelSize=app.ini.GetValues('for deg2pix','yPixelSize');
-                mh.screenparams.true_center=app.ini.GetValues('for deg2pix','true center');
-                mh.screenparams.subject_distance=app.ini.GetValues('for deg2pix','subject distance');
+                % all of these live in the hand-written rig config
+                cfg = rigIni('config');
+                mh.eccentricity_gain = cfg.GetValues('target window parameters','eccentricity_gain');
+                mh.trailing_window_time = cfg.GetValues('target window parameters','trailing_window_time');
+                mh.screenparams.xPixelSize=cfg.GetValues('for deg2pix','xPixelSize');
+                mh.screenparams.yPixelSize=cfg.GetValues('for deg2pix','yPixelSize');
+                mh.screenparams.true_center=cfg.GetValues('for deg2pix','true center');
+                mh.screenparams.subject_distance=cfg.GetValues('for deg2pix','subject distance');
 
                 if app.paramsloaded==0
 
@@ -383,6 +402,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                     trialtypestring=char(tlist{randTrial});
                     mh.trial.ttype=trialtypestring(1:end-2);
                     mh.trial_function=str2func(mh.trial.ttype);
+                    app.publishScopeMeta(mh.trial.ttype);
 
                     %%
                     % check if autocalibrate buffer changed
@@ -396,7 +416,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                     for i=1:size(ttable,1)
                         eval(['temp=[' ttable{i,2} '];']); % I have no idea why I do it this way but if i change it it breaks
                         mh.targets.(ttable{i,1}).position=temp;
-                        if any(matches(["cart","cartesian","pol","polar"],ttable{i,3},Ignorecase=1))
+                        if any(matches(["cart","cartesian","pol","polar","mm"],ttable{i,3},Ignorecase=1))
                             mh.targets.(ttable{i,1}).degreestype=ttable{i,3};
                         else
                             warndlg('One of the targets has an invalid degrees type')
@@ -478,17 +498,51 @@ classdef MHost2_exported < matlab.apps.AppBase
                     gotinfo=0;
                     xippmex('digout', 1, 1)
                     [eyeandphotodiode, xippmextstart]=xippmex('cont',app.chidx([1,2,4]),1000,'1ksps');
+                    nipTick(xippmextstart, 1000); % cache the NIP clock for setstate (no per-state xippmex('time'))
+                    % ---- cursor recording setup (batched, parallel to the eye) ----
+                    % Record every ENABLED cursor 1..5 alongside the eye. Each sample keeps
+                    % when it was taken: the NIP tick of the analog read, or GetSecs for a udp
+                    % cursor; trialRecord saves it as time_ms (ms since the trial start).
+                    % To keep the state loop fast, ALL analog cursor channels are read in ONE
+                    % batched xippmex('cont',...) call per pass (not one call per cursor); udp
+                    % cursors are read from their shared slot (a cheap memmap). Every cursor block
+                    % is guarded by recHasCursors, so eye-only tasks add ZERO per-pass work.
+                    recA_id=[]; recA_xi=[]; recA_yi=[]; recA_xg=[]; recA_yg=[]; recA_xo=[]; recA_yo=[];
+                    recU_id=[]; recU_obj={}; recChans=[]; CURSMAX=20000;
+                    for ci = 1:5
+                        try
+                            if numel(mh.cursors) < ci || isempty(mh.cursors{ci})
+                                cobj = cursorinfo(ci);
+                                if ~cobj.enabled, continue; end
+                                mh.cursors{ci} = cobj;
+                            else
+                                cobj = mh.cursors{ci};
+                                if ~cobj.enabled, continue; end
+                            end
+                        catch
+                            continue
+                        end
+                        if strcmpi(cobj.source,'udp')
+                            recU_id(end+1)=ci; recU_obj{end+1}=cobj; %#ok<AGROW>
+                        elseif any(app.chidx==cobj.xchan) && any(app.chidx==cobj.ychan)
+                            recChans(end+1)=cobj.xchan; recA_xi(end+1)=numel(recChans); %#ok<AGROW>
+                            recChans(end+1)=cobj.ychan; recA_yi(end+1)=numel(recChans); %#ok<AGROW>
+                            recA_id(end+1)=ci; %#ok<AGROW>
+                            recA_xg(end+1)=cobj.xgain; recA_yg(end+1)=cobj.ygain; %#ok<AGROW>
+                            recA_xo(end+1)=cobj.xoffset; recA_yo(end+1)=cobj.yoffset; %#ok<AGROW>
+                        end
+                    end
+                    Ka=numel(recA_id); Ku=numel(recU_id); recHasCursors=(Ka>0)||(Ku>0);
+                    recN=0; recSecs=nan(1,CURSMAX); recTick=nan(1,CURSMAX);
+                    recA_mm=nan(CURSMAX,2,max(Ka,1)); recU_mm=nan(CURSMAX,2,max(Ku,1));
 
                     % ITI check
                     gotiti=0;
-                    while (app.last_trial_timestamp+app.last_trial_ITI)>getsecs %% ITI
+                    while (app.last_trial_timestamp+app.last_trial_ITI)>GetSecs && ~app.STOPButton.Value %% ITI
                         gotiti=1;
                         pause(0.001)
                         mh.rewcheck(app);
-                        try
-                            com=readline(mh.rewardport);
-                            eval(com);
-                        end
+                        app.drainRewardPort;
                     end
                                         
                     if ~gotiti && ~app.ITI_first
@@ -506,7 +560,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                             mh=copy(app.mhbackup); %revert to last parameters/targets
                             mh.trialnumpersistent = mh.trialnumpersistent+1;
                             mh.trial.trialnum=mh.trialnumpersistent; %fix trial numbers
-                            toRemove={'tstarttime','tstoptime','state','data','System_Properties'}; % set structures to remove
+                            toRemove={'start_tick','start_clock','stop_ms','state','data','tags','System_Properties'}; % set structures to remove
                             for remove=toRemove
                                 mh.trial.(remove{1})=[]; %actually clear
                             end
@@ -524,20 +578,52 @@ classdef MHost2_exported < matlab.apps.AppBase
                         mh.Screen('sendtogr')
                         mh.graphicssent=0; % check if needed
                         [eyeandphotodiode_temp, ts]=xippmex('cont',app.chidx([1,2,4]),300,'1ksps');
+                        nipTick(ts, 300);
                         tsshift=floor((ts-xippmextstart)/30);
+                        if tsshift < 0 || tsshift > 600000 % NIP clock wrap/resync: >10 min of samples in one trial is impossible
+                            app.insToTxtbox(['Implausible NIP timestamp shift (' num2str(tsshift) ' ms). Resyncing trial clock.'])
+                            xippmextstart = ts;
+                            tsshift = 0;
+                        end
                         eyeandphotodiode(:,tsshift+1:300+tsshift)=eyeandphotodiode_temp;
+                        % record cursors: ONE batched analog read for all analog cursors + a cheap
+                        % slot read per udp cursor. Guarded so eye-only passes cost nothing.
+                        if recHasCursors && recN < CURSMAX
+                            recN = recN + 1;
+                            recSecs(recN) = GetSecs;
+                            if ~isempty(recChans)
+                                try
+                                    [craw, cts] = xippmex('cont', recChans, 1, '1ksps');
+                                    if ~isempty(cts), recTick(recN) = double(cts(1)); end   % when the sample was taken
+                                    for kk = 1:Ka
+                                        recA_mm(recN,1,kk) = craw(recA_xi(kk))*recA_xg(kk) + recA_xo(kk);
+                                        recA_mm(recN,2,kk) = craw(recA_yi(kk))*recA_yg(kk) + recA_yo(kk);
+                                    end
+                                catch
+                                end
+                            end
+                            for kk = 1:Ku
+                                mmk = recU_obj{kk}.rawmm;
+                                if numel(mmk) >= 2
+                                    recU_mm(recN,1,kk) = mmk(1); recU_mm(recN,2,kk) = mmk(2);
+                                end
+                            end
+                        end
 
                         if ~gotinfo
                             app.gettrialinfo(mh) %this gets all the targets and intervals from the trial to display on the GUI
                             gotinfo=1;
                         end
 
+                        drawnow limitrate   % process a STOP / emergency-stop click mid-trial
                         if app.STOPButton.Value == 1 %check for force stop trial
                             mh.stoptrial(0);
                         end
 
                         mh.rewcheck(app);
+                        app.drainRewardPort;
                         a=[a toc];
+                        app.updateMiscStats(a);
                         if length(a)>5 && a(end)>10
                             app.insToTxtbox(['Check time was slow: ' num2str(a(end))  'ms.'])
                         end
@@ -566,7 +652,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                         end
                     end
                     %append eye and photodiode into the structure
-                    mh.trial.tstoptime=getsecs;
+                    trialStopSecs=GetSecs;   % end of the trial loop (saved as trial.stop_ms)
                     eyeandphotodiode=eyeandphotodiode(:,999:end); %
                     eyeandphotodiode(1,:)=eyeandphotodiode(1,:)*mh.eye.xgain+mh.eye.xoffset;
                     eyeandphotodiode(2,:)=eyeandphotodiode(2,:)*mh.eye.ygain+mh.eye.yoffset;
@@ -583,9 +669,50 @@ classdef MHost2_exported < matlab.apps.AppBase
                         end
                     end
                     d.neural_data='placeholder';
+                    % event-code lookup table for this session (state name <-> parallel-port code
+                    % that setstate sends). Saved so the recorded digout markers decode to state
+                    % names offline.
+                    [~, scNames, scCodes] = stateEventCode();
+                    d.stateCodes = struct('name', {scNames}, 'code', scCodes);
                     d.photodiode(1,:)=eyeandphotodiode(3,:);
-                    ts_temp=1:length(d.eyepos);
-                    d.timestamps=ts_temp+floor(mh.trial.tstarttime*1000);
+                    % Stimulus timing: what the task asked to show and when (the change
+                    % log publishFrame keeps), and the raw clock data. When the trial is
+                    % saved, trialRecord puts every time on the trial's timeline (ms since
+                    % start_autogenerated, on the NIP clock): data.time_ms for these samples,
+                    % the cursors, states, targets. GraphicsHandler then adds when each
+                    % change reached the screen (buildStimulusTiming).
+                    d.stimulus_events = mh.stimulusRequests();
+                    d.clock_sync = struct( ...
+                        'nip_pairs', nipTick('pairs'), ...                         % [GetSecs tick] for every NIP read this trial
+                        'trace_start_tick', double(xippmextstart(1)) + 998*30, ... % NIP tick of d.photodiode(1) and d.eyepos(:,1): the trace keeps samples 999:end of the first read
+                        'trial_start_tick', mh.trial.start_tick, ...               % NIP tick of the trial start (trialRecord refines it)
+                        'stop_secs', trialStopSecs, ...                            % GetSecs at the end of the trial loop
+                        'first_frame_id', mh.stimFirstSeq);                        % this trial's first frame
+                    % cursors -> d.cursor: convert mm to DEGREES (via pixels), vectorised, one
+                    % entry per enabled cursor, with each sample's raw time (tick: NIP, analog;
+                    % secs: GetSecs) that trialRecord turns into time_ms.
+                    cur = struct('id',{},'pos',{},'tick',{},'secs',{});
+                    for kk = 1:Ka
+                        mm = recA_mm(1:recN,:,kk);
+                        deg = nan(size(mm));
+                        g = ~any(isnan(mm),2);
+                        if any(g)
+                            dd = pix2deg(deg2pix(mm(g,:),'mm',mh.screenparams),'cart',mh.screenparams);
+                            if size(dd,1)==sum(g), deg(g,:) = dd; end
+                        end
+                        cur(end+1) = struct('id',recA_id(kk),'pos',deg,'tick',recTick(1:recN),'secs',recSecs(1:recN)); %#ok<AGROW>
+                    end
+                    for kk = 1:Ku
+                        mm = recU_mm(1:recN,:,kk);
+                        deg = nan(size(mm));
+                        g = ~any(isnan(mm),2);
+                        if any(g)
+                            dd = pix2deg(deg2pix(mm(g,:),'mm',mh.screenparams),'cart',mh.screenparams);
+                            if size(dd,1)==sum(g), deg(g,:) = dd; end
+                        end
+                        cur(end+1) = struct('id',recU_id(kk),'pos',deg,'tick',nan(1,recN),'secs',recSecs(1:recN)); %#ok<AGROW>
+                    end
+                    d.cursor = cur;
                     clear eyeandphotodiode;
                     fprintf('(493-508) inserting data to structure finished at %f \n' , toc(app.post_trial_timer))                    
 
@@ -635,11 +762,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                     app.savestate(e,0);
                     fprintf('(551-553) ran app.savestate(e,0) %f \n' , toc(app.post_trial_timer))                    
                     
-                    try
-                        %check of the reward handler is talking
-                        com=readline(mh.rewardport);
-                        eval(com);
-                    end
+                    app.drainRewardPort;   %check of the reward handler is talking
                     fprintf('(553-562) talked to reward handler at %f \n' , toc(app.post_trial_timer))
 
                     if trellisrecording ==1
@@ -670,10 +793,13 @@ classdef MHost2_exported < matlab.apps.AppBase
 
                     flush(mh.graphicsport);% flush the graphics
 
-                    xippmex('close'); %this might prevent xippmex errors
+                    % Keep xippmex connected across trials (no close here): each close tore down
+                    % xippmex's data cache and each reopen re-requested the NIP's full config,
+                    % the pattern behind most xippmex crashes in the 2024-26 crash dumps.
+                    % setupDAQ at trial start reconnects only if the link actually dropped.
                     
                     app.last_trial_ITI=mh.intervals.iti.duration;
-                    app.last_trial_timestamp=mh.trial.tstoptime;
+                    app.last_trial_timestamp=trialStopSecs;
                     app.ITI_first=0;
 
                     app.post_trial_procedure_complete = 1;
@@ -709,6 +835,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                 logError(app, err, 'Run_Experiment');
 
                 app.insToTxtbox('Attempting to perform end of trial procedure')
+                if isempty(e), e = make_e(app); end
                 try
                     [mh,e] = app.EmergencyTrialEndingProcedure(mh,e);
                 catch emergencyErr
@@ -795,17 +922,41 @@ classdef MHost2_exported < matlab.apps.AppBase
             end
         end
 
+        function reloadScreenParams(app)
+            % Re-read the hand-written rig config into the state machine's cached
+            % screen params (tasks pass them to deg2pix, so target geometry uses
+            % them) and nudge the renderer, so a Screen Info edit takes effect
+            % without restarting anything. The renderer's own deg2pix already
+            % re-reads the config on every call.
+            try
+                cfg = rigIni('config');
+                mh = app.mhpass;
+                mh.eccentricity_gain    = cfg.GetValues('target window parameters','eccentricity_gain');
+                mh.trailing_window_time = cfg.GetValues('target window parameters','trailing_window_time');
+                mh.screenparams.xPixelSize       = cfg.GetValues('for deg2pix','xPixelSize');
+                mh.screenparams.yPixelSize       = cfg.GetValues('for deg2pix','yPixelSize');
+                mh.screenparams.true_center      = cfg.GetValues('for deg2pix','true center');
+                mh.screenparams.subject_distance = cfg.GetValues('for deg2pix','subject distance');
+                app.mhpass = mh;
+                try, app.mhbackup.screenparams = mh.screenparams; catch, end
+                try, app.mhpass.evalgraphics('gr.eye=eyeinfo; gr.cursors={};'); catch, end
+                app.insToTxtbox('screen parameters reloaded from config');
+            catch e
+                app.insToTxtbox(['could not reload screen parameters: ' e.message]);
+            end
+        end
+        
         function calibration_check(app,mh)
             try     % this 'try' is here because for some unknown reason this fnction is run after app is closed.
                 if app.SetCalibrationButton.Value
                     app.addnewoffsets
 
-                    app.ini.ReadFile('inis/ScreenParams.ini');
+                    [app.ini, statePath] = rigIni('state');
 
                     app.ini.SetValues('reward','reward',...
                         app.RewardDuration.Value)
 
-                    app.ini.WriteFile('inis/ScreenParams.ini');
+                    app.ini.WriteFile(statePath);
                     % mh.autocalibrationmatrix=[];
                     mh.eye=eyeinfo;
                     mh.Screen('seteye')
@@ -883,30 +1034,452 @@ classdef MHost2_exported < matlab.apps.AppBase
             app.paramsloaded=1;
         end
 
+        function toggleMouseMode(app, src)
+            % Toggle mouse mode: the cursor in the monitor window simulates the
+            % eye position (see GraphicsHandler / eyeinfo). The eye follows the
+            % cursor only while the left mouse button is held down.
+            newval = ~logical(src.Checked);
+            src.Checked = newval;
+            try
+                app.mhpass.evalgraphics(sprintf('gr.mousemode=%d;', double(newval)));
+            catch
+            end
+            if newval, state = 'ON'; else, state = 'OFF'; end
+            app.insToTxtbox(['mouse mode ' state]);
+        end
+
+        function setMouseTarget(app, src)
+            % Mouse Mode submenu (radio): Off / Eye / Cursor 1..5. Chooses which
+            % input the monitor-window cursor drives, via evalgraphics.
+            set(src.Parent.Children, 'Checked', 'off');
+            src.Checked = 'on';
+            t = src.Text;
+            try
+                if strcmpi(t, 'Off')
+                    app.mhpass.evalgraphics('gr.mousemode=0;');
+                    app.insToTxtbox('mouse mode OFF');
+                else
+                    if strcmpi(t, 'Eye')
+                        tgt = 'eye';
+                    else
+                        tgt = ['cursor' regexprep(t, '\D', '')];
+                    end
+                    app.mhpass.evalgraphics(sprintf('gr.mousetarget=''%s''; gr.mousemode=1;', tgt));
+                    app.insToTxtbox(['mouse mode ON -> ' tgt]);
+                end
+            catch
+            end
+        end
+
+        function openCursorAssignment(app)
+            % File > Cursor Assignment: analog channels for the eye and cursors
+            % 1..5 (or a UDP joystick per cursor). Saved to the state ini.
+            ini = rigIni('state');
+            f = uifigure('Name', 'Cursor Assignment', 'Position', [300 250 760 420]);
+            gl = uigridlayout(f, [4 1]); gl.RowHeight = {24, 34, '1x', 40};
+            try, an = xippmex('elec', 'analog'); catch, an = []; end
+            if isempty(an), an = [1 2]; end   % fallback if Trellis is not connected
+            dx = app.iniNum(ini, 'eye calibration', 'xchan', an(1));            % channels the eye class uses now
+            dy = app.iniNum(ini, 'eye calibration', 'ychan', an(min(2,numel(an))));
+            uilabel(gl, 'Text', 'Eye analog channels (what the eye class uses; edit to change)', 'FontWeight', 'bold');
+            eg = uigridlayout(gl, [1 4]); eg.ColumnWidth = {70, 70, 70, 70};
+            uilabel(eg, 'Text', 'Eye X:');
+            exf = uieditfield(eg, 'numeric', 'Value', dx, 'ValueDisplayFormat', '%d');
+            uilabel(eg, 'Text', 'Eye Y:');
+            eyf = uieditfield(eg, 'numeric', 'Value', dy, 'ValueDisplayFormat', '%d');
+            cols = {'Enabled', 'Source', 'Xchan', 'Ychan', 'UDPport', 'Xgain', 'Ygain', 'Xoffset', 'Yoffset'};
+            data = cell(5, 9);
+            for i = 1:5
+                s = sprintf('cursor%d', i);
+                data(i, :) = {logical(app.iniNum(ini, s, 'enabled', 0)), app.iniStr(ini, s, 'source', 'analog'), ...
+                    app.iniNum(ini, s, 'xchan', 0), app.iniNum(ini, s, 'ychan', 0), app.iniNum(ini, s, 'udpport', 0), ...
+                    app.iniNum(ini, s, 'xgain', 1), app.iniNum(ini, s, 'ygain', 1), ...
+                    app.iniNum(ini, s, 'xoffset', 0), app.iniNum(ini, s, 'yoffset', 0)};
+            end
+            tb = uitable(gl, 'Data', data, 'ColumnName', cols, ...
+                'RowName', {'Cursor 1', 'Cursor 2', 'Cursor 3', 'Cursor 4', 'Cursor 5'}, ...
+                'ColumnEditable', true(1, 9));
+            tb.ColumnFormat = {'logical', {'analog', 'udp'}, 'numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'numeric'};
+            uibutton(gl, 'Text', 'Save & Apply', 'ButtonPushedFcn', @(~,~) app.saveCursorAssignment(f, exf, eyf, tb));
+        end
+
+        function saveCursorAssignment(app, f, exf, eyf, tb)
+            ini = rigIni('state');
+            app.iniSet(ini, 'eye calibration', 'xchan', exf.Value);
+            app.iniSet(ini, 'eye calibration', 'ychan', eyf.Value);
+            d = tb.Data;
+            for i = 1:5
+                s = sprintf('cursor%d', i);
+                app.iniSet(ini, s, 'enabled', double(d{i, 1}));
+                app.iniSet(ini, s, 'source',  d{i, 2});
+                app.iniSet(ini, s, 'xchan',   d{i, 3});
+                app.iniSet(ini, s, 'ychan',   d{i, 4});
+                app.iniSet(ini, s, 'udpport', d{i, 5});
+                app.iniSet(ini, s, 'xgain',   d{i, 6});
+                app.iniSet(ini, s, 'ygain',   d{i, 7});
+                app.iniSet(ini, s, 'xoffset', d{i, 8});
+                app.iniSet(ini, s, 'yoffset', d{i, 9});
+            end
+            ok = ini.WriteFile(rigIniPath('state'));
+            try, app.mhpass.cursors = {}; catch, end
+            try, app.mhpass.evalgraphics('gr.cursors={};'); catch, end   % renderer rebuilds its cursors
+            close(f);
+            if ok
+                app.insToTxtbox('cursor assignment saved (cursors rebuild on next use; eye channels next trial)');
+            else
+                app.insToTxtbox('cursor assignment: WRITE FAILED');
+            end
+        end
+
+        function iniSet(~, ini, sec, key, val)
+            % Set an ini key, creating the section and/or key when they do not
+            % exist yet (IniConfig.SetValues only updates keys that already exist).
+            if ~ini.IsSections(sec), ini.AddSections(sec); end
+            if ini.IsKeys(sec, key)
+                ini.SetValues(sec, key, val);
+            else
+                ini.InsertKeys(sec, 1, key, val);
+            end
+        end
+
+        function v = iniNum(~, ini, sec, key, def)
+            try, v = ini.GetValues(sec, key); catch, v = []; end
+            if isempty(v) || ~isnumeric(v), v = def; end
+        end
+
+        function v = iniStr(~, ini, sec, key, def)
+            try, v = ini.GetValues(sec, key); catch, v = ''; end
+            if isempty(v), v = def; end
+            v = char(v);
+        end
+
+        function checkTrellisOrDemo(app)
+            % If xippmex cannot connect to Trellis, offer demo mode (simulated
+            % xippmex). A real connection clears any stale demo flag so a
+            % connected launch is never forced into demo.
+            try, s = xippmex(); catch, s = 0; end
+            if isequal(s, 1)
+                try, delete(demoFlagPath()); catch, end
+                return;
+            end
+            try
+                sel = uiconfirm(app.UIFigure, ...
+                    sprintf(['xippmex() returned %s -- Trellis is not connected.' ...
+                    newline newline 'Launch in DEMO mode with simulated data? ' ...
+                    '(Drive eye/cursor with Mouse Mode; analog channels return a sine wave.)'], mat2str(s)), ...
+                    'Trellis not found', 'Options', {'Demo mode','Continue anyway'}, ...
+                    'DefaultOption', 1, 'CancelOption', 2);
+                if strcmp(sel, 'Demo mode')
+                    enableDemoXippmex(app.filepaths.GetValues('paths','xippmex'));
+                    app.insToTxtbox('DEMO MODE: xippmex is simulated (no Trellis hardware).');
+                end
+            catch
+            end
+        end
+
+        function toggleDemoMode(app, src)
+            % Manually enter/leave demo mode (simulated xippmex). Swaps this
+            % process and, if running, GraphicsHandler; a process restart is
+            % cleanest for switching back to live Trellis.
+            on = ~logical(src.Checked);
+            src.Checked = on;
+            xp = app.filepaths.GetValues('paths','xippmex');
+            if on
+                enableDemoXippmex(xp);
+                try, app.mhpass.evalgraphics(sprintf('enableDemoXippmex(''%s'');', xp)); catch, end
+                app.insToTxtbox('DEMO MODE ON: xippmex is simulated. Restart Graphics/Scope if already running for a clean swap.');
+            else
+                disableDemoXippmex(xp);
+                try, app.mhpass.evalgraphics(sprintf('disableDemoXippmex(''%s'');', xp)); catch, end
+                app.insToTxtbox('DEMO MODE OFF: using the real xippmex (restart processes if needed).');
+            end
+        end
+
+        function createUtilsMenu(app)
+            % Add Trellis Scope to the existing Utils menu (added at startup so
+            % the design-time component tree is untouched).
+            uimenu(app.UtilsMenu, 'Text', 'Trellis Scope', ...
+                'MenuSelectedFcn', @(~,~) app.launchTrellisScope());
+            mm = uimenu(app.FileMenu, 'Text', 'Mouse Mode');
+            uimenu(mm, 'Text', 'Off', 'Checked', 'on', 'MenuSelectedFcn', @(s,~) app.setMouseTarget(s));
+            uimenu(mm, 'Text', 'Eye', 'MenuSelectedFcn', @(s,~) app.setMouseTarget(s));
+            for ci = 1:5
+                uimenu(mm, 'Text', sprintf('Cursor %d', ci), 'MenuSelectedFcn', @(s,~) app.setMouseTarget(s));
+            end
+            uimenu(app.FileMenu, 'Text', 'Cursor Assignment', 'MenuSelectedFcn', @(~,~) app.openCursorAssignment());
+            cdm = uimenu(app.FileMenu, 'Text', 'Cursors on Display');
+            st = rigIni('state');
+            for ci = 1:5
+                it = uimenu(cdm, 'Text', sprintf('Cursor %d', ci), ...
+                    'MenuSelectedFcn', @(s,~) app.toggleCursorOnDisplay(s, ci));
+                it.Checked = logical(app.iniNum(st, sprintf('cursor%d', ci), 'display', 0));
+            end
+            dmItem = uimenu(app.FileMenu, 'Text', 'Demo Mode', 'MenuSelectedFcn', @(s,~) app.toggleDemoMode(s));
+            if isfile(demoFlagPath()), dmItem.Checked = 'on'; end
+            % File > Switch Branch: pick a Git branch, then MHost2 restarts on it
+            uimenu(app.FileMenu, 'Text', 'Switch Branch...', 'Separator', 'on', ...
+                'MenuSelectedFcn', @(~,~) branchPicker(app.UIFigure, @() app.running));
+            % Exit last: the File items above are added here at startup, after the
+            % design-time Exit. Children lists the newest item first, so Exit goes
+            % first in it. Keep this the last thing that adds to the File menu.
+            app.ExitMenu.Separator = 'on';
+            k = app.FileMenu.Children ~= app.ExitMenu;
+            app.FileMenu.Children = [app.ExitMenu; app.FileMenu.Children(k)];
+        end
+
+        function toggleCursorOnDisplay(app, src, ci)
+            % File > Cursors on Display: also draw cursor ci on the animal's
+            % display during trials (the monitor always shows it). Saved as
+            % [cursorN] display in the state ini, and pushed to the renderer now.
+            on = ~logical(src.Checked);
+            src.Checked = on;
+            ini = rigIni('state');
+            app.iniSet(ini, sprintf('cursor%d', ci), 'display', double(on));
+            if ~ini.WriteFile(rigIniPath('state'))
+                app.insToTxtbox('cursors on display: WRITE FAILED');
+            end
+            try, app.mhpass.evalgraphics(sprintf('try, gr.cursors{%d}.ondisplay = %d; catch, end', ci, on)); catch, end
+            if on, word = 'ON'; else, word = 'off'; end
+            app.insToTxtbox(sprintf('cursor %d on display %s (during trials)', ci, word));
+        end
+
+        function launchTrellisScope(app)
+            % Launch the scope in its own MATLAB, alongside MonkeyHost, so its
+            % timer and Trellis reads never fight the trial loop.
+            try
+                system('gnome-terminal --tab -- sh -c "cd ./Utilities/; matlab -nodesktop -r ''launchScope''" --title="Trellis Scope"');
+                app.insToTxtbox('launched Trellis Scope');
+            catch e
+                app.insToTxtbox(['could not launch Trellis Scope: ' e.message]);
+            end
+        end
+
+        function publishScopeMeta(app, trialName)
+            % Publish the current trial name to the Trellis Scope slot so it
+            % can colour overlaid windows by task type. Lazy-open, best-effort.
+            try
+                if isempty(app.scopeMetaMap)
+                    app.scopeMetaMap = sceneOpen(true, scopeMetaPath());
+                end
+                app.scopeMetaSeq = app.scopeMetaSeq + 1;
+                sceneWrite(app.scopeMetaMap, app.scopeMetaSeq, struct('trialName', char(trialName)));
+            catch
+            end
+        end
+
+        function createMiscStats(app)
+            % Misc tab gauges. Built at runtime rather than in the design
+            % view so the .mlapp component tree stays untouched.
+            lbl = uilabel(app.miscTab);
+            lbl.Position = [17 220 139 22];
+            lbl.Text = 'Display FPS';
+            app.miscStats.fps = uieditfield(app.miscTab, 'numeric');
+            app.miscStats.fps.Position = [176 220 60 22];
+            app.miscStats.fps.Editable = 'off';
+            app.miscStats.fps.ValueDisplayFormat = '%.1f';
+            app.miscStats.fps.Tooltip = {'Display window flip rate reported by GraphicsHandler over its last ~2 s'};
+
+            lbl = uilabel(app.miscTab);
+            lbl.Position = [17 190 139 22];
+            lbl.Text = 'State loop (ms)';
+            app.miscStats.loopMs = uieditfield(app.miscTab, 'numeric');
+            app.miscStats.loopMs.Position = [176 190 60 22];
+            app.miscStats.loopMs.Editable = 'off';
+            app.miscStats.loopMs.ValueDisplayFormat = '%.2f';
+            app.miscStats.loopMs.Tooltip = {'Mean state-machine iteration time over the last 200 iterations of the current trial'};
+
+            eb = uibutton(app.miscTab, 'push');
+            eb.Text = 'EMERGENCY STOP';
+            eb.BackgroundColor = [0.80 0.10 0.10];
+            eb.FontColor = [1 1 1];
+            eb.FontWeight = 'bold';
+            eb.FontSize = 14;
+            eb.Position = [17 20 220 45];
+            eb.Tooltip = {'Kill the current trial immediately; does not wait for it to finish'};
+            eb.ButtonPushedFcn = createCallbackFcn(app, @emergencyStopPushed, true);
+        end
+
+        function updateMiscStats(app, loopSec)
+            % Refresh the misc tab gauges at most twice a second. Values set
+            % during a trial appear when the GUI next repaints, i.e. at the
+            % trial boundary; while idle they are live.
+            if toc(app.miscStatsTimer) < 0.5, return; end
+            app.miscStatsTimer = tic;
+            try
+                if isempty(app.renderStatsMap)
+                    app.renderStatsMap = sceneOpen(false, renderStatsPath());
+                end
+                [s, ok] = sceneRead(app.renderStatsMap);
+                if ok && isfield(s, 'fps')
+                    app.miscStats.fps.Value = s.fps;
+                end
+            catch
+            end
+            if ~isempty(loopSec)
+                n = min(numel(loopSec), 200);
+                app.miscStats.loopMs.Value = mean(loopSec(end-n+1:end)) * 1000;
+            end
+        end
+
+    end
+
+    methods (Access = public)
+        function ok = validateLoadedTasks(app)
+            % Validate the loaded tasks and parameter file just before a run.
+            % Returns false only if the user cancels the start. Checks, in
+            % order: files MATLAB cannot parse (syntax), items the parameter
+            % file does not declare, and custom path functions not imported.
+            ok = true;
+            if ~app.paramsloaded || isempty(app.UIFigure) || ~isvalid(app.UIFigure), return; end
+            try
+                rep = validateTasks(app.mhpass, '.Tasks_Internal', app.ParameterFile.Value);
+            catch valErr
+                app.insToTxtbox(['task validation skipped: ' valErr.message]);
+                return
+            end
+            if ~isempty(rep.syntaxErrors)
+                msg = "These files have syntax errors and will not run:";
+                for i = 1:size(rep.syntaxErrors,1)
+                    msg = msg + newline + "    " + rep.syntaxErrors{i,1} + "  ->  " + rep.syntaxErrors{i,2};
+                end
+                app.insToTxtbox(char(msg));
+                c = uiconfirm(app.UIFigure, char(msg), 'Syntax errors', ...
+                    'Options', {'Cancel','Start anyway'}, 'DefaultOption', 1, 'CancelOption', 1, 'Icon', 'error');
+                if strcmp(c, 'Cancel'), ok = false; return; end
+            end
+            if ~isempty(rep.customTasks)
+                msg = sprintf(['These tasks need custom functions that are not loaded:\n'  ...
+                    '    %s\n\nMissing functions: %s'], ...
+                    strjoin(rep.customTasks, ', '), strjoin(rep.missingFns, ', '));
+                choice = uiconfirm(app.UIFigure, msg, 'Custom functions needed', ...
+                    'Options', {'Load and start','Start anyway','Cancel'}, ...
+                    'DefaultOption', 1, 'CancelOption', 3, 'Icon', 'warning');
+                switch choice
+                    case 'Cancel'
+                        ok = false; return
+                    case 'Load and start'
+                        app.loadCustomFunctions;
+                        try, rep = validateTasks(app.mhpass, '.Tasks_Internal', app.ParameterFile.Value); catch, end
+                        if ~isempty(rep.customTasks)
+                            c2 = uiconfirm(app.UIFigure, sprintf(['Still missing: %s\n\n' ...
+                                'Start anyway?'], strjoin(rep.missingFns, ', ')), ...
+                                'Custom functions', 'Options', {'Start anyway','Cancel'}, ...
+                                'DefaultOption', 2, 'CancelOption', 2, 'Icon', 'warning');
+                            if strcmp(c2, 'Cancel'), ok = false; return; end
+                        end
+                end
+            end
+            if ~isempty(rep.undeclared)
+                msg = "The loaded parameter file does not declare everything these tasks use:";
+                for i = 1:size(rep.undeclared,1)
+                    msg = msg + newline + "    " + rep.undeclared{i,1} + "  ->  " + ...
+                        rep.undeclared{i,2} + " """ + rep.undeclared{i,3} + """";
+                end
+                app.insToTxtbox(char(msg));
+                c3 = uiconfirm(app.UIFigure, char(msg), 'Missing parameter declarations', ...
+                    'Options', {'Start anyway','Cancel'}, 'DefaultOption', 2, 'CancelOption', 2, 'Icon', 'warning');
+                if strcmp(c3, 'Cancel'), ok = false; return; end
+            end
+        end
+
+        function emergencyStopPushed(app, event) %#ok<INUSD>
+            % Kill the current trial immediately and stop the session, without
+            % waiting for a long interval to elapse. internal is a handle, so
+            % clearing runtrial breaks the trial loop at its next check; the
+            % loop's drawnow makes that check happen within a frame. The ITI
+            % loop and outer loop stop on STOPButton being set.
+            app.STOPButton.Value = 1;
+            if ~isempty(app.mhpass) && isvalid(app.mhpass)
+                app.mhpass.runtrial = 0;
+            end
+            app.insToTxtbox('EMERGENCY STOP: killing current trial');
+        end
+
+        function loadCustomFunctions(app)
+            % Import a custom-functions folder and make it callable right now.
+            % Add the chosen folder (recursively) to the path so the functions
+            % work this session even if selected loosely, and copy them into
+            % .Custom_Functions so they persist across restarts.
+            folder = uigetdir('~/Documents', 'select the folder with custom functions');
+            if isequal(folder, 0), return; end
+            try
+                addpath(genpath(folder));
+                if ~exist('.Custom_Functions', 'dir'), mkdir('.Custom_Functions'); end
+                copyfile(fullfile(folder, '*'), '.Custom_Functions');
+                addpath('.Custom_Functions');
+                rehash;
+                app.insToTxtbox(['loaded custom functions from ' folder]);
+            catch cfErr
+                uialert(app.UIFigure, ['Could not load custom functions: ' cfErr.message], ...
+                    'Custom functions', 'Icon', 'error');
+            end
+        end
+
+    end
+
+    methods (Access = private)
+        function drainRewardPort(app)
+            % Read and act on EVERY reward-handler message waiting on UDP 2024,
+            % not just one. The reward handler replies with code to run, e.g.
+            % app.insToTxtbox("reward: 0.3s");. Reading a single line per check
+            % let messages pile up in the socket buffer during a trial and then
+            % dump in a burst; drain them all so each reward shows as it happens.
+            try
+                rp = app.mhpass.rewardport;
+            catch
+                return
+            end
+            while rp.NumBytesAvailable > 0
+                try
+                    com = readline(rp);
+                    if ~ismissing(com) && strlength(com) > 0
+                        eval(com);
+                    end
+                catch
+                    break
+                end
+            end
+        end
+
         function idle_loop(app)
             try
                 %% show eye position/ idle loop
                 onceinawhile=99;
-                while ~app.running
+                while isvalid(app) && ~app.running
                     onceinawhile=onceinawhile+1;
                     pause(0.001) %help gui
                     drawnow %help gui
+                    app.updateMiscStats([]);
                     mh=app.mhpass;
                     mh.rewcheck(app);
                     app.calibration_check(mh);
                     if onceinawhile == 100
-                        setupDAQ(app);
+                        % Liveness probe that KEEPS the connection open. The old setupDAQ +
+                        % xippmex('close') pair left xippmex disconnected between checks, so
+                        % idle digout (stop reward) and eye reads silently failed. Bare xippmex()
+                        % only reports the connection (it opens one just if none exists);
+                        % xippmex('time') read every stream's buffer and crashed MATLAB.
+                        try
+                            ok = isequal(xippmex(), 1);
+                        catch
+                            ok = false;
+                        end
+                        if ok
+                            app.XippmexLamp.Color=[0,1,0];
+                        else
+                            setupDAQ(app);      % reconnect (with its retry/dialog) only when actually lost
+                        end
                         app.CheckGraphics(10);
                         onceinawhile=0;
-                        xippmex('close');
                     end
                     app.mhpass=mh;
-                    try
-                        com=readline(mh.rewardport);
-                        eval(com);
-                    end
+                    app.drainRewardPort;
                 end
             catch err
+                if ~isvalid(app)
+                    % app was closed while idling: nothing left to recover, exit quietly
+                    return
+                end
                 app.errored = 1;
                 logError(app, err, 'idle_loop');
 
@@ -1014,6 +1587,10 @@ classdef MHost2_exported < matlab.apps.AppBase
         function gettrialinfo(app,mh)
             % name
             app.TrialnameEditField.Value=mh.trial.ttype;
+            if ~isstruct(mh.trial.targets) || ~isstruct(mh.trial.intervals)
+                app.insToTxtbox('Trial has no registered targets/intervals yet; skipping trial-info display.')
+                return
+            end
             %targets
             targs=fieldnames(mh.trial.targets);
             targnames=cell(length(targs) ,1);
@@ -1040,13 +1617,16 @@ classdef MHost2_exported < matlab.apps.AppBase
         end
 
         function addnewoffsets(app)
-            app.ini.ReadFile('inis/ScreenParams.ini');
+            % eye calibration is machine-written state; true center is
+            % hand-written rig config, so they come from different files
+            [app.ini, statePath] = rigIni('state');
+            cfg = rigIni('config');
 
             xoff=app.ini.GetValues('eye calibration','xoffset');
 
             yoff=app.ini.GetValues('eye calibration','yoffset');
 
-            true_zero=app.ini.GetValues('for deg2pix','true center');
+            true_zero=cfg.GetValues('for deg2pix','true center');
 
             truexoffset=xoff+deg2pix([app.xoffset.Value nan],'cart')-true_zero(1);
             trueyoffset=yoff+deg2pix([nan app.yoffset.Value],'cart')-true_zero(2);
@@ -1063,7 +1643,7 @@ classdef MHost2_exported < matlab.apps.AppBase
             app.yoffset.Value=0;
             app.xoffset.Value=0;
 
-            app.ini.WriteFile('inis/ScreenParams.ini');
+            app.ini.WriteFile(statePath);
 
         end
 
@@ -1073,6 +1653,15 @@ classdef MHost2_exported < matlab.apps.AppBase
             end
             for i=1:howmany
                 try
+                    % Never block on the port: readline waited its full 1 s timeout
+                    % whenever nothing was queued, so an absent (or stuck) renderer
+                    % turned CheckGraphics(10) into a 10 s stall per idle cycle --
+                    % starving the reward button and the calibration check. Poll
+                    % briefly and bounded instead.
+                    if app.mhpass.graphicsport.NumBytesAvailable == 0
+                        pause(0.02);
+                        continue
+                    end
                     com=readline(app.mhpass.graphicsport);
                     eval(com)
                     flush(app.mhpass.graphicsport)
@@ -1080,6 +1669,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                 if exist('isGraphicsReady','var') % checking if graphics are still working
                     if isGraphicsReady==1
                         app.GraphicsLamp.Color=[0,1,0];
+                        break                      % answered: no need to keep polling
                     end
                 end
             end
@@ -1131,22 +1721,33 @@ classdef MHost2_exported < matlab.apps.AppBase
             fprintf(fid, 'SYSTEM INFORMATION:\n');
             fprintf(fid, '-----------------------------------------------------------------\n');
             fprintf(fid, 'MATLAB Version: %s\n', version);
+            fprintf(fid, 'Code Version: %s\n', codeVersion());
             fprintf(fid, 'Operating System: %s\n', computer);
             fprintf(fid, 'User: %s\n\n', getenv('USER'));
 
             % Write application state if available
             fprintf(fid, 'APPLICATION STATE:\n');
             fprintf(fid, '-----------------------------------------------------------------\n');
-            fprintf(fid, 'Running: %d\n', app.running);
-            fprintf(fid, 'Trial number: %d\n', app.mhpass.trialnumpersistent);
-            fprintf(fid, 'Subject: %s\n', app.SubjectNameEditField.Value);
-            fprintf(fid, 'Parameter file: %s\n', app.ParameterFile.Value);
+            if ~isvalid(app)
+                fprintf(fid, '(app object was already deleted when this error was logged)\n');
+            else
+                try
+                    fprintf(fid, 'Running: %d\n', app.running);
+                    fprintf(fid, 'Trial number: %d\n', app.mhpass.trialnumpersistent);
+                    fprintf(fid, 'Subject: %s\n', app.SubjectNameEditField.Value);
+                    fprintf(fid, 'Parameter file: %s\n', app.ParameterFile.Value);
+                catch stateErr
+                    fprintf(fid, '(could not read app state: %s)\n', stateErr.message);
+                end
+            end
 
             % Close the file
             fclose(fid);
 
             % Add error to app's information text area
-            app.insToTxtbox(sprintf('Error occurred in %s. See %s for details.', source, filename));
+            if isvalid(app)
+                app.insToTxtbox(sprintf('Error occurred in %s. See %s for details.', source, filename));
+            end
         end
     end
 
@@ -1162,6 +1763,7 @@ classdef MHost2_exported < matlab.apps.AppBase
 
             app.filepaths.ReadFile(app.filepaths_path);
             addpath(genpath(app.filepaths.GetValues('paths','xippmex')));
+            app.checkTrellisOrDemo();
             movegui(app.UIFigure,[1100 100]);
 
             evalin('base','clear'); %clear world
@@ -1174,6 +1776,9 @@ classdef MHost2_exported < matlab.apps.AppBase
             addpath(genpath(app.filepaths.GetValues('paths','home')));
 
             app.LiveParameters = LiveParams(app); %launch params window
+            app.UIFigure.Name = strtrim(['MHost2 ' codeVersion('short')]);   % version and branch, from git
+            windowIdentity(app.UIFigure.Name, 'mhost2', app.UIFigure);   % own dock icons
+            windowIdentity('Parameters', 'parameters', app.LiveParameters.ParametersUIFigure);
 
             %% set up daq. Modify the specifics in the setupDAQ function
             setupDAQ(app);
@@ -1185,13 +1790,21 @@ classdef MHost2_exported < matlab.apps.AppBase
             mh.graphicsport = udpport("LocalPort",2020, "Timeout",1); %start udp port
             app.mhpass=mh;
             mh.rewardport = udpport("LocalPort",2024, "Timeout",0.001); %start udp port
+            app.createMiscStats();
+            app.createUtilsMenu();
 
             %% set up initial conditions from previous session
-            isini=app.ini.ReadFile('inis/ScreenParams.ini');
+            % state = machine-written values, cfg = hand-written rig config
+            try
+                app.ini = rigIni('state');
+                cfg     = rigIni('config');
+                isini   = true;
+            catch iniErr
+                isini = false;
+                errordlg(iniErr.message)
+            end
 
-            if ~isini
-                errordlg('ini not found. Missing or in the wrong path.')
-            elseif isini
+            if isini
                 app.xoffset.Value=0;
                 app.Rawxoffset.Value=app.ini.GetValues('eye calibration','xoffset');
                 app.xgain.Value=app.ini.GetValues('eye calibration','xgain');
@@ -1212,8 +1825,8 @@ classdef MHost2_exported < matlab.apps.AppBase
                 end
                 app.TrellisDir.Value = app.ini.GetValues('last filepaths','trellis');
 
-                mh.eccentricity_gain = app.ini.GetValues('target window parameters','eccentricity_gain');
-                mh.trailing_window_time = app.ini.GetValues('target window parameters','trailing_window_time');
+                mh.eccentricity_gain = cfg.GetValues('target window parameters','eccentricity_gain');
+                mh.trailing_window_time = cfg.GetValues('target window parameters','trailing_window_time');
             end
 
 
@@ -1290,7 +1903,7 @@ classdef MHost2_exported < matlab.apps.AppBase
 
             app.addnewoffsets
 
-            app.ini.ReadFile('inis/ScreenParams.ini');
+            [app.ini, statePath] = rigIni('state');
 
             app.ini.SetValues('reward','reward',...
                 app.RewardDuration.Value);
@@ -1299,7 +1912,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                 {app.ParameterFile.Value,...
                  app.TrellisDir.Value});
 
-            app.ini.WriteFile('inis/ScreenParams.ini');
+            app.ini.WriteFile(statePath);
             sca;
             for i=1:50
             app.mhpass.evalgraphics('exit')
@@ -1337,6 +1950,21 @@ classdef MHost2_exported < matlab.apps.AppBase
             delete(fullfile(dirname,'temptrials',finfo(1).name))
             save(fullfile(dirname,'e.mat'),'e')
             rmdir(fullfile(dirname,'temptrials'))
+            % Every STOP drops a timestamped folder (task copies and the info
+            % box text) straight into the data folder. Gather them under
+            % metadata/ so the finalized folder holds e.mat, class_definitions
+            % and one metadata folder rather than one folder per stop.
+            stamps = dir(dirname);
+            stamps = stamps([stamps.isdir] & ~cellfun(@isempty, regexp({stamps.name}, '^\d+$', 'once')));
+            if ~isempty(stamps)
+                metadir = fullfile(dirname, 'metadata');
+                if ~isfolder(metadir), mkdir(metadir); end
+                for k = 1:numel(stamps)
+                    src = fullfile(dirname, stamps(k).name);
+                    try, rmpath(src); catch, end      % savestate addpath'd it
+                    movefile(src, fullfile(metadir, stamps(k).name));
+                end
+            end
             app.checkForDataDirectory = [];
 
             %iterate folders and move
@@ -1350,7 +1978,7 @@ classdef MHost2_exported < matlab.apps.AppBase
 
             app.addnewoffsets
 
-            app.ini.ReadFile('inis/ScreenParams.ini');
+            [app.ini, statePath] = rigIni('state');
 
             app.ini.SetValues('reward','reward',...
                 app.RewardDuration.Value);
@@ -1358,7 +1986,7 @@ classdef MHost2_exported < matlab.apps.AppBase
             app.ini.SetValues('last filepaths',{'params'},...
                 {app.ParameterFile.Value});
 
-            app.ini.WriteFile('inis/ScreenParams.ini');
+            app.ini.WriteFile(statePath);
 
             app.insToTxtbox('data combined');
             sca;
@@ -1366,6 +1994,10 @@ classdef MHost2_exported < matlab.apps.AppBase
 
         % Button pushed function: STARTButton
         function STARTButtonPushed(app, event)
+            if ~app.validateLoadedTasks
+                app.insToTxtbox('start cancelled by validation');
+                return
+            end
             app.running=1;
             pause(0.1)% pause to let mh to be assigned in
 
@@ -1536,12 +2168,12 @@ classdef MHost2_exported < matlab.apps.AppBase
 
         % Button pushed function: SeteyelinkparametersButton
         function SeteyelinkparametersButtonPushed(app, event)
-            app.ini.ReadFile('inis/ScreenParams.ini');
+            [app.ini, statePath] = rigIni('state');
 
             app.ini.SetValues('eye calibration',{'xoffset','yoffset',},...
                 {num2str(app.Rawxoffset.Value), num2str(app.Rawyoffset.Value)});
 
-            app.ini.WriteFile('inis/ScreenParams.ini');
+            app.ini.WriteFile(statePath);
         end
 
         % Button pushed function: ZoomInButton
@@ -1599,12 +2231,12 @@ classdef MHost2_exported < matlab.apps.AppBase
         % Value changed function: RewardDuration
         function RewardDurationValueChanged(app, event)
             value = app.RewardDuration.Value;
-            app.ini.ReadFile('inis/ScreenParams.ini');
+            [app.ini, statePath] = rigIni('state');
 
             app.ini.SetValues('reward','reward',...
                 value);
 
-            app.ini.WriteFile('inis/ScreenParams.ini');
+            app.ini.WriteFile(statePath);
         end
 
         % Menu selected function: SoundGeneratorMenu

@@ -36,6 +36,12 @@ classdef graphics < handle
         toconvert                   % Coordinate conversion table
         pixelsforlines              % Pixel positions for grid lines
         gridlinesmatrix             % Matrix of grid line coordinates
+        gridmode = 'degrees'        % Grid units: 'degrees' | 'mm' | 'both'
+        mmgrid = 100                % mm grid spacing (millimetres)
+        gridlinesmatrix_mm          % mm grid line coordinates
+        mmpixels                    % pixel positions for mm grid lines
+        mmvals                      % mm grid label values
+        cursors = {}                % cursorinfo objects the renderer draws and owns (mouse/analog/udp)
         center_circle = [0 0 0 0]   % Center circle coordinates
         
         %% Experimental stimuli
@@ -48,6 +54,8 @@ classdef graphics < handle
         
         %% Eye tracking
         eye                         % Eye tracking information
+        mousemode = 0               % Mouse mode: simulate eye with the mouse (off by default; set via evalgraphics)
+        mousetarget = 'eye'         % Mouse-mode target: 'eye' or 'cursor1'..'cursor5'
         eyehistory                  % History of eye positions
         
         %% Trial state management
@@ -60,8 +68,7 @@ classdef graphics < handle
         %% Command processing
         functionsbuffer = []        % Buffer for graphics commands
         lastarg                     % Last argument processed
-        fliptimes                   % Timing of screen flips
-        commandIDs                  % IDs of processed commands
+        flipLog                     % one entry per display flip this trial: frame ID, times, state, photodiode, items shown (buildStimulusTiming)
         commid_udp                  % Current command ID from UDP
         movieplaying = 0            % Flag indicating movie is playing
         
@@ -82,9 +89,25 @@ classdef graphics < handle
         user_defined                % User-defined custom data
         target                      % Target information
 
+        %% Resources owned by this process (Psychtoolbox handles are process-local)
+        resourceMap  = []           % logical id -> PTB handle on the DISPLAY window
+        resourceMapMon = []         % logical id -> PTB handle on the MONITOR window (NaN: movie has no monitor copy)
+        resourceKind = {}           % logical id -> 'texture' / 'movie' / 'failed'
+        movieLastTex = []           % most recent frame fetched per movie on the DISPLAY, reused when no new frame is ready
+        movieLastTexMon = []        % same, for the monitor's own copy of the movie
+        moviePlaying = []           % per movie id: is it currently playing (rate>0)? gates the resume flush-seek
+        resourcePath = {}           % logical id -> path it was loaded from, so a recycled id cannot masquerade
+        lastOneShot  = 0            % highest one-shot token (PlayMovie/CloseMovie) already run
+        lastFrameSeq = -1           % newest frame seq seen; a drop means the state machine restarted
+
         %% extra
         actualFlipCount
         actualCommandCount
         stateCount
+    end
+    methods
+        function setgridmode(obj, val)
+            obj.gridmode = val;   % Grid-units dropdown callback target
+        end
     end
 end

@@ -6,28 +6,28 @@ classdef interval
         sound = 0;
     end
     methods
-        function int = interval(name,dur,prob)
+        function obj = interval(name,durations,prob)
             if nargin==2
-                int.name=name;
-                int.duration=dur;
+                obj.name=name;
+                obj.duration=durations;
             else
-                int.prob=prob;
+                obj.prob=prob;
             end
         end
 
-        function out=getint(in, yesname)
+        function out=getint(obj, asStruct)
             if nargin==1
-                if in.prob >= rand
-                    out=in.duration(randi(length(in.duration)));
+                if obj.prob >= rand
+                    out=obj.duration(randi(length(obj.duration)));
                 else
                     out=0;
                 end
-            elseif yesname
-                out.name=in.name;
-                if in.prob >= rand
-                    %out.duration = in.duration;
-                    idx=randi([1,size(in.duration,2)]);
-                    out.duration =in.duration(idx);
+            elseif asStruct
+                out.name=obj.name;
+                if obj.prob >= rand
+                    %out.duration = obj.duration;
+                    durIdx=randi([1,size(obj.duration,2)]);
+                    out.duration =obj.duration(durIdx);
                 else
                     out.duration=0;
                 end

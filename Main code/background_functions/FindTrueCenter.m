@@ -59,10 +59,10 @@ disp(['The new center is: ' num2str(center)])
 a=input('Save the new center? (y/n): ','s');
 
 if a=='y'
-    ini=IniConfig();
-    ini.ReadFile('inis/ScreenParams.ini');
+    % true center lives in the hand-written rig config, not in state
+    [ini, iniPath] = rigIni('config');
     ini.SetValues('for deg2pix','true center',{num2str(center)});
-    ini.WriteFile('inis/ScreenParams.ini');
+    ini.WriteFile(iniPath);
     disp('New center position recorded')
 else
     disp('New center not saved. You can manually add it to the ini file. Be careful please.')

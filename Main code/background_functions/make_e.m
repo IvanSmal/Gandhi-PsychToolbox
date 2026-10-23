@@ -1,10 +1,9 @@
-function e = make_e(app)
-%MAKE_E Summary of this function goes here
-%   Detailed explanation goes here
-e=experiment;
-e.subject_name = app.SubjectNameEditField.Value;
-e.DataDir = app.Dir.Value;
-e.TrellisDir=app.TrellisDir.Value;
-e.parameter_file=app.ParameterFile.Value;
+function expt = make_e(app)
+%MAKE_E Build an experiment object from the current GUI field values.
+expt=experiment;
+expt.subject_name = app.SubjectNameEditField.Value;
+expt.DataDir = app.Dir.Value;
+expt.TrellisDir=app.TrellisDir.Value;
+expt.parameter_file=app.ParameterFile.Value;
 end
 

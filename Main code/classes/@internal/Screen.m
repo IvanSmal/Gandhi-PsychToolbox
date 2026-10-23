@@ -1,149 +1,163 @@
 function varargout = Screen(mh, varargin)
-% Create a simpler hash for comparison
-try
-%     % Faster hashing approach using typecast for numeric operations
-%     hashValues = zeros(1, length(varargin), 'double');
-%     for i = 1:length(varargin)
-%         if isnumeric(varargin{i})
-%             % Use direct sum on vectorized data without double conversion
-%             hashValues(i) = sum(varargin{i}(:));
-%         elseif ischar(varargin{i})
-%             % Avoid double conversion for character arrays
-%             hashValues(i) = sum(uint8(varargin{i}));
-%         elseif isstring(varargin{i})
-%             % Convert string to char first for faster processing
-%             hashValues(i) = sum(uint8(char(varargin{i})));
-%         elseif isobject(varargin{i})
-%             hashValues(i) = i * 1000; % Simple object identifier
-%         else
-%             hashValues(i) = i;
-%         end
-%     end
-%     cmd_hash = sprintf('%d', sum(hashValues));
-% catch
-    % commented out hashing above because i think it caused issues. all
-    % commands should have unique hash now
-    cmd_hash = sprintf('%d', randi(10000000));
+%SCREEN Psychtoolbox-style drawing, published through the shared scene slot.
+%
+%   Task files keep the Psychtoolbox syntax they have always used:
+%       mh.Screen('FillOval', mh, colour, rect)
+%       mh.Screen('sendtogr')
+%
+%   ANY Screen call is supported, not a fixed set of primitives. Arguments
+%   are kept as real MATLAB values and serialised with the frame, so
+%   DrawTexture, DrawDots, DrawLines, DrawText, FillPoly, procedural
+%   gratings and anything Psychtoolbox adds later all pass through
+%   unchanged. Nothing is eval'd on the far side.
+%
+%   This replaced a UDP command stream that serialised each call to MATLAB
+%   source text: 1072 us per writeline, three per iteration, 77% of the
+%   state-machine loop. The frame now costs ~5 us to encode and ~48 us to
+%   publish.
+%
+%   Window argument, by convention (unchanged from before):
+%       mh  or 'windowPtr'  -> draw on BOTH the display and the monitor
+%       'monitoronly'       -> monitor (experimenter) window only
+%       'displayonly'       -> display (animal) window only
+%
+%   Timestamping: end any drawing call with 'Tag', name to get when it was
+%   asked for and when it reached the screen in data.stimulus_events and
+%   data.stimulus_frames (see buildStimulusTiming):
+%       mh.Screen('FillRect', 'windowPtr', [1 1 1], cueRect, 'Tag', 'cue')
+%   The pair is removed before drawing. Targets drawn at the rectangle getpos
+%   returned are tagged with their own name automatically. Only what is drawn
+%   on the display counts, not 'monitoronly'.
+
+if isempty(mh.sceneMap)
+    mh.sceneMap = sceneOpen(true);
+    mh.cmdList  = {};
 end
 
-% Fast path for cached output
-if strcmp(mh.cachedout, cmd_hash) || mh.holdbuffer
-    % If command is 'sendtogr', process that separately
-    if nargin > 1 && strcmpi(varargin{1}, 'sendtogr') && ~isempty(mh.graphicscommandbuffer)
-        processSendToGr(mh);
+cmd = varargin{1};
+if ~(ischar(cmd) || isstring(cmd)), return; end
+
+switch lower(string(cmd))
+    case "sendtogr"
+        publishFrame(mh);
+        return
+    case "clearbuffer"
+        mh.cmdList = {};
+        frameItems('clear');
+        return
+    case "seteye"
+        mh.sceneSetEye = 1;
+        return
+end
+
+% Playback control is a ONE-SHOT: it changes the renderer's state instead of
+% describing the current picture. A drawing command may be dropped safely
+% because the next frame draws it again, but a dropped PlayMovie never comes
+% back - and the renderer only ever reads the NEWEST frame, so a command
+% carried by exactly one frame is almost always skipped. One-shots therefore
+% ride in every frame, each tagged with a token, and the renderer runs each
+% token once, in order.
+%
+%   mh.Screen('PlayMovie',         mh, mov, rate)   start / pause (rate 0)
+%   mh.Screen('CloseMovie',        mh, mov)         pause; playback resumes
+%                                                   where it stopped
+%   mh.Screen('SetMovieTimeIndex', mh, mov, secs)   seek, e.g. 0 to restart
+args = varargin;
+if numel(args) >= 2
+    args{2} = windowToken(args{2});
+end
+tag = '';
+if numel(args) >= 4 && (ischar(args{end-1}) || isstring(args{end-1})) && strcmpi(args{end-1}, 'Tag')
+    tag = char(args{end});          % timestamp this item; Psychtoolbox never sees the pair
+    args(end-1:end) = [];
+end
+if any(strcmpi(string(cmd), ["PlayMovie","CloseMovie","SetMovieTimeIndex"]))
+    mh.oneShotSeq = mh.oneShotSeq + 1;
+    s = struct('token', mh.oneShotSeq);
+    s.cmd = args;
+    mh.oneShots{end+1} = s;
+    % Bounded ring rather than a clear at the trial boundary: a clear can
+    % drop a token the renderer has not read yet, and one-shots are rare
+    % enough that it can never fall this far behind.
+    if numel(mh.oneShots) > 32
+        mh.oneShots = mh.oneShots(end-31:end);
     end
-    return;
+    return
+end
+if ischar(args{min(2, end)}) && any(strcmp(args{min(2, end)}, {'both', 'display'}))
+    frameItems('draw', args, tag);  % what the animal sees, for stimulus timing
+end
+mh.cmdList{end+1} = args;
 end
 
-% Update cache hash
-mh.cachedout = cmd_hash;
+% =========================================================================
+function publishFrame(mh)
+% Every published frame gets an ID and a generation timestamp, and lists the
+% items it draws on the display (frameItems). The ID is the join key: the
+% renderer records which frame each flip showed, so the change log kept here
+% (when each item was asked for) meets the flips that showed it
+% (buildStimulusTiming).
+% GetSecs (PTB, monotonic, 0.48 us resolution) is the clock of every live
+% time in a trial, and of the renderer's flip timestamps; trialRecord puts
+% them all on the trial's timeline when the trial is saved.
+tGen = GetSecs;
+mh.sceneSeq = mh.sceneSeq + 1;
+seq = mh.sceneSeq;
+state = char(mh.activestatename);
+[tagNames, tagKinds, tagRects, changes] = frameItems('take', state);
 
-% Handle special commands
-if nargin > 1
-    if strcmpi(varargin{1}, 'clearbuffer') || strcmpi(varargin{1}, 'sendtogr')
-        % Clear buffer more efficiently
-        if strcmpi(varargin{1}, 'clearbuffer')
-            writeline(mh.graphicsport, 'executegr.functionsbuffer=[];', '0.0.0.0', 2021);
-        elseif strcmpi(varargin{1}, 'sendtogr') && ~isempty(mh.graphicscommandbuffer)
-            processSendToGr(mh);
-        end
-        return;
+frame = struct( ...
+    'seq',          seq, ...
+    'tGenerated',   tGen, ...
+    'trialStarted', logical(mh.trialstarted), ...
+    'stateName',    state, ...
+    'setEye',       logical(mh.sceneSetEye), ...
+    'resources',    {mh.resourceDecl}, ...
+    'oneShots',     {mh.oneShots}, ...
+    'cmds',         {mh.cmdList});
+if ~isempty(tagNames)                   % items drawn on the display (none: fields left out)
+    frame.tagNames = tagNames;
+    frame.tagKinds = tagKinds;
+    frame.tagRects = tagRects;
+end
+
+sceneWrite(mh.sceneMap, seq, frame);
+
+% The "requested" side of data.stimulus_events: every item appearing or
+% disappearing, and every state change (the photodiode square changes colour
+% on each), with this frame's ID and time. Rare, so grown on demand.
+for j = 1:size(changes, 1)
+    n = mh.stimReqN + 1;
+    mh.stimReqTag{n}   = changes{j, 1};
+    mh.stimReqKind{n}  = changes{j, 2};
+    mh.stimReqEvent{n} = changes{j, 3};
+    mh.stimReqState{n} = state;
+    mh.stimReqSeq(n)   = seq;
+    mh.stimReqTime(n)  = tGen;
+    mh.stimReqN        = n;
+end
+
+mh.cmdList     = {};
+mh.sceneSetEye = 0;
+end
+
+% =========================================================================
+function tok = windowToken(w)
+% Reduce the window argument to a small token the renderer can resolve.
+% Tasks pass the internal object itself to mean "both windows"; serialising
+% that object would be enormous and pointless.
+if isobject(w) || isa(w,'internal')
+    tok = 'both';
+    return
+end
+if ischar(w) || isstring(w)
+    switch lower(string(w))
+        case "monitoronly",  tok = 'monitor';
+        case "displayonly",  tok = 'display';
+        case "windowptr",    tok = 'both';
+        otherwise,           tok = w;    % not a window selector; pass through
     end
+    return
 end
-
-% Preallocate command string with estimated size
-numArgs = length(varargin);
-estimatedCmdLength = numArgs * 50; % Estimate average 50 chars per argument
-cmdStr = strings(1, numArgs + 2); % +2 for additional commands
-cmdIdx = 1;
-
-% Process arguments
-for i = 1:numArgs
-    cmdStr(cmdIdx) = sprintf('args_udp{%d}=%s;', mh.lastcommand, formatArgument(mh, varargin{i}, i));
-    cmdIdx = cmdIdx + 1;
-    mh.lastcommand = mh.lastcommand + 1;
-end
-
-% Handle texture case - faster string manipulation
-if numArgs > 0 && strcmpi(varargin{1}, 'DrawTexture') && numArgs >= 3
-    if ischar(varargin{3}) || isstring(varargin{3})
-        varval = strrep(varargin{3}, '.texture', '.monitortexture');
-        cmdStr(cmdIdx) = sprintf('additionalinfo_udp{1}=%s;', varval);
-        cmdIdx = cmdIdx + 1;
-    end
-end
-
-% Handle output variables more efficiently
-if nargout > 0
-    outStr = strings(1, nargout);
-    for i = 1:nargout
-        outStr(i) = sprintf('outs_udp{%d}=''a%d'';', i, i);
-    end
-    cmdStr(cmdIdx) = join(outStr, '');
-    cmdIdx = cmdIdx + 1;
-end
-
-% Add delimiter
-cmdStr(cmdIdx) = sprintf('args_udp{%d}=''endcommand'';', mh.lastcommand);
-mh.lastcommand = mh.lastcommand + 1;
-
-% Join strings - more efficient than strjoin on cell arrays
-mh.graphicscommandbuffer = mh.graphicscommandbuffer + join(cmdStr(1:cmdIdx), '');
-
-% Handle output retrieval
-if nargout > 0
-    commands = readline(mh.graphicsport);
-    eval(commands);  % Consider replacing with more efficient code if possible
-    
-    % Preallocate output
-    varargout = cell(nargout, 1);
-    for i = 1:nargout
-        varargout{i} = eval(['a' num2str(i)]);  % Consider more efficient approach
-    end
-end
-
-end
-
-function processSendToGr(mh)
-% Extracted sendtogr logic for cleaner code organization
-if mh.commandID == 0
-    mh.commandID = getsecs;
-end
-
-% Send state name once - combine operations
-mh.evalgraphics(['gr.activestatename =''' mh.activestatename ''';']);
-writeline(mh.graphicsport, mh.activestatename, '0.0.0.0', 2023);
-
-% Send commands in one batch - faster string formatting
-cmdBatch = strjoin([mh.graphicscommandbuffer, ';commandID_udp=', num2str(mh.commandID), ';']);
-    
-    writeline(mh.graphicsport, cmdBatch, '0.0.0.0', 2021);
-
-% Reset state
-mh.lastsenttime = getsecs;
-mh.graphicscommandbuffer = '';
-mh.lastcommand = 1;
-mh.holdbuffer = 0;
-mh.commandID = 0;
-end
-
-function formatted = formatArgument(mh, arg, argIdx)
-% Optimized argument formatting function
-if ischar(arg)
-    if contains(arg, 'gr')
-        formatted = arg;
-    else
-        formatted = ['''' arg ''''];
-    end
-elseif isnumeric(arg)
-    % More efficient numeric conversion
-    formatted = mat2str(arg);
-elseif isobject(arg)
-    % Optimize object handling
-    targname = arg.name;
-    pos = mh.trialtarg(targname, 'getpos');
-    formatted = mat2str(pos);
-else
-    formatted = ['''' inputname(argIdx) ''''];
-end
+tok = w;
 end

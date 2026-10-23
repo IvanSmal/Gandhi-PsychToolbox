@@ -1,5 +1,17 @@
 function GraphicsHandler
 % opengl('save','hardware');
+
+% GStreamer's VA-API plugin segfaults inside the AMD driver (libgstvaapi ->
+% vaInitialize -> radeonsi_drv_video -> LLVM) while opening a movie, taking
+% this whole process with it -- intermittently, which is why it looked like
+% random renderer deaths (~/matlab_crash_dump.*, thread 'qtdemux0:sink').
+% Point libva at a driver that does not exist: vaInitialize then fails
+% cleanly, the vaapi elements never register, and GStreamer decodes in
+% software, which is what every run that did not crash was doing anyway.
+% Must happen before Psychtoolbox initialises GStreamer (first OpenMovie).
+setenv('LIBVA_DRIVER_NAME', 'none');
+setenv('GST_PLUGIN_FEATURE_RANK', 'vaapidecodebin:0,vaapih264dec:0,vaapih265dec:0,vaapimpeg2dec:0,vaapivp8dec:0,vaapivp9dec:0,vaapipostproc:0,vaapisink:0');
+
 pathhere=pwd;
 pathhere=pathhere(1:end-21);
 filepaths_path=[pathhere '/inis/FilePaths.ini'];
@@ -7,6 +19,9 @@ filepaths_ini=IniConfig();
 filepaths_ini.ReadFile(filepaths_path);
 addpath(genpath(filepaths_ini.GetValues('paths','home')));
 addpath(filepaths_ini.GetValues('paths','xippmex'));
+% Demo mode: if MonkeyHost set the demo flag, swap to the simulated xippmex so
+% this renderer runs without Trellis too.
+if isfile(demoFlagPath()), enableDemoXippmex(filepaths_ini.GetValues('paths','xippmex')); end
 xippmex;
 vblhis=0;
 vbl=0;
@@ -15,18 +30,34 @@ warning ('off','all');
 graphicsport = udpport("LocalPort",2021, "timeout", 0.02);
 
 %% initiate a bunch of gr stuff
-gr.screenparams= IniConfig();
-gr.screenparams.ReadFile(filepaths_ini.GetValues('paths','ini_screen'));
-bgcolor=gr.screenparams.GetValues('screen info','background');
+% [screen info] is hand-written rig config; rigIni falls back to
+% ScreenParams.ini on a rig that has not been migrated yet.
+screenIni = rigIni('config', fullfile(pathhere,'inis'));
+bgcolor = screenIni.GetValues('screen info','background');
 gr = graphics;
+gr.screenparams = screenIni; % previously wiped by the 'gr = graphics' line above
 gr.eye=eyeinfo;
+
+%% diagnostics log
+% This process used to disp() into a terminal that dies with it, so a failed
+% texture load or a dropped draw left no trace anywhere on disk and the only
+% symptom was "nothing appears". Everything that went to the console now goes
+% to a file next to the app's error logs as well.
+grlogfid  = -1;
+grlogLast = 0;
+try
+    logdir = fullfile(pathhere,'ErrorLogs');
+    if ~exist(logdir,'dir'), mkdir(logdir); end
+    grlogfid = fopen(fullfile(logdir, ...
+        ['GraphicsHandler_' datestr(now,'yyyymmdd_HHMMSS') '.log']), 'w');
+catch
+end
 
 %% set up the screens for experiments
 Screen('Preference', 'SkipSyncTests', 1);
 Screen('Preference', 'VisualDebugLevel', 3);
 
 %set the resolution
-% Screen('Resolution',1,1920,1080,120)
 
 % Clear the workspace and the screen
 sca;
@@ -35,7 +66,18 @@ close all;
 % Here we call some default settings for setting up Psychtoolbox
 PsychDefaultSetup(2);
 
-Screen('Resolution',1,1920,1080,120); %set resolutions
+%% display mode (the animal's TV) -- rig-specific, so read it from this rig's own ini
+% rig1 drives a native 1080p60 panel and needs no mode change; rig2 drives a 4K
+% panel that must be forced to 1920x1080@120. Missing keys mean "leave it alone".
+displayXres    = screenIni.GetValues('screen info','display_xres');
+displayYres    = screenIni.GetValues('screen info','display_yres');
+displayRefresh = screenIni.GetValues('screen info','display_refresh');
+if ~isempty(displayXres) && ~isempty(displayYres) && ~isempty(displayRefresh)
+    Screen('Resolution', 1, displayXres, displayYres, displayRefresh);
+    fprintf('display set to %gx%g @ %g Hz from ScreenParams.ini\n', displayXres, displayYres, displayRefresh);
+else
+    disp('no display_xres/display_yres/display_refresh in ScreenParams.ini; display mode left unchanged');
+end
 
 % priority
 Priority(90);
@@ -68,6 +110,7 @@ PsychImaging('PrepareConfiguration');
 PsychImaging('AddTask', 'General', 'UsePanelFitter', [gr.screenXpixels, gr.screenYpixels], 'Full');
 
 [gr.window_monitor, gr.monitor_rect]=PsychImaging('OpenWindow', 0, bgcolor,monitor_rect,[],[],[],[],[],kPsychGUIWindow);
+windowIdentity(sprintf('PTB Onscreen Window [%d]:', gr.window_monitor), 'monitor');   % its own dock icon
 
 gr.original_monitor_params=Screen('PanelFitter', gr.window_monitor);
 gr.winparams=gr.original_monitor_params;
@@ -80,7 +123,10 @@ gr.newsize_true(2)=gr.newsize(4)-gr.newsize(2);
 
 
 % diode stuff
+% diode in bottom-left corner
 gr.diode_pos=[0,gr.screenYpixels-20,20,gr.screenYpixels];
+% diode in bottom-right corner
+%gr.diode_pos=[gr.screenXpixels-20,gr.screenYpixels-20,gr.screenXpixels,gr.screenYpixels];
 
 % for some reason draw a circle for a frame idk why i need to do this, but
 % otherwise it will not display circles
@@ -128,160 +174,296 @@ seteye
 % disp('loaded movie')
 % Screen('PlayMovie', gr.movie, 1);
 %% keep function alive
+% The scene is a LATEST-VALUE SLOT in shared memory, not a command queue.
+% The state machine overwrites it as fast as it likes (measured ~39 us) and
+% never waits; this loop reads whichever scene is current when it is ready to
+% draw, at whatever rate Screen('Flip') allows. Scenes skipped in between
+% were never displayable, so skipping them is correct and nothing backs up.
+sceneMap = sceneOpen(false);
+L        = sceneLayout();
+flipcount = 0;
+% Whatever the slot holds now predates this renderer. Take its state as the
+% baseline rather than recording it as the first trial's first transition.
+[frame0, ok0] = sceneRead(sceneMap);
+if ok0 && isfield(frame0,'stateName') && ~isempty(frame0.stateName)
+    gr.state_history   = {char(frame0.stateName)};
+    gr.activestatename = char(frame0.stateName);
+end
+% Flip-rate gauge for the state machine's GUI: the scene slot's format in the
+% opposite direction. This process is the only writer; the state machine
+% reads whichever value is current when it refreshes its misc tab.
+statsMap   = sceneOpen(true, renderStatsPath());
+statsSeq   = 0;
+statsLastT = 0;
+vblRing    = nan(1,120);            % last ~2 s of display flips at 60 Hz
+% Mouse mode: publish the cursor (in the monitor window) as a simulated eye
+% position. The slot is created lazily on first use, so normal sessions never
+% touch it. heldX/heldY latch the last position so the eye only moves while the
+% left button is held.
+mouseMap = []; mouseSeq = 0; heldX = []; heldY = [];
+% Startup: clear any mouse-mode slot left by a previous session. /dev/shm
+% survives app restarts, so a slot left at on=1 made the eye/cursors follow a
+% stale mouse position until Mouse Mode was toggled on and off again. Opening
+% the map here also makes the idle branch below keep asserting on=0.
+try
+    if isfile(mousePath())
+        mouseMap = sceneOpen(true, mousePath()); mouseSeq = mouseSeq + 1;
+        sceneWrite(mouseMap, mouseSeq, struct('on',0,'target','eye','x',0,'y',0));
+    end
+catch
+end
+% Keep the monitor window a fixed size: PTB has no non-resizable GUI flag, so
+% if the operator resizes it we snap the size back (position left free, so it
+% stays movable). Target size is captured on the first idle frame.
+monTargetW = []; monTargetH = []; lastSnapT = 0;
+% Stimulus timing: every display flip of a trial is logged with the frame it
+% showed and the items that frame drew (see buildStimulusTiming, dumpdata).
+noTags = struct('tag', {}, 'kind', {}, 'rect', {});
+gr.flipLog = emptyFlipLog();
+% Live target positions for TrellisScope: the last second of display flips,
+% published about every 100 ms (see targetFlipsPath, publishTargetFlips).
+tfMap = []; tfSession = GetSecs; tfCount = 0; tfLastPub = 0; tfLastTry = -inf;
+tfFlips = zeros(0, 2);                  % [counter onset]
+tfItemCnt = zeros(0, 1); tfItemXY = zeros(0, 2); tfItemName = {};
 while 1
     try %error handler
-        % pause(0.00001) %allow for callbacks to be checked
-        getCommands(graphicsport)
-        %% evaluate graphics buffer
-        runonce=0;
-        flipcount=0;
-        vbl=0;
-        while gr.trialstarted
-            if ~isempty(gr.functionsbuffer)
-                runonce=runonce+1;
-                if runonce==1
-                    setgrid(gr);
-                    Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
-                end
+        getCommands(graphicsport)          % low-rate control only (dumpdata, exit, seteye)
 
-                if ~strcmp(gr.state_history{end},gr.activestatename)
-                    gr.state_history{end+1}=gr.activestatename;
-                    gr.diode_color=abs(gr.diode_color-1);
-                    disp(join(["changed diode for state: " gr.activestatename]));
-                end
-                gr.fliptimes=[gr.fliptimes getsecs];
-                gr.commandIDs=[gr.commandIDs gr.commid_udp];
-
-                if ~exist('allargs','var') %I know the while loop makes this redundant. While loop was added later and I didn't want to mess with what works
-                    while ~exist('allargs','var')
-                        getCommands(graphicsport)
-                        try
-                            [additionalinfo,allargs,outs]=parsecommands(gr);
-                        end
-                    end
-                else
-                    Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
-                    DrawScreen(gr,additionalinfo,allargs,outs)
-
-                    clear additionalinfo allargs outs
-
-                    fliptime=vbl-vblhis;
-                    vblhis=vbl;
-
-                    vbl=getsecs;
-                    Screen('Flip',gr.window_main,[],[],1);
-                    if ~isempty(gr.texture)
-                        if  gr.texture >= 0
-                        Screen('Close',gr.texture)
-                        end
-                    end
-                    flipcount=flipcount+1;
-
-
-                    if flipcount>3
-                        Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
-                        Screen('Flip',gr.window_monitor,[],[],1);
-                        updategui(gr);
-                        runonce=0;
-                        flipcount=0;
-                    end
-
-                    getCommands(graphicsport)
-
-                    flipped=1;
-                end
-            else
-                getCommands(graphicsport)
-            end
+        % Mouse mode (toggled via evalgraphics gr.mousemode): map the cursor in
+        % the monitor window to DISPLAY pixels and publish it as the eye
+        % position. The eye follows the cursor only while the LEFT button is
+        % held, so releasing it freezes the eye instead of snapping to an edge.
+        if isprop(gr,'mousemode') && gr.mousemode
+            tgt = 'eye'; if isprop(gr,'mousetarget'), tgt = gr.mousetarget; end   % eye or cursorN
+            if isempty(mouseMap), mouseMap = sceneOpen(true, mousePath()); end
+            [mmx, mmy, mbtn] = GetMouse(gr.window_monitor);
+            r = Screen('Rect', gr.window_monitor);          % window-local pixels
+            dx = (mmx - r(1)) / max(1, r(3)-r(1)) * gr.screenXpixels;   % -> display px
+            dy = (mmy - r(2)) / max(1, r(4)-r(2)) * gr.screenYpixels;
+            if isempty(heldX), heldX = dx; heldY = dy; end  % start at the cursor
+            if mbtn(1), heldX = dx; heldY = dy; end          % move only while left held
+            mouseSeq = mouseSeq + 1;
+            sceneWrite(mouseMap, mouseSeq, struct('on',1,'target',tgt,'x',heldX,'y',heldY));
+        elseif ~isempty(mouseMap)
+            mouseSeq = mouseSeq + 1;
+            sceneWrite(mouseMap, mouseSeq, struct('on',0,'target','eye','x',0,'y',0));   % announce off
+            heldX = []; heldY = [];
         end
-        %% this is to show eye when trials are not running
-        while ~gr.trialstarted
-            % send ready signal to mh
-            writeline(graphicsport,'isGraphicsReady=1;','0.0.0.0',2020);
 
-            getCommands(graphicsport)
-            writeline(graphicsport,'mh.readyforflip=1;','0.0.0.0',2020);
-            gr=makegridlines(gr);
+        [frame, ok] = sceneRead(sceneMap);
+        if ~ok
+            frame = struct('seq',-1,'trialStarted',false,'stateName','null', ...
+                'setEye',false,'resources',{{}},'oneShots',{{}},'cmds',{{}});
+        end
+
+        % In-trial follows the newest scene frame -- but a frame the state
+        % machine stopped refreshing (a task error, a force-stop before its
+        % final publish) must not pin the renderer in the trial. Treat a frame
+        % older than 1 s as out of trial (a trial publishes every ~1 ms). GetSecs is system-wide, so the
+        % frame's tGenerated compares directly to ours.
+        wasInTrial = gr.trialstarted;
+        stale = isfield(frame,'tGenerated') && frame.tGenerated > 0 && (GetSecs - frame.tGenerated) > 1.0;
+        gr.trialstarted = logical(frame.trialStarted) && ~stale;
+        if wasInTrial && ~gr.trialstarted
+            % Leaving the trial: blank the stimulus window once, so the last
+            % task frame never lingers into the idle state.
             try
-                seteye;
+                Screen('FillRect', gr.window_main, bgcolor);
+                [vblB, onsetB, ~, missedB] = Screen('Flip', gr.window_main);
+                % logged: whatever was still on screen disappeared at this flip
+                logFlip(frame.seq, NaN, vblB, onsetB, missedB, frame.stateName, NaN, false, true, noTags);
             catch
             end
+        end
+
+        % state name travels with the frame; diode flips on transition
+        nm = frame.stateName;
+        if isempty(nm), nm = 'null'; end
+        toggled = false;
+        if ~strcmp(gr.state_history{end}, nm)
+            gr.state_history{end+1} = nm;
+            gr.activestatename      = nm;
+            gr.diode_color          = abs(gr.diode_color - 1);
+            toggled = true;         % this frame's flip changes the photodiode square
+            disp(join(["changed diode for state: " nm]));
+        end
+
+        if isfield(frame,'setEye') && frame.setEye
+            try, seteye; catch, end
+        end
+
+        % Only a frame that was really read carries a sequence number. The state
+        % machine numbers frames and one-shot tokens from zero each time it
+        % starts, and this renderer outlives it, so a sequence number that goes
+        % backwards means a fresh run whose tokens would otherwise sit below the
+        % high-water mark and be ignored forever.
+        if ok
+            if frame.seq < gr.lastFrameSeq
+                grlog('state machine restarted (seq %d -> %d); resetting one-shots', ...
+                    gr.lastFrameSeq, frame.seq);
+                gr.lastOneShot = 0;
+            end
+            gr.lastFrameSeq = frame.seq;
+        end
+
+        % load any texture or movie this renderer has not seen yet. The
+        % declaration list rides in every frame, so this is idempotent and
+        % there is no race over which frame happened to carry it.
+        if isfield(frame,'resources') && ~isempty(frame.resources)
+            ensureResources(gr, frame.resources);
+        end
+        runOneShots(gr, frame);
+
+        if gr.trialstarted
+            drawFrame(gr, frame);
+            drawDisplayCursors(gr);   % over the targets, under the diode; trials only
+            Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
+            Screen('DrawingFinished', gr.window_main);
+            % Take the timestamps Psychtoolbox actually reports rather than
+            % calling a clock afterwards: vbl/onset are when photons appeared,
+            % and missed>0 means this flip overran its deadline.
+            [vbl, onset, ~, missed] = Screen('Flip', gr.window_main);
+            noteDisplayFlip(vbl);
+            % what this flip showed: frame.seq is the ID the state machine gave
+            % the frame, the join key to its change log (buildStimulusTiming)
+            % (frame.stateName, not nm: drawFrame, a nested function, reuses nm)
+            if isfield(frame, 'tagNames') && ~isempty(frame.tagNames)
+                shownTags = struct('tag', reshape(frame.tagNames, 1, []), ...
+                    'kind', reshape(frame.tagKinds, 1, []), 'rect', num2cell(frame.tagRects, 2)');
+            else
+                shownTags = noTags;
+            end
+            flipGen = NaN; if isfield(frame, 'tGenerated'), flipGen = frame.tGenerated; end   % when MHost2 published it
+            logFlip(frame.seq, flipGen, vbl, onset, missed, frame.stateName, mean(gr.diode_color(:)), toggled, false, shownTags);
+
+            flipcount = flipcount + 1;
+            if flipcount >= 3
+                drawMonitorExtras(gr);
+                Screen('Flip', gr.window_monitor, [], [], 1);   % dontsync: never block the display flip
+                updategui(gr);
+                % Service the Graphics Info uifigure's event queue so it renders
+                % and stays interactive; throttled, and only when the info window
+                % is enabled, so it never disturbs display-flip timing otherwise.
+                if strcmp(gr.TurnthisoffifthiswindowslowsdowngraphicsSwitch.Value,'On'), drawnow limitrate; end
+                flipcount = 0;
+            end
+        else
+            % out of trial: show the eye and the grid on the monitor window
+            writeline(graphicsport,'isGraphicsReady=1;','0.0.0.0',2020);
+            gr = makegridlines(gr);
+            try, seteye; catch, end
             setgrid(gr);
-            Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]);
+            try, Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]); catch, end
+            drawcursors(gr);
 
             gr.newsize=Screen('GlobalRect',gr.window_monitor);
             gr.newsize_true(1)=gr.newsize(3)-gr.newsize(1);
             gr.newsize_true(2)=gr.newsize(4)-gr.newsize(2);
-            gr.winparams=Screen('PanelFitter', gr.window_monitor);
-            gr.winparams(1:4)=ceil(gr.winparams(1:4)*gr.scalefactor);
-            gr.scalefactor=1;
-            gr.winparams([1,3])=ceil(gr.winparams([1,3])+gr.left_right);
-            gr.left_right=0;
-            gr.winparams([2,4])=ceil(gr.winparams([2,4])+gr.up_down);
-            gr.up_down=0;
-            Screen('PanelFitter', gr.window_monitor, gr.winparams);
+            % Fixed-size monitor window: if it was resized, snap the size back
+            % (leave X/Y at -1 = unchanged, so it can still be moved). wmctrl
+            % runs in the background and is rate-limited so it never stalls the
+            % loop or oscillates. Target = the size the window opened at.
+            if isempty(monTargetW), monTargetW = gr.newsize_true(1); monTargetH = gr.newsize_true(2); end
+            if (abs(gr.newsize_true(1)-monTargetW) > 8 || abs(gr.newsize_true(2)-monTargetH) > 8) && (GetSecs - lastSnapT > 1)
+                lastSnapT = GetSecs;
+                try
+                    system(sprintf('wmctrl -r "PTB Onscreen Window [%d]" -e 0,-1,-1,%d,%d &', ...
+                        gr.window_monitor, monTargetW, monTargetH));
+                catch
+                end
+            end
+            % Only re-drive the PanelFitter when a pan/zoom is actually pending.
+            % The window opened with UsePanelFitter(...,'Full'), which re-fits the
+            % content to the window on its own; overriding it every frame pinned a
+            % stale source/dest rect, so a plain OS resize tiled instead of
+            % re-fitting. Leaving it alone unless the operator panned/zoomed lets
+            % resize work while preserving pan/zoom.
+            if gr.scalefactor ~= 1 || gr.left_right ~= 0 || gr.up_down ~= 0
+                gr.winparams=Screen('PanelFitter', gr.window_monitor);
+                gr.winparams(1:4)=ceil(gr.winparams(1:4)*gr.scalefactor);
+                gr.scalefactor=1;
+                gr.winparams([1,3])=ceil(gr.winparams([1,3])+gr.left_right);
+                gr.left_right=0;
+                gr.winparams([2,4])=ceil(gr.winparams([2,4])+gr.up_down);
+                gr.up_down=0;
+                Screen('PanelFitter', gr.window_monitor, gr.winparams);
+            end
 
-            Screen('Flip',gr.window_monitor);
-            Screen('Flip',gr.window_main);
+            Screen('Flip',gr.window_monitor, [], [], 1);
+            [vblIdle, onsetIdle] = Screen('Flip',gr.window_main);
+            noteDisplayFlip(vblIdle);
+            % First idle flip after trial flips, when the leaving-trial blank
+            % above did not run (gr.trialstarted cleared by MHost2 first): the
+            % display is clear from this flip on.
+            if ~isempty(gr.flipLog.blank) && ~gr.flipLog.blank(end)
+                logFlip(frame.seq, NaN, vblIdle, onsetIdle, 0, frame.stateName, NaN, false, true, noTags);
+            end
             updategui(gr);
-
-            gr.functionsbuffer=[];
-            % Screen('Close');
+            drawnow limitrate;   % out of trial: keep the info window painted & interactive (timing not critical here)
         end
     catch e
-        disp(e.message)
+        grlog('LOOP ERROR: %s', e.message);
     end
 end
-%% callback function that does the graphics handling
+%% diagnostics: console as before, plus a file that outlives this process
+    function grlog(fmt, varargin)
+        try
+            msg = sprintf(fmt, varargin{:});
+        catch
+            msg = fmt;
+        end
+        disp(msg);
+        if grlogfid > 0
+            try
+                fprintf(grlogfid, '%s  %s\n', datestr(now,'HH:MM:SS.FFF'), msg);
+            catch
+            end
+        end
+    end
+
+    function grlogThrottled(fmt, varargin)
+        % For conditions that repeat every frame: say it once a second rather
+        % than 60 times, so the log stays readable but never goes silent.
+        t = GetSecs;
+        if t - grlogLast < 1, return; end
+        grlogLast = t;
+        grlog(fmt, varargin{:});
+    end
+
+%% low-rate control channel (still UDP: dumpdata, exit, seteye once a trial)
     function getCommands(graphicsport,~)
         try
-            command=readline(graphicsport);
-            if contains(command,'SetEye','IgnoreCase',true)
-                seteye;
-            elseif contains(command,'execute','IgnoreCase',true)
-                rawexecute(command);
-            else
-                executeScreen(command);
+            % Drain EVERY pending command this frame, not just one. The control
+            % channel is one-way UDP with no ack: a command left in the buffer
+            % (a burst of menu actions, or gr.mousemode=0 arriving behind other
+            % evals) would otherwise be applied many frames late, or lost when
+            % the backlog overflows the socket buffer -- which is how a Mouse
+            % Mode "Off" or a cursor-assignment apply could silently not stick.
+            % NumBytesAvailable first: a bare readline blocks for the port
+            % timeout (20 ms) when idle, which would cap this loop at 50 Hz. The
+            % iteration cap keeps a flood from stalling the render loop.
+            for iCmd = 1:64
+                if graphicsport.NumBytesAvailable == 0
+                    return
+                end
+                command=readline(graphicsport);
+                if strlength(command)==0
+                    return
+                end
+                if contains(command,'SetEye','IgnoreCase',true)
+                    seteye;
+                elseif contains(command,'execute','IgnoreCase',true)
+                    rawexecute(command);
+                end
             end
         catch
         end
     end
-
-%% recive and execute Screen calls
-    function executeScreen(command)
-
-        args_udp={};
-        outs_udp={};
-        additionalinfo_udp={};
-        commandID_udp={};
-        gr.lastarg=1;
-        eval(command);
-
-        gr.functionsbuffer(end+1).args_uncut=args_udp;
-        gr.functionsbuffer(end+1).outs=outs_udp;
-        gr.functionsbuffer(end+1).additionalinfo=additionalinfo_udp;
-        gr.commid_udp=commandID_udp;
-        flush(graphicsport);
-
-    end
-%% set eye calibration
     function seteye
         try
             gr.eye=eyeinfo;
-            toconvert(:,1)=-40:10:40;
-            toconvert(:,2)=-40:10:40;
-            pixelsforlines=deg2pix(toconvert,'cart');
-            xlines=reshape(repmat(pixelsforlines(:,1),2)',1,[]);
-            fully=reshape(repmat([0 1080], length(xlines)/2,1)',1,[]);
-            ylines = reshape(repmat(pixelsforlines(:,2),2)',1,[]);
-            fullx=reshape(repmat([0 3000], length(ylines)/2,1)',1,[]);
-            gr.gridlinesmatrix=[xlines fullx;fully ylines];
-            truezero=deg2pix([0 0]);
-            degadds=deg2pix([10 10;20 20; 30 30; 40 40; 50 50],'cart')-truezero;
-            degadds(:,2)=[];
-
-            gr.center_circle=[truezero-10 truezero+10;...
-                truezero-degadds truezero+degadds]';
+            % The monitor grid (degrees + mm) is rebuilt every frame by
+            % makegridlines, so there is nothing else to do here.
         catch e
             disp(e.message)
         end
@@ -294,151 +476,583 @@ end
 %%data save function
     function dumpdata(fname)
         gr;
-        temptr=[];
-        trname=[];
-        disp('trying to dump data')
-        fname=strtrim(fname);
-        temptr=load(fname);
-        trname=fields(temptr);
-        temptr.(trname{:}).data.graphics_fliptimes.fliptimes=gr.fliptimes;
-        temptr.(trname{:}).data.graphics_fliptimes.commandIDs = gr.commandIDs;
-        temptr.(trname{:}).data.DiodeFlipStates={gr.state_history{2:end}};
-        gr.commandIDs=[];gr.fliptimes=[];gr.state_history={'null'};
-        save(fname,'-struct','temptr');
-        disp(join(['saved ',trname{:}]))
+        % char, not string: the command arrives as dumpdata("...") with double
+        % quotes, so fname is a string scalar. [str 'suffix'] then builds a 1x2
+        % STRING ARRAY instead of concatenating, which made save reject the
+        % sidecar path with 'Argument must be a text scalar'.
+        fname = char(strtrim(fname));
+
+        % Snapshot and clear FIRST, before touching the file.
+        %
+        % The previous version cleared these buffers only AFTER a successful
+        % load(). If the load threw, the data was neither written nor
+        % cleared, so the next trial's dump wrote both trials' data into the
+        % next trial's file - one trial empty, the following one doubled.
+        % Clearing up front means a failed dump can lose at most the trial it
+        % belongs to, and can never corrupt a second trial.
+        % If the trial's end has not reached the screen yet (this loop was
+        % stalled), clear the display now, so the dump records when the last
+        % items disappeared instead of that flip landing in the next trial's log.
+        try
+            [fEnd, okEnd] = sceneRead(sceneMap);
+            if okEnd && ~fEnd.trialStarted && ~isempty(gr.flipLog.blank) && ~gr.flipLog.blank(end)
+                Screen('FillRect', gr.window_main, bgcolor);
+                [vblE, onsetE, ~, missedE] = Screen('Flip', gr.window_main);
+                logFlip(fEnd.seq, NaN, vblE, onsetE, missedE, fEnd.stateName, NaN, false, true, noTags);
+            end
+        catch
+        end
+        rec = gr.flipLog;                  % one entry per display flip this trial
+        gr.flipLog = emptyFlipLog();
+        % Keep the current state as the new baseline (element 1 is never
+        % recorded). Resetting to 'null' made the next iteration see the
+        % previous trial's still-current 'stop_autogenerated' as a fresh
+        % transition: it toggled the diode once between trials.
+        gr.state_history = gr.state_history(end);
+        % screenparams []: pix2deg reads this rig's config, as for the eye
+        geom = struct('width', gr.screenXpixels, 'height', gr.screenYpixels, ...
+            'diode_rect', gr.diode_pos, 'screenparams', []);
+
+        for attempt = 1:3
+            try
+                temptr = load(fname);
+                trname = fields(temptr);
+                % MHost2 saved the trial with what the task asked for and the
+                % clock data, every time on the trial's timeline (trialRecord);
+                % add what the display showed and when.
+                temptr.(trname{1}) = buildStimulusTiming(rec, temptr.(trname{1}), geom);
+                save(fname,'-struct','temptr');
+                disp(join(['saved ', trname{1}]))
+                return
+            catch dumpErr
+                disp(['dumpdata attempt ' num2str(attempt) ' failed: ' dumpErr.message]);
+                pause(0.05);
+            end
+        end
+
+        % Still could not write it. Spill to a sidecar next to the trial file
+        % so the timing data is recoverable and unambiguously attributable,
+        % instead of silently vanishing or landing in the wrong trial.
+        try
+            [pp,nn,~] = fileparts(fname);
+            side = fullfile(pp, [nn '.graphics_orphan.mat']);
+            save(side, 'rec');   % one struct variable: unambiguous, no -struct edge cases
+            disp(['DUMPDATA FAILED - wrote orphan sidecar: ' side]);
+        catch sideErr
+            disp(['DUMPDATA FAILED and no sidecar could be written: ' sideErr.message]);
+        end
+    end
+%% stimulus timing: one entry per display flip (see buildStimulusTiming)
+    function L = emptyFlipLog()
+        L = struct('frame_id', [], 'generated', [], 'vbl', [], 'onset', [], 'missed', [], 'state', {{}}, ...
+            'diode', [], 'toggle', false(1,0), 'blank', false(1,0), 'tags', {{}});
+    end
+    function logFlip(id, generated, vbl, onset, missed, state, diode, toggle, blank, tags)
+        % generated: GetSecs MHost2 published the frame (NaN for the blank);
+        % diode: the square's colour (0/1, NaN once the trial's blank removes
+        % it); toggle: it changed colour on this flip; blank: the flip that
+        % cleared the display at the end of the trial.
+        n = numel(gr.flipLog.frame_id) + 1;
+        gr.flipLog.frame_id(n) = id;
+        gr.flipLog.generated(n) = generated;
+        gr.flipLog.vbl(n)      = vbl;
+        gr.flipLog.onset(n)    = onset;
+        gr.flipLog.missed(n)   = missed;
+        gr.flipLog.state{n}    = char(state);
+        gr.flipLog.diode(n)    = diode;
+        gr.flipLog.toggle(n)   = toggle;
+        gr.flipLog.blank(n)    = blank;
+        gr.flipLog.tags{n}     = tags;
+        publishTargetFlips(onset, tags, blank);
+    end
+    function publishTargetFlips(onset, tags, blank)
+        % Keep the last second of flips with the items each showed (centre of
+        % its box, display pixels) and publish them for TrellisScope about
+        % every 100 ms, and on the trial's last (blank) flip. A flip with no
+        % items still counts: it is where an item stopped being shown.
+        try
+            tfCount = tfCount + 1;
+            tfFlips(end+1, :) = [tfCount onset];
+            for tfQ = 1:numel(tags)
+                tfR = tags(tfQ).rect;
+                if numel(tfR) ~= 4 || any(~isfinite(tfR)), continue, end
+                tfItemCnt(end+1, 1) = tfCount; %#ok<AGROW>
+                tfItemXY(end+1, :) = [(tfR(1)+tfR(3))/2, (tfR(2)+tfR(4))/2]; %#ok<AGROW>
+                tfItemName{end+1, 1} = char(tags(tfQ).tag); %#ok<AGROW>
+            end
+            tfKeep = tfFlips(:, 2) >= onset - 1;
+            if ~all(tfKeep)
+                tfFirst = tfFlips(find(tfKeep, 1), 1);
+                tfFlips = tfFlips(tfKeep, :);
+                tfK = tfItemCnt >= tfFirst;
+                tfItemCnt = tfItemCnt(tfK); tfItemXY = tfItemXY(tfK, :); tfItemName = tfItemName(tfK);
+            end
+            if ~(blank || onset - tfLastPub >= 0.1), return, end
+            if isempty(tfMap)
+                if GetSecs - tfLastTry < 2, return, end          % not every flip
+                tfLastTry = GetSecs;
+                tfMap = sceneOpen(true, targetFlipsPath());
+            end
+            [tfNames, ~, tfIdx] = unique(tfItemName);
+            sceneWrite(tfMap, tfCount, struct('session', tfSession, 'counter', tfCount, ...
+                'flips', tfFlips, 'items', [tfItemCnt tfIdx(:) tfItemXY], 'names', {reshape(tfNames, 1, [])}));
+            tfLastPub = onset;
+        catch tfErr
+            grlogThrottled('target publish failed: %s', tfErr.message);
+        end
     end
 %%parse the commands without drawing'
-    function [additionalinfo,allargs,outs]=parsecommands(gr)
-        flush(graphicsport);
-        gr.flipped=0;
-        args_uncut={};
-        outs={};
-        additionalinfo={};
-        v = fieldnames(gr.functionsbuffer);
-        for ii = 1 : length(v) %unwrap commands
-            eval([v{ii} '= gr.functionsbuffer.' v{ii} ';']);
-        end
-        gr.functionsbuffer=[];
-
-        commandcount=1;
-        lastargcount=1;
-
-        for iii = 1:length(args_uncut)
-            if strcmp(args_uncut{iii},'endcommand')
-                % args_uncut(iii)=[];
-                allargs{commandcount}=args_uncut(lastargcount:iii-1);
-                commandcount=commandcount+1;
-                lastargcount=iii+1;
+%% draw the scene onto both windows
+%% dispatch one frame's Screen calls onto the real windows
+    function drawFrame(gr, frame)
+        for i = 1:numel(frame.cmds)
+            a = frame.cmds{i};
+            if numel(a) < 2, continue; end
+            nm = a{1};
+            sel = a{2};
+            % A resource reference (a struct with .resref) is only ever a
+            % handle in THIS process, and is resolved only on the windowed
+            % branches below. If one reaches a fall-through Screen(a{:}) path
+            % (an unrecognised window selector), passing the struct into the
+            % Screen mex corrupts its argument parser so that every later
+            % Screen call, on any window, then fails with a bare "Usage:"
+            % until the process is restarted. So on those paths, drop the
+            % command instead of poisoning the mex.
+            if ~(ischar(sel) || isstring(sel))
+                if hasResref(a), grlogThrottled('dropped %s: unresolved resource ref', char(string(nm))); continue; end
+                try, Screen(a{:}); catch e0, grlogThrottled('Screen(%s) failed: %s', char(string(nm)), e0.message); end
+                continue
+            end
+            wantBoth    = strcmpi(string(sel), "both");
+            wantDisplay = wantBoth || strcmpi(string(sel), "display");
+            wantMonitor = wantBoth || strcmpi(string(sel), "monitor");
+            if ~(wantDisplay || wantMonitor)
+                if hasResref(a), grlogThrottled('dropped %s: resource ref with unknown window selector "%s"', char(string(nm)), char(string(sel))); continue; end
+                try, Screen(a{:}); catch e3, grlogThrottled('Screen(%s) failed: %s', char(string(nm)), e3.message); end
+                continue
+            end
+            if wantDisplay
+                [rest, ok] = resolveArgs(gr, a(3:end), false);
+                if ok
+                    try, Screen(nm, gr.window_main, rest{:}); catch e1, grlogThrottled('display %s failed: %s', char(string(nm)), e1.message); end
+                end
+            end
+            if wantMonitor
+                [restM, okM] = resolveArgs(gr, a(3:end), true);
+                if okM
+                    try, Screen(nm, gr.window_monitor, restM{:}); catch e2, grlogThrottled('monitor %s failed: %s', char(string(nm)), e2.message); end
+                end
             end
         end
     end
 
-    function DrawScreen(gr,additionalinfo,allargs,outs)
-        for i=1:length(allargs) %drawing satarts here
-            args=allargs{i};
-            %% check if user wants to set a graphics parameter
-            if length(args)>2 &&...
-                    (isstring(args{end-1}) || ischar(args{end-1})) &&...
-                    matches(args{end-1},'set','IgnoreCase',true)           % this is to check if the user wants to set a parameter in the graphics handler
+%% does this command still carry an unresolved resource reference?
+    function tf = hasResref(a)
+        tf = false;
+        for k = 1:numel(a)
+            if isstruct(a{k}) && isfield(a{k}, 'resref'), tf = true; return; end
+        end
+    end
 
-                % user MUST be setting something to a window
-                args{2}=gr.window_main;
-                if contains(args{end},'monitor')
-                    args{2}=gr.window_monitor;
-                end
+%% publish the display flip rate about once a second
+    function noteDisplayFlip(vbl)
+        vblRing = [vblRing(2:end) vbl];
+        if vbl - statsLastT < 1, return; end
+        statsLastT = vbl;
+        v = vblRing(~isnan(vblRing));
+        if numel(v) < 2, return; end
+        statsSeq = statsSeq + 1;
+        try
+            sceneWrite(statsMap, statsSeq, struct( ...
+                'fps',          (numel(v)-1) / (v(end)-v(1)), ...
+                'nFlips',       numel(v), ...
+                'trialStarted', logical(gr.trialstarted), ...
+                't',            vbl));
+        catch stErr
+            grlogThrottled('flip-rate publish failed: %s', stErr.message);
+        end
+    end
 
-                evalstring=strcat(args{end},'=Screen(args{1:end-2});');
-                eval(evalstring);
+%% run each one-shot exactly once, no matter how many frames carried it
+    function runOneShots(gr, frame)
+        % Playback control changes renderer state rather than describing the
+        % current picture, so it cannot be treated like a draw. This loop only
+        % ever reads the NEWEST frame, so a command carried by a single frame
+        % is almost always skipped -- which is why PlayMovie never arrived and
+        % the movie sat on its first decoded frame. One-shots now ride in every
+        % frame, tagged, and each token is run once.
+        if ~isfield(frame,'oneShots') || isempty(frame.oneShots), return; end
+        for i = 1:numel(frame.oneShots)
+            s = frame.oneShots{i};
+            if ~(isstruct(s) && isfield(s,'token') && isfield(s,'cmd')), continue; end
+            if s.token <= gr.lastOneShot, continue; end
+            gr.lastOneShot = s.token;           % consumed, whatever happens next
+            a = s.cmd;
+            if numel(a) < 3 || ~(isstruct(a{3}) && isfield(a{3},'resref')), continue; end
+            nm = a{1};
+            id = a{3}.resref;
+            if ~(numel(gr.resourceKind) >= id && strcmp(gr.resourceKind{id},'movie'))
+                grlog('%s skipped: id=%d is not a loaded movie', char(nm), id);
+                continue
             end
-            if isempty(outs)
-                if length(args) >= 2 && (isstring(args{2}) || ischar(args{2}))
-                    if length(args)==2 &&...
-                            matches(args{2},'windowPtr') &&...
-                            ~matches(args{1},'flip','IgnoreCase',true)
+            % Movies play CONTINUOUSLY (opened, looping and muted, in
+            % ensureResources) and are never paused. Pausing then resuming is
+            % where GStreamer stalls on this rig -- bare PlayMovie sometimes
+            % never restarts the decoder, so the movie sits frozen on its last
+            % frame, intermittently and worsening over a session (the
+            % ~19-trial freeze). Every mitigation for the resume (flush-seek,
+            % blocking re-prime) still left a stall under rapid switching, and
+            % the blocking prime stuttered the vsync loop. Not pausing removes
+            % the whole failure class: 0 freezes across rapid and normal
+            % timing. The task decides what the animal SEES by whether it
+            % draws the movie, not by starting/stopping the decoder.
+            if strcmpi(string(nm), "SetMovieTimeIndex")
+                % Seek an already-playing movie -- reliable, and instant once
+                % warmupMovie has built the seek index. Applied to both copies.
+                secs = 0;
+                if numel(a) >= 4 && isnumeric(a{4}) && isscalar(a{4}), secs = a{4}; end
+                try
+                    Screen('SetMovieTimeIndex', gr.resourceMap(id), secs);
+                    if ~isnan(gr.resourceMapMon(id))
+                        Screen('SetMovieTimeIndex', gr.resourceMapMon(id), secs);
+                    end
+                    grlog('SetMovieTimeIndex id=%d t=%g s', id, secs);
+                catch skErr
+                    grlog('SetMovieTimeIndex FAILED id=%d: %s', id, skErr.message);
+                end
+                continue
+            end
+            % PlayMovie re-asserts continuous playback (idempotent -- the
+            % movie is already playing); CloseMovie is intentionally a no-op
+            % for the decoder (it does NOT pause), since the task stops
+            % showing the movie simply by not drawing it. Both are kept so the
+            % task API is unchanged and so a rate change (e.g. slow motion via
+            % PlayMovie rate) still takes effect.
+            if strcmpi(string(nm), "CloseMovie")
+                grlog('CloseMovie id=%d (no-op; movie plays continuously)', id);
+                continue
+            end
+            rate = 1;
+            if numel(a) >= 4 && isnumeric(a{4}) && isscalar(a{4}), rate = a{4}; end
+            try
+                Screen('PlayMovie', gr.resourceMap(id), rate, 1, 0);   % loop, muted
+                grlog('PlayMovie id=%d rate=%g', id, rate);
+            catch pmErr
+                grlog('PlayMovie FAILED id=%d: %s', id, pmErr.message);
+            end
+            if ~isnan(gr.resourceMapMon(id))
+                try
+                    Screen('PlayMovie', gr.resourceMapMon(id), rate, 1, 0);
+                catch pmErrM
+                    grlog('PlayMovie FAILED on monitor copy id=%d: %s', id, pmErrM.message);
+                end
+            end
+        end
+    end
 
-                        Screen(args{1},gr.window_main);
-                        Screen(args{1},gr.window_monitor);
-
-                    elseif length(args)>2 && matches(args{2},'windowPtr')
-
-                        Screen(args{1},gr.window_main,args{3:end});
-
-                        if (isstring(args{1}) || ischar(args{1})) && matches(args{1},'DrawTexture','IgnoreCase',true)
-                            args{3}=additionalinfo{1};
-                            try
-                                Screen(args{1},gr.window_monitor,args{3:end});
-                            catch
-                                disp("Couldn't draw a texture on monitor-screen")
-                            end
-                        else
-                            Screen(args{1},gr.window_monitor,args{3:end});
-                        end
-                    elseif length(args)>2 && matches(args{2},'monitoronly')
+%% load any resource this renderer has not seen yet
+    function ensureResources(gr, decls)
+        for i = 1:numel(decls)
+            d = decls{i};
+            % A logical id only means something within ONE run of the state
+            % machine: ids are handed out 1,2,3... per run, while this renderer
+            % keeps its cache across restarts of that process. Keying the cache
+            % on the id alone let a texture resolve against a movie left over
+            % from an earlier run, and a movie against a leftover texture -- so
+            % the texture drew nothing and the movie drew a stale still frame.
+            % The id is trusted only while the declaration still agrees about
+            % what it points at.
+            if cachedMatches(gr, d)
+                continue                        % already loaded, or already failed
+            end
+            releaseResource(gr, d.id);          % id recycled: let the old one go
+            try
+                switch d.kind
+                    case 'texture'
+                        img = imread(d.path);
+                        % A Psychtoolbox texture belongs to the window it was
+                        % made for, so the experimenter's window needs its own.
+                        gr.resourceMap(d.id)    = Screen('MakeTexture', gr.window_main,    img);
+                        gr.resourceMapMon(d.id) = Screen('MakeTexture', gr.window_monitor, img);
+                        gr.resourceKind{d.id}   = 'texture';
+                        grlog('loaded texture id=%d: %s', d.id, d.path);
+                    case 'movie'
+                        % A decoded movie frame is a texture and, like any
+                        % texture, belongs to the window it was decoded for:
+                        % the display's frame drawn on the monitor renders
+                        % solid white (measured by pixel readback; the
+                        % earlier check only saw that the call did not
+                        % throw). So the monitor decodes its own copy. That
+                        % costs 0.08 ms/frame against a 16.67 ms budget.
+                        [gr.resourceMap(d.id), durS] = Screen('OpenMovie', gr.window_main, d.path);
+                        gr.resourceKind{d.id}   = 'movie';
+                        grlog('opened movie id=%d: %s', d.id, d.path);
+                        gr.movieLastTex(d.id)    = 0;
+                        gr.movieLastTexMon(d.id) = 0;
+                        warmupMovie(gr.window_main, gr.resourceMap(d.id), durS, d.id, 'display');
+                        % Then leave it PLAYING for good: looping so a long
+                        % session never runs off the end, muted so it makes no
+                        % sound while the task is not showing it. The task
+                        % never pauses it; see runOneShots.
+                        Screen('PlayMovie', gr.resourceMap(d.id), 1, 1, 0);
                         try
-                            Screen(args{1},gr.window_monitor,args{3:end});
-                        catch
-                            disp("Couldn't draw something on monitor-screen")
+                            [gr.resourceMapMon(d.id), durM] = Screen('OpenMovie', gr.window_monitor, d.path);
+                            warmupMovie(gr.window_monitor, gr.resourceMapMon(d.id), durM, d.id, 'monitor');
+                            Screen('PlayMovie', gr.resourceMapMon(d.id), 1, 1, 0);
+                        catch monErr
+                            % The display copy is the one that matters;
+                            % NaN (a valid movie handle can be 0) means the
+                            % monitor simply has nothing to draw for it.
+                            gr.resourceMapMon(d.id) = NaN;
+                            grlog('monitor copy of movie id=%d failed to open: %s', d.id, monErr.message);
                         end
-                    end
-                else
-
-                    %% movie logic
-                    if (isstring(args{1}) || ischar(args{1})) && matches(args{1},'PlayMovie','IgnoreCase',true)
-                        if ~gr.movieplaying
-                            % Screen('PlayMovie', gr.movie, 0);
-                            % Screen('SetMovieTimeIndex', gr.movie, 1)
-                            Screen('PlayMovie', gr.movie, 1);
-                            Screen('SetMovieTimeIndex', gr.movie, 0)
-                            disp('movie playing')
-                            gr.movieplaying=1;
-                        end
-                        gr.movie
-                        gr.texture=Screen('GetMovieImage', gr.window_main, gr.movie);
-                        if ~isempty(gr.texture) && gr.texture >= 0
-                        Screen('DrawTexture', gr.window_main, gr.texture);
-                        end
-                        % gr.monitortexture=Screen('MakeTexture', gr.window_monitor, gr.monitormovieplaceholder);
-                        % Screen('DrawTexture', gr.window_monitor, gr.monitortexture);
-                    elseif (isstring(args{1}) || ischar(args{1})) && matches(args{1},'CloseMovie','IgnoreCase',true)
-                        gr.movieplaying=0;
-                        disp('movie closed')
-                        Screen('Close',gr.texture)
-                        Screen('PlayMovie', gr.movie, 0);
-                        % Screen('CloseMovie', gr.movie);
-                    end
-
-                    if ~(isstring(args{1}) || ischar(args{1})) && matches(args{1},'PlayMovie','IgnoreCase',true) &&...
-                            ~(isstring(args{1}) || ischar(args{1})) && matches(args{1},'CloseMovie','IgnoreCase',true)
-                        Screen(args{:});
-                    end
+                    otherwise
+                        gr.resourceKind{d.id}   = 'failed';
+                        grlog('UNKNOWN RESOURCE KIND "%s" id=%d', char(d.kind), d.id);
                 end
+            catch resErr
+                gr.resourceMap(d.id)  = -1;     % mark failed so we stop retrying every frame
+                gr.resourceKind{d.id} = 'failed';
+                grlog('RESOURCE LOAD FAILED id=%d (%s): %s', d.id, d.path, resErr.message);
             end
-
-            %% if output is requested
-            % elseif ~isempty(outs)
-            %     a1=[];a2=[];a3=[];a4=[];a5=[];a6=[];a7=[];
-            %     evalstring=strcat('[',sprintf('%s,',outs{:}),']');
-            %
-            %     if length(args)>=2 %this needs to change to better logic
-            %         args{2}=gr.window_main;
-            %     end
-            %
-            %     eval(strcat(evalstring,'=Screen(args{:});'));
-            %
-            %     outstr='';
-            %     for ii=1:length(outs)
-            %         outstr=strcat(outstr,outs{ii},'=',string(eval(outs{ii})),';');
-            %     end
-            %     writeline(graphicsport,strcat('mh.graphicssent=0;', outstr),'0.0.0.0',2020)
-            % end
-
-            clear args
+            gr.resourcePath{d.id} = d.path;     % what this id now stands for
         end
-        clear args args_uncut  outs   additionalinfo
-        gr.functionsbuffer=[];
-        Screen('DrawingFinished',gr.window_main);
     end
-%%make grid lines function
+
+%% prime a just-opened movie so the first trial is not the slow one
+    function warmupMovie(win, mov, durS, id, which)
+        % qtdemux builds its seek index on the FIRST real (non-zero) seek of a
+        % movie handle. Without this, trial 1 of a task that seeks
+        % (SetMovieTimeIndex) decodes at roughly half rate while that index is
+        % built, so the movie looks stuck for a trial or two before it runs
+        % smoothly. Doing one real seek here, once at open, moves that cost off
+        % the experiment: measured, trial 1 then decodes at full rate like the
+        % rest. A seek to 0 does NOT exercise the index, so the target must be
+        % non-zero; clamp it inside the movie for very short clips.
+        if isempty(durS) || ~isfinite(durS) || durS <= 0, durS = 2; end
+        warmT = max(0.1, min(1.0, durS/2));
+        try
+            Screen('PlayMovie', mov, 1, 0, 0);   % muted: warmup makes no sound
+            pullBounded(win, mov, 0.5);
+            Screen('SetMovieTimeIndex', mov, warmT);   % the real seek that builds the index
+            pullBounded(win, mov, 0.5);
+            Screen('SetMovieTimeIndex', mov, 0);       % leave it where a fresh open would
+            pullBounded(win, mov, 0.5);
+            Screen('PlayMovie', mov, 0);               % back to paused, as opened
+            grlog('warmed up %s movie id=%d (dur=%.1fs, seek probe %.2fs)', which, id, durS, warmT);
+        catch wErr
+            % Warmup is best-effort: a failure here only means trial 1 is the
+            % slow one again, not that the movie is broken.
+            grlogThrottled('movie warmup (%s) id=%d failed: %s', which, id, wErr.message);
+        end
+    end
+
+%% pull decoded frames for up to timeoutS, discarding them (warmup only)
+    function pullBounded(win, mov, timeoutS)
+        t0 = GetSecs;
+        got = false;
+        while GetSecs - t0 < timeoutS
+            t = Screen('GetMovieImage', win, mov, 0);
+            if t > 0, Screen('Close', t); got = true; break; end
+        end
+        if ~got
+            % one blocking pull as a fallback, itself guarded by the caller
+            t = Screen('GetMovieImage', win, mov, 1);
+            if t > 0, Screen('Close', t); end
+        end
+    end
+
+%% is the cached entry for this id still the thing the task is asking for?
+    function tf = cachedMatches(gr, d)
+        tf = numel(gr.resourceKind) >= d.id && ~isempty(gr.resourceKind{d.id}) ...
+            && numel(gr.resourcePath) >= d.id ...
+            && strcmp(gr.resourcePath{d.id}, d.path) ...
+            && (strcmp(gr.resourceKind{d.id}, d.kind) ...
+                || strcmp(gr.resourceKind{d.id}, 'failed'));
+    end
+
+%% free whatever an id used to hold, before it is reused for something else
+    function releaseResource(gr, id)
+        if numel(gr.resourceKind) < id || isempty(gr.resourceKind{id}), return; end
+        try
+            switch gr.resourceKind{id}
+                case 'texture'
+                    if gr.resourceMap(id)    > 0, Screen('Close', gr.resourceMap(id));    end
+                    if gr.resourceMapMon(id) > 0, Screen('Close', gr.resourceMapMon(id)); end
+                case 'movie'
+                    if numel(gr.movieLastTex) >= id && gr.movieLastTex(id) > 0
+                        Screen('Close', gr.movieLastTex(id));
+                    end
+                    if numel(gr.movieLastTexMon) >= id && gr.movieLastTexMon(id) > 0
+                        Screen('Close', gr.movieLastTexMon(id));
+                    end
+                    Screen('CloseMovie', gr.resourceMap(id));
+                    if ~isnan(gr.resourceMapMon(id))
+                        Screen('CloseMovie', gr.resourceMapMon(id));
+                    end
+            end
+            grlog('released stale resource id=%d (%s)', id, gr.resourceKind{id});
+        catch relErr
+            grlog('could not release id=%d: %s', id, relErr.message);
+        end
+        gr.resourceKind{id} = '';
+        if numel(gr.movieLastTex)    >= id, gr.movieLastTex(id)    = 0; end
+        if numel(gr.movieLastTexMon) >= id, gr.movieLastTexMon(id) = 0; end
+    end
+
+%% turn resource references into handles valid for the requested window
+    function [rest, ok] = resolveArgs(gr, rest, wantMonitor)
+        ok = true;
+        for j = 1:numel(rest)
+            if ~(isstruct(rest{j}) && isfield(rest{j},'resref')), continue; end
+            id = rest{j}.resref;
+            if numel(gr.resourceKind) < id || isempty(gr.resourceKind{id}) || strcmp(gr.resourceKind{id},'failed')
+                % Dropping the draw is right -- there is nothing to draw yet --
+                % but doing it silently is what made a failed load look like a
+                % task that simply does nothing.
+                grlogThrottled('draw dropped: resource id=%d not available', id);
+                ok = false; return                      % not loaded, or failed
+            end
+            if strcmp(gr.resourceKind{id}, 'movie')
+                % Each window decodes its own copy of the movie (see
+                % ensureResources), so ask the copy that belongs to the
+                % window being drawn.
+                [tex, have] = movieFrame(gr, id, wantMonitor);
+                if ~have
+                    ok = false; return                  % nothing decoded yet
+                end
+                rest{j} = tex;
+            elseif wantMonitor
+                rest{j} = gr.resourceMapMon(id);
+            else
+                rest{j} = gr.resourceMap(id);
+            end
+        end
+    end
+
+%% newest decoded frame of movie id for one window, or its previous frame
+    function [tex, have] = movieFrame(gr, id, wantMonitor)
+        % Movies advance at the renderer's rate. GetMovieImage with
+        % waitForImage=0 returns 0 when no NEW frame is ready, which is most
+        % flips for a 30 fps movie on a 60 Hz panel - so keep the last frame
+        % and redraw it instead of flickering.
+        tex = 0; have = false;
+        if wantMonitor
+            win = gr.window_monitor; mov = gr.resourceMapMon(id); last = gr.movieLastTexMon;
+        else
+            win = gr.window_main;    mov = gr.resourceMap(id);    last = gr.movieLastTex;
+        end
+        if isnan(mov), return; end              % this window has no copy
+        try
+            t = Screen('GetMovieImage', win, mov, 0);
+        catch gmErr
+            % A stale handle used to throw out of here and abort the whole
+            % frame, so one bad movie blanked everything.
+            grlogThrottled('GetMovieImage failed for id=%d: %s', id, gmErr.message);
+            return
+        end
+        if t > 0
+            if numel(last) >= id && last(id) > 0
+                try, Screen('Close', last(id)); catch, end
+            end
+            last(id) = t;
+            if wantMonitor, gr.movieLastTexMon = last; else, gr.movieLastTex = last; end
+        end
+        if numel(last) < id || last(id) <= 0, return; end
+        tex = last(id); have = true;
+    end
+
+
+%% monitor-only furniture: grid and eye position
+    function drawMonitorExtras(gr)
+        setgrid(gr);
+        try, Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]); catch, end
+        drawcursors(gr);
+        Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
+    end
+
+    function drawcursors(grobj)
+        % Draw each ACTIVE cursor on the monitor as a coloured dot (distinct
+        % from the white eye dot). "Active" = a cursor the mouse is driving in
+        % mouse mode, or an enabled (assigned) cursor. The renderer OWNS each
+        % udp cursor's socket (cursorinfo.owner = true): reading it here pumps
+        % the joystick and republishes the shared slot (cursorSlotPath) that the
+        % task process reads, so exactly one process ever binds the port.
+        ensureCursors(grobj);
+        cols = cursorColors();
+        W = grobj.screenXpixels; H = grobj.screenYpixels; m = 12;   % edge margin
+        for ci = 1:5
+            c = grobj.cursors{ci};
+            ismouse = cursorMouseDriven(grobj, ci);
+            active = c.enabled || ismouse;   % udp cursors included (renderer owns the port)
+            if ~active, continue; end
+            try
+                % Always read enabled cursors: for a udp owner this pumps the
+                % socket and republishes the shared slot even between draws.
+                p = c.getcursor; px = p(1); py = p(2);
+                % a udp cursor with no packet yet has no real position -- skip
+                % drawing its (0,0) default until the joystick has sent one.
+                if strcmpi(c.source,'udp') && ~c.gotdata && ~ismouse, continue; end
+                offscreen = px < 0 || px > W || py < 0 || py > H;
+                cx = min(max(px, m), W-m);   % clamp the drawn dot to the screen
+                cy = min(max(py, m), H-m);   % so an off-screen cursor is findable
+                Screen('DrawDots', grobj.window_monitor, [cx; cy], 14, cols(ci,:), [], 2);
+                if offscreen
+                    % pin to the edge and label with its real coordinates (deg)
+                    dg = pix2deg([px py], 'cart');
+                    Screen('TextSize', grobj.window_monitor, grobj.fontsize);
+                    Screen('DrawText', grobj.window_monitor, ...
+                        sprintf('c%d off (%.1f, %.1f)', ci, dg(1), dg(2)), ...
+                        min(max(cx+10, 2), W-160), min(max(cy-10, 12), H-12), cols(ci,:));
+                end
+            catch
+            end
+        end
+    end
+
+    function drawDisplayCursors(grobj)
+        % Draw the cursors ticked in File > Cursors on Display on the animal's
+        % display. Called only in the in-trial branch, so the display stays
+        % blank between trials. Same dot and colour as on the monitor; an
+        % off-screen cursor is not drawn here (its edge label is a monitor aid).
+        ensureCursors(grobj);
+        cols = cursorColors();
+        W = grobj.screenXpixels; H = grobj.screenYpixels;
+        for ci = 1:5
+            c = grobj.cursors{ci};
+            ismouse = cursorMouseDriven(grobj, ci);
+            if ~c.ondisplay || ~(c.enabled || ismouse), continue; end
+            try
+                p = c.getcursor;
+                if strcmpi(c.source,'udp') && ~c.gotdata && ~ismouse, continue; end
+                if p(1) < 0 || p(1) > W || p(2) < 0 || p(2) > H, continue; end
+                Screen('DrawDots', grobj.window_main, [p(1); p(2)], 14, cols(ci,:), [], 2);
+            catch
+            end
+        end
+    end
+
+    function ensureCursors(grobj)
+        % Build the renderer's cursors 1..5 from the state ini on first use (and
+        % again after File > Cursor Assignment clears them).
+        if isempty(grobj.cursors)
+            grobj.cursors = cell(1,5);
+            for ci = 1:5, grobj.cursors{ci} = cursorinfo(ci); grobj.cursors{ci}.owner = true; end
+        end
+    end
+
+    function cols = cursorColors()
+        % One row per cursor, in the 0-1 colour range both windows use
+        % (PsychDefaultSetup(2)); 0-255 values were clipped to 1.
+        cols = [0 255 255; 255 0 255; 255 255 0; 255 160 0; 120 255 120] / 255;
+    end
+
+    function tf = cursorMouseDriven(grobj, ci)
+        % Mouse Mode is driving cursor ci.
+        tf = isprop(grobj,'mousemode') && grobj.mousemode && ...
+             strcmpi(grobj.mousetarget, sprintf('cursor%d',ci));
+    end
+
     function gr=makegridlines(gr)
         gr.pixelsforlines=deg2pix(gr.toconvert,'cart');
         gr.xlines=reshape(repmat(gr.pixelsforlines(:,1),2)',1,[]);
@@ -453,25 +1067,52 @@ end
 
         gr.center_circle=[truezero-10 truezero+10;...
             truezero-degadds truezero+degadds]';
+
+        % mm grid (spacing gr.mmgrid mm; linear via deg2pix ...,'mm'), drawn
+        % when gridmode is 'mm' or 'both'. Spans ~700 mm each way to cover the
+        % panel about the true center.
+        mmspan = ceil(700/gr.mmgrid)*gr.mmgrid;
+        gr.mmvals = -mmspan:gr.mmgrid:mmspan;
+        gr.mmpixels = deg2pix([gr.mmvals(:) gr.mmvals(:)],'mm');
+        mmx = reshape(repmat(gr.mmpixels(:,1),2)',1,[]);
+        mmfully = reshape(repmat([0 1080], length(mmx)/2,1)',1,[]);
+        mmy = reshape(repmat(gr.mmpixels(:,2),2)',1,[]);
+        mmfullx = reshape(repmat([0 3000], length(mmy)/2,1)',1,[]);
+        gr.gridlinesmatrix_mm = [mmx mmfullx; mmfully mmy];
     end
 %%set grid
     function gr=setgrid(gr)
         Screen('TextSize', gr.window_monitor,gr.fontsize);
+        gm = gr.gridmode; if isempty(gm), gm='degrees'; end
         try
             Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 960, 5 , [255,255,255]);
-
-            for i=1:length(gr.toconvert(:,1))
-                Screen('DrawText', gr.window_monitor, num2str(gr.toconvert(i,1)), gr.pixelsforlines(i,1),...
-                    gr.pixelsforlines(ceil(length(gr.toconvert(:,1))/2),2), [.5,.5,.5]);
-                Screen('DrawText', gr.window_monitor, num2str(gr.toconvert(i,2)),...
-                    gr.pixelsforlines(ceil(length(gr.toconvert(:,1))/2),1), gr.pixelsforlines(i,2),  [.5,.5,.5]);
-            end
         catch
         end
-
-
-        Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix,1,[.3 .3 .3]);
-        Screen('FrameOval',gr.window_monitor,[0.2 0.2 0.2]',gr.center_circle,3);
+        if any(strcmpi(gm,{'degrees','both'}))
+            try
+                for i=1:length(gr.toconvert(:,1))
+                    Screen('DrawText', gr.window_monitor, num2str(gr.toconvert(i,1)), gr.pixelsforlines(i,1),...
+                        gr.pixelsforlines(ceil(length(gr.toconvert(:,1))/2),2), [.5,.5,.5]);
+                    Screen('DrawText', gr.window_monitor, num2str(gr.toconvert(i,2)),...
+                        gr.pixelsforlines(ceil(length(gr.toconvert(:,1))/2),1), gr.pixelsforlines(i,2),  [.5,.5,.5]);
+                end
+            catch
+            end
+            Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix,1,[.3 .3 .3]);
+            Screen('FrameOval',gr.window_monitor,[0.2 0.2 0.2]',gr.center_circle,3);
+        end
+        if any(strcmpi(gm,{'mm','both'}))
+            try
+                for i=1:length(gr.mmvals)
+                    Screen('DrawText', gr.window_monitor, num2str(gr.mmvals(i)), gr.mmpixels(i,1),...
+                        gr.mmpixels(ceil(length(gr.mmvals)/2),2), [.4,.4,.7]);
+                    Screen('DrawText', gr.window_monitor, num2str(gr.mmvals(i)),...
+                        gr.mmpixels(ceil(length(gr.mmvals)/2),1), gr.mmpixels(i,2), [.4,.4,.7]);
+                end
+            catch
+            end
+            Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix_mm,1,[.25 .25 .5]);
+        end
     end
 
     function createInfoWindow(gr)
@@ -538,8 +1179,20 @@ end
         gr.TurnthisoffifthiswindowslowsdowngraphicsSwitch.Position = [199 67 45 20];
         gr.TurnthisoffifthiswindowslowsdowngraphicsSwitch.Value = 'On';
 
+        % Create Grid units dropdown (switch the monitor grid: degrees / mm / both)
+        gridLbl = uilabel(gr.UIFigure);
+        gridLbl.HorizontalAlignment = 'right';
+        gridLbl.Position = [219 116 68 22];
+        gridLbl.Text = 'Grid units';
+        gridDD = uidropdown(gr.UIFigure);
+        gridDD.Items = {'degrees', 'mm', 'both'};
+        gridDD.Position = [292 116 105 22];             % same row as the photodiode lamp
+        gridDD.Value = gr.gridmode;
+        gridDD.ValueChangedFcn = @(src,~) gr.setgridmode(src.Value);
+
         % Show the figure after all components are created
         gr.UIFigure.Visible = 'on';
+        windowIdentity('Graphics Info', 'graphicsinfo', gr.UIFigure);   % its own dock icon
     end
     function updategui(gr)
         if strcmp(gr.TurnthisoffifthiswindowslowsdowngraphicsSwitch.Value,'On')
@@ -555,5 +1208,3 @@ end
         end
     end
 end
-
-

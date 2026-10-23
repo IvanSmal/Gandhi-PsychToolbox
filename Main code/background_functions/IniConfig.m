@@ -797,18 +797,13 @@ classdef IniConfig < handle
             error(nargchk(2, 2, nargin));
             CheckIsString(file_name);
             
-            fid = fopen(file_name, 'w');
-            
-            if (fid ~= -1)
-                str = obj.ToString();
-                fprintf(fid, '%s', str);
-                
-                fclose(fid);
-                status = true;
-            else
-                status = false;
-                return;
-            end
+            % Build the text first, then swap the file in whole (temp file +
+            % rename). Other processes re-read these files constantly -
+            % GraphicsHandler rebuilds eyeinfo from ScreenParams.ini every idle
+            % frame - and the old fopen('w')-then-ToString left the file empty
+            % for several ms, so eyeinfo found no calibration and quit.
+            str = obj.ToString();
+            status = WriteFileWhole(file_name, str);
         end
         
     end % public methods
@@ -1340,6 +1335,107 @@ function [file_data, status] = GetDataFromFile(file_name)
     else
         status = false;
         file_data = {};
+    end
+end
+%--------------------------------------------------------------------------
+
+%==========================================================================
+function status = WriteFileWhole(file_name, str)
+    %WriteFileWhole - replace a file so readers never see it half-written
+    %
+    % Writes a temp file in the same folder and renames it over the target
+    % (a rename within one filesystem is atomic). Falls back to the old
+    % in-place write when that is not possible, e.g. the target is a symlink
+    % or the folder is not writable.
+
+    target = char(file_name);
+    if isempty(regexp(target, '^([/\\]|[A-Za-z]:)', 'once'))
+        target = fullfile(pwd, target);   % Java would resolve it elsewhere
+    end
+
+    if IsSymlink(target)
+        status = WriteFileInPlace(target, str);   % a rename would replace the link
+        return;
+    end
+
+    tmp = [tempname(fileparts(target)) '.tmp'];
+    fid = fopen(tmp, 'w');
+    if (fid == -1)
+        status = WriteFileInPlace(target, str);
+        return;
+    end
+    fprintf(fid, '%s', str);
+    fclose(fid);
+
+    if ReplaceFile(tmp, target)
+        status = true;
+    else
+        try, delete(tmp); catch, end
+        status = WriteFileInPlace(target, str);
+    end
+end
+%--------------------------------------------------------------------------
+
+%==========================================================================
+function status = WriteFileInPlace(file_name, str)
+    %WriteFileInPlace - the original truncate-and-write
+
+    fid = fopen(file_name, 'w');
+
+    if (fid ~= -1)
+        fprintf(fid, '%s', str);
+        fclose(fid);
+        status = true;
+    else
+        status = false;
+    end
+end
+%--------------------------------------------------------------------------
+
+%==========================================================================
+function tf = IsSymlink(file_name)
+    %IsSymlink - true if file_name is a symbolic link
+
+    tf = false;
+    if usejava('jvm')
+        try
+            tf = java.nio.file.Files.isSymbolicLink(java.io.File(file_name).toPath());
+        catch
+        end
+    end
+end
+%--------------------------------------------------------------------------
+
+%==========================================================================
+function ok = ReplaceFile(src_name, target)
+    %ReplaceFile - rename src_name over target, keeping target's permissions
+
+    ok = false;
+    if usejava('jvm')
+        try
+            src = java.io.File(src_name).toPath();
+            dst = java.io.File(target).toPath();
+            no_follow = javaArray('java.nio.file.LinkOption', 1);
+            no_follow(1) = java.nio.file.LinkOption.NOFOLLOW_LINKS;
+            if java.nio.file.Files.exists(dst, no_follow)
+                try   % ScreenParams.ini is mode 777; a new file would get the umask
+                    java.nio.file.Files.setPosixFilePermissions(src, ...
+                        java.nio.file.Files.getPosixFilePermissions(dst, no_follow));
+                catch   % not a POSIX filesystem: nothing to keep
+                end
+            end
+            opts = javaArray('java.nio.file.CopyOption', 1);
+            opts(1) = java.nio.file.StandardCopyOption.ATOMIC_MOVE;
+            java.nio.file.Files.move(src, dst, opts);
+            ok = true;
+            return;
+        catch
+        end
+    end
+    try
+        ok = movefile(src_name, target, 'f');
+    catch
+        ok = false;
     end
 end
 %--------------------------------------------------------------------------

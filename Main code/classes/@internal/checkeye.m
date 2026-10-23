@@ -1,13 +1,16 @@
 function out=checkeye(mh,targ,pos)
+% mm targets store moving_position in mm; every other type stores it in cart
+% (pol is converted to cart in getpos), so legacy behaviour is unchanged.
+mvtype='cart'; if strcmpi(mh.trial.targets.(targ).degreestype,'mm'), mvtype='mm'; end
 % if ~exist('pos','var') || isempty(pos)
     if isempty(mh.trial.targets.(targ).moving_position)
         targpos=mh.trialtarg(targ,'getpos','center');
     elseif numel(mh.trial.targets.(targ).moving_position(:,1))==1
-        targpos=deg2pix(mh.trial.targets.(targ).moving_position,'cart',mh.screenparams);
+        targpos=deg2pix(mh.trial.targets.(targ).moving_position,mvtype,mh.screenparams);
     else
         tbackwards=abs(mh.trial.targets.(targ).timestamp-mh.trial.targets.(targ).timestamp(end));
         firstidx=find(tbackwards<(mh.trailing_window_time/1000),1);
-        targpos=deg2pix(mh.trial.targets.(targ).moving_position(firstidx:10:end,:),'cart',mh.screenparams);
+        targpos=deg2pix(mh.trial.targets.(targ).moving_position(firstidx:10:end,:),mvtype,mh.screenparams);
     end
 % else
 %     disp('here')
@@ -22,12 +25,19 @@ function out=checkeye(mh,targ,pos)
 %eccentric the target is. So at gain "0.1", 0.1 degrees will be added to
 %the window per 1 degree of eccentricity. The window will not be multiplied
 %by 1.1
-degreesfromcenter=pix2deg(targpos,'cart',mh.screenparams);
-targfromcenter=hypot(degreesfromcenter(end,1),degreesfromcenter(end,2));
-truegainvalue=targfromcenter*mh.eccentricity_gain;
-truegainpixels=deg2pix([truegainvalue truegainvalue],'size',mh.screenparams); % pixels to add to window
+if strcmpi(mh.trial.targets.(targ).degreestype,'mm')
+    % mm targets: window is in millimetres and does NOT expand with screen
+    % position (no eccentricity gain).
+    truegainpixels=[0 0 0 0];
+    windowsize_all=deg2pix([mh.trial.targets.(targ).window mh.trial.targets.(targ).window],'mmsize',mh.screenparams);
+else
+    degreesfromcenter=pix2deg(targpos,'cart',mh.screenparams);
+    targfromcenter=hypot(degreesfromcenter(end,1),degreesfromcenter(end,2));
+    truegainvalue=targfromcenter*mh.eccentricity_gain;
+    truegainpixels=deg2pix([truegainvalue truegainvalue],'size',mh.screenparams); % pixels to add to window
 
-windowsize_all=deg2pix([mh.trial.targets.(targ).window mh.trial.targets.(targ).window],'size',mh.screenparams);
+    windowsize_all=deg2pix([mh.trial.targets.(targ).window mh.trial.targets.(targ).window],'size',mh.screenparams);
+end
 radius=windowsize_all(3)+truegainpixels(3); %using index 3 because assumes a perfect circle so x and y values are the same. so 3 and 4 should be the same.
 howfareye=targpos-mh.eye.geteye;
 hypoteye=hypot(howfareye(:,1),howfareye(:,2));

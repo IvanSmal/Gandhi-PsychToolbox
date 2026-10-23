@@ -1,58 +1,74 @@
-function [ev, fr, sync] = buildStimulusTiming(flips, ev, sync, photodiode, geom)
-%BUILDSTIMULUSTIMING Match what the task asked to show with what the display showed.
-%   [EV, FR, SYNC] = buildStimulusTiming(FLIPS, EV, SYNC, PHOTODIODE, GEOM)
-%   builds a trial's stimulus timing tables. GraphicsHandler calls it when it
-%   saves its flip log into the trial file (dumpdata).
+function tr = buildStimulusTiming(flips, tr, geom)
+%BUILDSTIMULUSTIMING Add what the display showed, and when, to a saved trial.
+%   TR = buildStimulusTiming(FLIPS, TR, GEOM) fills the display side of a
+%   trial's timing. GraphicsHandler calls it when it saves its flip log into
+%   the trial file (dumpdata). TR is the trial in trialRecord's form (a
+%   trial object is converted first).
 %
 %   Inputs
-%     FLIPS       GraphicsHandler's log, one element per display flip of the
-%                 trial: frame_id, vbl, onset (StimulusOnsetTime), missed,
-%                 state, diode (square colour 0/1), toggle (the square changed
-%                 colour on this flip: a state change), blank (the flip that
-%                 cleared the display when the trial ended) and tags (the items
-%                 the frame drew: tag, kind, rect in display pixels).
-%     EV          MHost2's change log (mh.stimulusRequests): one row per item
-%                 appearing or disappearing and per state change, with the ID
-%                 and Psychtoolbox time of the frame that first asked for it.
-%     SYNC        MHost2's clock data: nip_pairs ([GetSecs NIP-tick] read
-%                 pairs, see nipTick), trace_start_tick (NIP tick of the first
-%                 photodiode/eye sample), first_frame_id (this trial's), and
-%                 trial_start_tick / trial_start_sample (passed through).
-%     PHOTODIODE  data.photodiode, 1 kHz, starting at trace_start_tick.
-%     GEOM        display: width, height, diode_rect, screenparams.
+%     FLIPS  GraphicsHandler's log, one element per display flip of the
+%            trial: frame_id, generated (GetSecs the frame was published),
+%            vbl, onset (StimulusOnsetTime), missed, state, diode (square
+%            colour 0/1), toggle (the square changed colour on this flip: a
+%            state change), blank (the flip that cleared the display when the
+%            trial ended) and tags (the items the frame drew: tag, kind, rect
+%            in display pixels).
+%     TR     the trial. Uses data.stimulus_events (MHost2's change log: one
+%            row per item appearing or disappearing and per state change,
+%            with the frame that first asked for it), data.clock_sync (clock
+%            fit, trace_start_tick, first_frame_id), data.photodiode (1 kHz
+%            from trace_start_tick) and start_tick.
+%     GEOM   display: width, height, diode_rect, screenparams.
 %
-%   Outputs (structs of column arrays, readable outside MATLAB too)
-%     EV    data.stimulus_events: per row tag, kind (target, tag or
-%           photodiode), event (on, off or state), state, requested and
-%           displayed (Psychtoolbox seconds), delay, flip, frame_id,
-%           onset_tick and photon_tick (NIP 30 kHz ticks), x_deg, y_deg,
-%           rect_px, missed. A change that never reached the screen (gone
-%           again before the next flip) keeps displayed = NaN.
-%     FR    data.stimulus_frames: one entry per item, one row per flip it was
-%           on screen (same columns, plus state); the photodiode entry has one
-%           row per colour change, i.e. per state change.
-%     SYNC  data.clock_sync: the inputs plus fit (tick = ticks_per_s*GetSecs +
-%           tick_at_0) and photodiode (the measured display delay).
+%   Fills (structs of column arrays, readable outside MATLAB too)
+%     data.stimulus_events  per row displayed_ms, photon_ms, delay_ms,
+%            displayed_tick, photon_tick, flip, frame_id, x_deg, y_deg,
+%            rect_px, missed. A change that never reached the screen (gone
+%            again before the next flip) keeps displayed_ms = NaN; one shown
+%            with no request on record is added with requested_ms = NaN.
+%     data.stimulus_frames  one entry per item, one row per flip it was on
+%            screen: frame_id, requested_ms (when that frame was published),
+%            displayed_ms, photon_ms, displayed_tick, photon_tick, x_deg,
+%            y_deg, rect_px, missed, state. The photodiode entry has one row
+%            per colour change, i.e. per state change, and its colour.
+%     data.clock_sync  photodiode (the measured display delay), frame_ms.
+%     The same numbers, through objectTiming, in trial.targets, trial.tags
+%     and trial.state.
 %
-%   Clocks. onset_tick is the flip's StimulusOnsetTime converted to the NIP
-%   clock through the read pairs: the lowest (GetSecs - tick) per second is
-%   the moment a sample was fresh, and a line through those is the offset.
-%   photon_tick is when the item's light appeared: each colour change of
-%   the photodiode square is found in the recorded photodiode trace, which
-%   measures the delay from flip to light at the square; items get that delay,
-%   shifted by the time the display takes to draw down from the square's
-%   height to theirs. It is NaN when the trace shows no usable photodiode
-%   signal (demo mode, or the photodiode not connected).
+%   Times: *_ms are ms since the trial start (trial.start_tick), *_tick NIP
+%   30 kHz ticks. displayed is the flip's StimulusOnsetTime put on the NIP
+%   clock with the trial's clock fit. photon is when the item's light
+%   appeared: each colour change of the photodiode square is found in the
+%   recorded photodiode trace, which measures the delay from flip to light
+%   at the square; items get that delay, shifted by the time the display
+%   takes to draw down from the square's height to theirs. It is NaN for an
+%   item wholly off the display, and for everything when the trace shows no
+%   usable photodiode signal (demo mode, or the photodiode not connected).
 
 TPS = 30000;                                        % NIP ticks per second
+TPM = TPS / 1000;                                   % per ms
 
+tr = trialRecord(tr, getf(geom, 'screenparams', []));   % unchanged if already saved by MHost2
+D = tr.data;
+ev = getf(D, 'stimulus_events', []);
+sync = D.clock_sync;
 if ~isstruct(ev) || ~isfield(ev, 'request_frame'), ev = emptyEvents(); end   % no change log saved
 flips = trialFlips(flips, sync);
 nF = numel(flips.frame_id);
+if ~isfield(flips, 'generated') || numel(flips.generated) ~= nF, flips.generated = nan(1, nF); end
 
 % ---- clocks
-[toTick, sync.fit] = fitClock(getf(sync, 'nip_pairs', zeros(0,2)), TPS);
+start = tr.start_tick;
+toTick = nipClock(sync.fit);
+tickMs = @(k) (k - start) / TPM;
 onsetTick = round(toTick(flips.onset(:)));
+if isfinite(sync.fit.ticks_per_s)
+    secsMs = @(t) (toTick(t) - start) / TPM;
+    dispMs = tickMs(onsetTick);
+else                                                % no NIP reads (see trialRecord)
+    secsMs = @(t) (t - sync.start_secs) * 1000;
+    dispMs = secsMs(flips.onset(:));
+end
 good = ~flips.blank(:) & ~(flips.missed(:) > 0);
 fd = median(diff(flips.vbl(good)));                 % frame duration (s)
 if isempty(fd) || ~isfinite(fd) || fd < 0.004 || fd > 0.05, fd = 1/60; end
@@ -61,10 +77,10 @@ diodeY = mean(geom.diode_rect([2 4]));
 scanTicks = @(y) (y ./ H) * fd * TPS;               % top of display -> row y
 
 toggles = find(flips.toggle(:));
-[edgeTick, sync.photodiode] = diodeEdges(photodiode, ...
+[edgeTick, sync.photodiode] = diodeEdges(getf(D, 'photodiode', []), ...
     getf(sync, 'trace_start_tick', NaN), onsetTick(toggles), TPS);
 lagT = sync.photodiode.lag_ms * TPS / 1000;         % flip -> light at the square
-lightTick = @(t, y) round(t + lagT - scanTicks(diodeY) + scanTicks(y));
+lightTick = @(t, R) round(t + lagT - scanTicks(diodeY) + scanTicks(visibleY(R, geom)));
 sync.frame_ms = fd * 1000;
 
 % ---- which items each flip showed, and where
@@ -100,18 +116,22 @@ for k = 1:nK
     r = find(present(:, k));
     R = rects(r, :, k);
     [x, y] = centreDeg(R, geom);
+    ph = lightTick(onsetTick(r), R);
     fr.(keys{k}) = struct('name', names{k}, 'kind', kinds{k}, 'flip', r, ...
-        'frame_id', col(flips.frame_id(r)), 'onset', col(flips.onset(r)), ...
-        'onset_tick', onsetTick(r), 'photon_tick', lightTick(onsetTick(r), mean(R(:, [2 4]), 2)), ...
+        'frame_id', col(flips.frame_id(r)), 'requested_ms', secsMs(col(flips.generated(r))), ...
+        'displayed_ms', dispMs(r), 'photon_ms', tickMs(ph), ...
+        'displayed_tick', onsetTick(r), 'photon_tick', ph, ...
         'x_deg', x, 'y_deg', y, 'rect_px', R, 'missed', col(flips.missed(r)) > 0, ...
         'state', {col(flips.state(r))});                % {}: one struct, not one per row
 end
-D = repmat(geom.diode_rect(:)', numel(toggles), 1);
-[x, y] = centreDeg(D, geom);
+Dr = repmat(geom.diode_rect(:)', numel(toggles), 1);
+[x, y] = centreDeg(Dr, geom);
+ph = round(edgeTick(:));
 fr.(pdKey) = struct('name', 'photodiode', 'kind', 'photodiode', 'flip', toggles, ...
-    'frame_id', col(flips.frame_id(toggles)), 'onset', col(flips.onset(toggles)), ...
-    'onset_tick', onsetTick(toggles), 'photon_tick', round(edgeTick(:)), ...
-    'x_deg', x, 'y_deg', y, 'rect_px', D, 'missed', col(flips.missed(toggles)) > 0, ...
+    'frame_id', col(flips.frame_id(toggles)), 'requested_ms', secsMs(col(flips.generated(toggles))), ...
+    'displayed_ms', dispMs(toggles), 'photon_ms', tickMs(ph), ...
+    'displayed_tick', onsetTick(toggles), 'photon_tick', ph, ...
+    'x_deg', x, 'y_deg', y, 'rect_px', Dr, 'missed', col(flips.missed(toggles)) > 0, ...
     'state', {col(flips.state(toggles))}, 'color', col(flips.diode(toggles)));
 
 % ---- what reached the screen: appear / disappear per item, colour changes
@@ -139,6 +159,7 @@ nE = numel(ev.tag);
 reqFrame = col(ev.request_frame);
 used = false(nE, 1);
 extra = [];
+T = struct('onsetTick', onsetTick, 'dispMs', dispMs, 'tickMs', tickMs, 'lightTick', lightTick);
 for s = 1:numel(shown)
     i = shown(s).flip;
     c = find(~used & strcmp(ev.tag, shown(s).tag) & strcmp(ev.event, shown(s).event) & reqFrame <= flips.frame_id(i));
@@ -152,38 +173,55 @@ for s = 1:numel(shown)
     [~, m] = max(reqFrame(c));
     e = c(m);
     used(e) = true;
-    ev = fillRow(ev, e, shown(s), flips, onsetTick, lightTick, geom);
+    ev = fillRow(ev, e, shown(s), flips, T, geom);
 end
-for s = extra                                        % keep them, requested = NaN
+for s = extra                                        % keep them, requested_ms = NaN
     e = numel(ev.tag) + 1;
     ev.tag{e, 1} = shown(s).tag;
     if strcmp(shown(s).tag, 'photodiode'), ev.kind{e, 1} = 'photodiode';
     else, ev.kind{e, 1} = kinds{strcmp(names, shown(s).tag)}; end
     ev.event{e, 1} = shown(s).event;
     ev.state{e, 1} = flips.state{shown(s).flip};
-    ev.requested(e, 1) = NaN;
-    ev = fillRow(ev, e, shown(s), flips, onsetTick, lightTick, geom);
+    ev.entry(e, 1) = NaN;
+    ev.requested_ms(e, 1) = NaN;
+    ev = fillRow(ev, e, shown(s), flips, T, geom);
 end
-ev = rmfield(ev, 'request_frame');
+D.stimulus_events = rmfield(ev, intersect(fieldnames(ev), {'request_frame', 'request_secs'}));
+D.stimulus_frames = fr;
+D.clock_sync = sync;
+tr.data = D;
+tr = objectTiming(tr);
 end
 
 % =========================================================================
-function ev = fillRow(ev, e, s, flips, onsetTick, lightTick, geom)
+function ev = fillRow(ev, e, s, flips, T, geom)
 i = s.flip;
-ev.displayed(e, 1) = flips.onset(i);
-ev.delay(e, 1) = flips.onset(i) - ev.requested(e);
-ev.flip(e, 1) = i;
-ev.frame_id(e, 1) = flips.frame_id(i);
-ev.onset_tick(e, 1) = onsetTick(i);
+ev.displayed_ms(e, 1) = T.dispMs(i);
+ev.delay_ms(e, 1) = T.dispMs(i) - ev.requested_ms(e);
+ev.displayed_tick(e, 1) = T.onsetTick(i);
 if strcmp(s.event, 'state')
     ev.photon_tick(e, 1) = round(s.light);       % measured at the square
 else
-    ev.photon_tick(e, 1) = lightTick(onsetTick(i), mean(s.rect([2 4])));
+    ev.photon_tick(e, 1) = T.lightTick(T.onsetTick(i), s.rect);
 end
+ev.photon_ms(e, 1) = T.tickMs(ev.photon_tick(e));
+ev.flip(e, 1) = i;
+ev.frame_id(e, 1) = flips.frame_id(i);
 [ev.x_deg(e, 1), ev.y_deg(e, 1)] = centreDeg(s.rect, geom);
 ev.rect_px(e, 1:4) = s.rect;
 ev.missed(e, 1) = flips.missed(i) > 0;
 if isempty(ev.state{e}), ev.state{e, 1} = flips.state{i}; end
+end
+
+function y = visibleY(R, geom)
+% Height (display px) of the middle of each box's part that is on the
+% display; NaN if none of it is.
+R = reshape(R, [], 4);
+top = max(R(:, 2), 0);
+bot = min(R(:, 4), geom.height);
+on = top <= bot & R(:, 1) <= geom.width & R(:, 3) >= 0;
+y = (top + bot) / 2;
+y(~on) = NaN;
 end
 
 function f = trialFlips(f, sync)
@@ -196,33 +234,6 @@ for fn = fieldnames(f)'
     v = f.(fn{1});
     if numel(v) == numel(keep), f.(fn{1}) = v(keep); end
 end
-end
-
-function [toTick, fit] = fitClock(P, TPS)
-% Lower envelope of (GetSecs - tick/TPS): the read that found the freshest
-% sample has the smallest delay. One minimum per second, then a line.
-fit = struct('ticks_per_s', NaN, 'tick_at_0', NaN, 'pairs', size(P, 1), 'read_delay_ms', NaN);
-toTick = @(t) nan(size(t));
-if isempty(P), return, end
-g = P(:, 1); r = g - P(:, 2) / TPS;
-b = floor(g - g(1));
-ub = unique(b);
-gm = zeros(numel(ub), 1); rm = gm;
-for j = 1:numel(ub)
-    idx = find(b == ub(j));
-    [rm(j), m] = min(r(idx));
-    gm(j) = g(idx(m));
-end
-if numel(ub) >= 5                                   % drift only over 5 s or more
-    p = polyfit(gm - g(1), rm, 1);
-else
-    p = [0 min(r)];
-end
-o = @(t) p(1) * (t - g(1)) + p(2);                  % GetSecs - true time
-toTick = @(t) (t - o(t)) * TPS;
-fit.ticks_per_s = TPS * (1 - p(1));
-fit.tick_at_0 = -TPS * (p(2) - p(1) * g(1));
-fit.read_delay_ms = median(r - o(g)) * 1000;        % typical age of the newest sample
 end
 
 function [edges, cal] = diodeEdges(x, startTick, pred, TPS)
@@ -285,10 +296,10 @@ end
 
 function ev = emptyEvents()
 c = cell(0, 1); z = zeros(0, 1);
-ev = struct('tag', {c}, 'kind', {c}, 'event', {c}, 'state', {c}, 'requested', z, ...
-    'request_frame', z, 'displayed', z, 'delay', z, 'flip', z, 'frame_id', z, ...
-    'onset_tick', z, 'photon_tick', z, 'x_deg', z, 'y_deg', z, ...
-    'rect_px', zeros(0, 4), 'missed', false(0, 1));
+ev = struct('tag', {c}, 'kind', {c}, 'event', {c}, 'state', {c}, 'entry', z, ...
+    'requested_ms', z, 'displayed_ms', z, 'photon_ms', z, 'delay_ms', z, ...
+    'displayed_tick', z, 'photon_tick', z, 'flip', z, 'frame_id', z, ...
+    'x_deg', z, 'y_deg', z, 'rect_px', zeros(0, 4), 'missed', false(0, 1), 'request_frame', z);
 end
 
 function v = col(v)

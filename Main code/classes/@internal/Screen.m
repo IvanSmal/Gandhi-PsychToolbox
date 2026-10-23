@@ -97,9 +97,9 @@ function publishFrame(mh)
 % renderer records which frame each flip showed, so the change log kept here
 % (when each item was asked for) meets the flips that showed it
 % (buildStimulusTiming).
-% GetSecs (PTB, monotonic, 0.48 us resolution) is used on BOTH sides -
-% getsecs is wall-clock seconds-since-midnight and is not comparable to
-% Psychtoolbox flip timestamps.
+% GetSecs (PTB, monotonic, 0.48 us resolution) is the clock of every live
+% time in a trial, and of the renderer's flip timestamps; trialRecord puts
+% them all on the trial's timeline when the trial is saved.
 tGen = GetSecs;
 mh.sceneSeq = mh.sceneSeq + 1;
 seq = mh.sceneSeq;

@@ -3,8 +3,8 @@ classdef target %< handle
         name
         size = [0 0 5 5]
         position = [0 0]
-        timestamp=[];
-        moving_position=[];
+        timestamp=[];       % GetSecs of each getpos call (saved as computed.time_ms, see trialRecord)
+        moving_position=[]; % the position each call worked out (saved as computed.x_deg / y_deg)
         degreestype='cartesian'
         window = 200;
         color = [1 0 0]
@@ -57,14 +57,14 @@ classdef target %< handle
             else
                 if ~any(matches(varargin(:),'continue',IgnoreCase=true))
                     curState=mh.activestatename;
-                    elapsedSec=getsecs-mh.trial.state.(curState).time;
+                    elapsedSec=GetSecs-mh.trial.state.(curState).time;
                     mh.targettime=mh.trial.state.(curState).time;
                 elseif any(matches(varargin(:),'continue',IgnoreCase=true))
                     try
                         curState = varargin{end};
-                        elapsedSec=getsecs-mh.trial.state.(curState).time; 
+                        elapsedSec=GetSecs-mh.trial.state.(curState).time; 
                     catch
-                        elapsedSec=getsecs-mh.targettime;
+                        elapsedSec=GetSecs-mh.targettime;
                         center=varargin(1);
                     end
                 end
@@ -86,7 +86,7 @@ classdef target %< handle
                     mh.trial.targets.(targ.name).moving_position=...
                         [mh.trial.targets.(targ.name).moving_position; tempPos];
                     mh.trial.targets.(targ.name).timestamp=...
-                        [mh.trial.targets.(targ.name).timestamp getsecs];
+                        [mh.trial.targets.(targ.name).timestamp GetSecs];
                     pixPos=deg2pix(tempPos,degType,mh.screenparams);
 
                 else
@@ -100,7 +100,7 @@ classdef target %< handle
                     mh.trial.targets.(targ.name).moving_position=...
                         [mh.trial.targets.(targ.name).moving_position; tempPos];
                     mh.trial.targets.(targ.name).timestamp=...
-                        [mh.trial.targets.(targ.name).timestamp getsecs];
+                        [mh.trial.targets.(targ.name).timestamp GetSecs];
                     pixPos=deg2pix(tempPos,targ.degreestype,mh.screenparams);
                 end
             end

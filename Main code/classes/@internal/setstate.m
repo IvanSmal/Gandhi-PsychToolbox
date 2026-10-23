@@ -7,7 +7,9 @@ if nargin < 3
     mh.trial.state.(name).count=count;
 end
 
-mh.trial.state.(name).time(count)=getsecs;
+% Psychtoolbox time (GetSecs), like every live time in a trial. When the trial
+% is saved, trialRecord turns these into requested_ms (ms since the trial start).
+mh.trial.state.(name).time(count)=GetSecs;
 
 if ~strcmp(mh.activestatename,name)
     mh.activestatetime = mh.trial.state.(name).time(end);

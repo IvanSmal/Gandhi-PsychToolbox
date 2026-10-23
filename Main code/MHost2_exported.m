@@ -208,7 +208,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                     trnumber=num2str([zeros(1,5) app.mhpass.trial.trialnum]);
                     trnumber = trnumber(find(~isspace(trnumber)));
                     trname=['tr_' trnumber(end-5:end)];
-                    eval([trname '=app.mhpass.trial;']);
+                    eval([trname '=trialRecord(app.mhpass.trial, app.mhpass.screenparams);']);   % saved form: every time on the trial's timeline
                     tempfname=fullfile(app.checkForDataDirectory,'temptrials',[trname '.mat']);
                     
                     app.insToTxtbox('fixed trial numbers.')
@@ -228,7 +228,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                 clear temptr
             else
                 %% back up data up to this point
-                eval([trname '=app.mhpass.trial;']);
+                eval([trname '=trialRecord(app.mhpass.trial, app.mhpass.screenparams);']);   % saved form: every time on the trial's timeline
 
                 response=0; %restet graphics response    
                 if exist(fullfile(app.checkForDataDirectory,'temptrials'),'dir')
@@ -256,7 +256,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                         trnumber=num2str([zeros(1,5) app.mhpass.trial.trialnum]);
                         trnumber = trnumber(find(~isspace(trnumber)));
                         trname=['tr_' trnumber(end-5:end)];
-                        eval([trname '=app.mhpass.trial;']);
+                        eval([trname '=trialRecord(app.mhpass.trial, app.mhpass.screenparams);']);   % saved form: every time on the trial's timeline
                         tempfname=fullfile(app.checkForDataDirectory,'temptrials',[trname '.mat']);
                         
                         app.insToTxtbox('fixed trial numbers.')
@@ -500,8 +500,9 @@ classdef MHost2_exported < matlab.apps.AppBase
                     [eyeandphotodiode, xippmextstart]=xippmex('cont',app.chidx([1,2,4]),1000,'1ksps');
                     nipTick(xippmextstart, 1000); % cache the NIP clock for setstate (no per-state xippmex('time'))
                     % ---- cursor recording setup (batched, parallel to the eye) ----
-                    % Record every ENABLED cursor 1..5 alongside the eye, timestamped in the same
-                    % millisecond frame as d.timestamps so a cursor trace aligns to trial start.
+                    % Record every ENABLED cursor 1..5 alongside the eye. Each sample keeps
+                    % when it was taken: the NIP tick of the analog read, or GetSecs for a udp
+                    % cursor; trialRecord saves it as time_ms (ms since the trial start).
                     % To keep the state loop fast, ALL analog cursor channels are read in ONE
                     % batched xippmex('cont',...) call per pass (not one call per cursor); udp
                     % cursors are read from their shared slot (a cheap memmap). Every cursor block
@@ -532,12 +533,12 @@ classdef MHost2_exported < matlab.apps.AppBase
                         end
                     end
                     Ka=numel(recA_id); Ku=numel(recU_id); recHasCursors=(Ka>0)||(Ku>0);
-                    recN=0; recTs=nan(1,CURSMAX);
+                    recN=0; recSecs=nan(1,CURSMAX); recTick=nan(1,CURSMAX);
                     recA_mm=nan(CURSMAX,2,max(Ka,1)); recU_mm=nan(CURSMAX,2,max(Ku,1));
 
                     % ITI check
                     gotiti=0;
-                    while (app.last_trial_timestamp+app.last_trial_ITI)>getsecs && ~app.STOPButton.Value %% ITI
+                    while (app.last_trial_timestamp+app.last_trial_ITI)>GetSecs && ~app.STOPButton.Value %% ITI
                         gotiti=1;
                         pause(0.001)
                         mh.rewcheck(app);
@@ -559,7 +560,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                             mh=copy(app.mhbackup); %revert to last parameters/targets
                             mh.trialnumpersistent = mh.trialnumpersistent+1;
                             mh.trial.trialnum=mh.trialnumpersistent; %fix trial numbers
-                            toRemove={'tstarttime','tstoptime','state','data','System_Properties'}; % set structures to remove
+                            toRemove={'start_tick','start_clock','stop_ms','state','data','tags','System_Properties'}; % set structures to remove
                             for remove=toRemove
                                 mh.trial.(remove{1})=[]; %actually clear
                             end
@@ -589,10 +590,11 @@ classdef MHost2_exported < matlab.apps.AppBase
                         % slot read per udp cursor. Guarded so eye-only passes cost nothing.
                         if recHasCursors && recN < CURSMAX
                             recN = recN + 1;
-                            recTs(recN) = floor(getsecs*1000);
+                            recSecs(recN) = GetSecs;
                             if ~isempty(recChans)
                                 try
-                                    craw = xippmex('cont', recChans, 1, '1ksps');
+                                    [craw, cts] = xippmex('cont', recChans, 1, '1ksps');
+                                    if ~isempty(cts), recTick(recN) = double(cts(1)); end   % when the sample was taken
                                     for kk = 1:Ka
                                         recA_mm(recN,1,kk) = craw(recA_xi(kk))*recA_xg(kk) + recA_xo(kk);
                                         recA_mm(recN,2,kk) = craw(recA_yi(kk))*recA_yg(kk) + recA_yo(kk);
@@ -650,7 +652,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                         end
                     end
                     %append eye and photodiode into the structure
-                    mh.trial.tstoptime=getsecs;
+                    trialStopSecs=GetSecs;   % end of the trial loop (saved as trial.stop_ms)
                     eyeandphotodiode=eyeandphotodiode(:,999:end); %
                     eyeandphotodiode(1,:)=eyeandphotodiode(1,:)*mh.eye.xgain+mh.eye.xoffset;
                     eyeandphotodiode(2,:)=eyeandphotodiode(2,:)*mh.eye.ygain+mh.eye.yoffset;
@@ -673,29 +675,23 @@ classdef MHost2_exported < matlab.apps.AppBase
                     [~, scNames, scCodes] = stateEventCode();
                     d.stateCodes = struct('name', {scNames}, 'code', scCodes);
                     d.photodiode(1,:)=eyeandphotodiode(3,:);
-                    % d.timestamps: each sample's time in ms on the getsecs clock, like the
-                    % state times. The trace starts with the first NIP read, BEFORE the ITI
-                    % wait, so sample 1 is not the trial start: place the samples by the NIP
-                    % clock. The trace keeps samples 999:end of the first 1000-sample read.
-                    traceStartTick = double(xippmextstart(1)) + 998*30;           % NIP tick of sample 1
-                    startSample = round((mh.stimStartTick - traceStartTick)/30);  % samples before start_autogenerated
-                    if ~isfinite(startSample), startSample = 0; end               % no trial-start tick: as before
-                    d.timestamps = (0:length(d.eyepos)-1) - startSample + floor(mh.trial.tstarttime*1000);
                     % Stimulus timing: what the task asked to show and when (the change
-                    % log publishFrame keeps), and the clock data that puts it on the NIP
-                    % (Trellis) clock. GraphicsHandler adds when each change reached the
-                    % screen when it saves its flip log (buildStimulusTiming).
+                    % log publishFrame keeps), and the raw clock data. When the trial is
+                    % saved, trialRecord puts every time on the trial's timeline (ms since
+                    % start_autogenerated, on the NIP clock): data.time_ms for these samples,
+                    % the cursors, states, targets. GraphicsHandler then adds when each
+                    % change reached the screen (buildStimulusTiming).
                     d.stimulus_events = mh.stimulusRequests();
                     d.clock_sync = struct( ...
-                        'nip_pairs', nipTick('pairs'), ...            % [GetSecs tick] for every NIP read this trial
-                        'trace_start_tick', traceStartTick, ...       % NIP tick of d.photodiode(1) and d.eyepos(:,1)
-                        'trial_start_tick', mh.stimStartTick, ...     % NIP tick of start_autogenerated
-                        'trial_start_sample', startSample + 1, ...    % the eye/photodiode sample at the trial start
-                        'first_frame_id', mh.stimFirstSeq);           % this trial's first frame
+                        'nip_pairs', nipTick('pairs'), ...                         % [GetSecs tick] for every NIP read this trial
+                        'trace_start_tick', double(xippmextstart(1)) + 998*30, ... % NIP tick of d.photodiode(1) and d.eyepos(:,1): the trace keeps samples 999:end of the first read
+                        'trial_start_tick', mh.trial.start_tick, ...               % NIP tick of the trial start (trialRecord refines it)
+                        'stop_secs', trialStopSecs, ...                            % GetSecs at the end of the trial loop
+                        'first_frame_id', mh.stimFirstSeq);                        % this trial's first frame
                     % cursors -> d.cursor: convert mm to DEGREES (via pixels), vectorised, one
-                    % entry per enabled cursor. Timestamps share d.timestamps' ms frame, so eye
-                    % and cursor align to trial start by subtracting floor(mh.trial.tstarttime*1000).
-                    cur = struct('id',{},'pos',{},'timestamps',{});
+                    % entry per enabled cursor, with each sample's raw time (tick: NIP, analog;
+                    % secs: GetSecs) that trialRecord turns into time_ms.
+                    cur = struct('id',{},'pos',{},'tick',{},'secs',{});
                     for kk = 1:Ka
                         mm = recA_mm(1:recN,:,kk);
                         deg = nan(size(mm));
@@ -704,7 +700,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                             dd = pix2deg(deg2pix(mm(g,:),'mm',mh.screenparams),'cart',mh.screenparams);
                             if size(dd,1)==sum(g), deg(g,:) = dd; end
                         end
-                        cur(end+1) = struct('id',recA_id(kk),'pos',deg,'timestamps',recTs(1:recN)); %#ok<AGROW>
+                        cur(end+1) = struct('id',recA_id(kk),'pos',deg,'tick',recTick(1:recN),'secs',recSecs(1:recN)); %#ok<AGROW>
                     end
                     for kk = 1:Ku
                         mm = recU_mm(1:recN,:,kk);
@@ -714,7 +710,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                             dd = pix2deg(deg2pix(mm(g,:),'mm',mh.screenparams),'cart',mh.screenparams);
                             if size(dd,1)==sum(g), deg(g,:) = dd; end
                         end
-                        cur(end+1) = struct('id',recU_id(kk),'pos',deg,'timestamps',recTs(1:recN)); %#ok<AGROW>
+                        cur(end+1) = struct('id',recU_id(kk),'pos',deg,'tick',nan(1,recN),'secs',recSecs(1:recN)); %#ok<AGROW>
                     end
                     d.cursor = cur;
                     clear eyeandphotodiode;
@@ -803,7 +799,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                     % setupDAQ at trial start reconnects only if the link actually dropped.
                     
                     app.last_trial_ITI=mh.intervals.iti.duration;
-                    app.last_trial_timestamp=mh.trial.tstoptime;
+                    app.last_trial_timestamp=trialStopSecs;
                     app.ITI_first=0;
 
                     app.post_trial_procedure_complete = 1;

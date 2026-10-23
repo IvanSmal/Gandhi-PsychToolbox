@@ -271,7 +271,7 @@ while 1
                 Screen('FillRect', gr.window_main, bgcolor);
                 [vblB, onsetB, ~, missedB] = Screen('Flip', gr.window_main);
                 % logged: whatever was still on screen disappeared at this flip
-                logFlip(frame.seq, vblB, onsetB, missedB, frame.stateName, NaN, false, true, noTags);
+                logFlip(frame.seq, NaN, vblB, onsetB, missedB, frame.stateName, NaN, false, true, noTags);
             catch
             end
         end
@@ -333,7 +333,8 @@ while 1
             else
                 shownTags = noTags;
             end
-            logFlip(frame.seq, vbl, onset, missed, frame.stateName, mean(gr.diode_color(:)), toggled, false, shownTags);
+            flipGen = NaN; if isfield(frame, 'tGenerated'), flipGen = frame.tGenerated; end   % when MHost2 published it
+            logFlip(frame.seq, flipGen, vbl, onset, missed, frame.stateName, mean(gr.diode_color(:)), toggled, false, shownTags);
 
             flipcount = flipcount + 1;
             if flipcount >= 3
@@ -395,7 +396,7 @@ while 1
             % above did not run (gr.trialstarted cleared by MHost2 first): the
             % display is clear from this flip on.
             if ~isempty(gr.flipLog.blank) && ~gr.flipLog.blank(end)
-                logFlip(frame.seq, vblIdle, onsetIdle, 0, frame.stateName, NaN, false, true, noTags);
+                logFlip(frame.seq, NaN, vblIdle, onsetIdle, 0, frame.stateName, NaN, false, true, noTags);
             end
             updategui(gr);
             drawnow limitrate;   % out of trial: keep the info window painted & interactive (timing not critical here)
@@ -497,7 +498,7 @@ end
             if okEnd && ~fEnd.trialStarted && ~isempty(gr.flipLog.blank) && ~gr.flipLog.blank(end)
                 Screen('FillRect', gr.window_main, bgcolor);
                 [vblE, onsetE, ~, missedE] = Screen('Flip', gr.window_main);
-                logFlip(fEnd.seq, vblE, onsetE, missedE, fEnd.stateName, NaN, false, true, noTags);
+                logFlip(fEnd.seq, NaN, vblE, onsetE, missedE, fEnd.stateName, NaN, false, true, noTags);
             end
         catch
         end
@@ -516,13 +517,10 @@ end
             try
                 temptr = load(fname);
                 trname = fields(temptr);
-                % MHost2 saved what the task asked for (its change log) and the
-                % clock data; add what the display showed and when, on the
-                % Psychtoolbox and NIP clocks.
-                d = temptr.(trname{1}).data;
-                [d.stimulus_events, d.stimulus_frames, d.clock_sync] = buildStimulusTiming( ...
-                    rec, d.stimulus_events, d.clock_sync, d.photodiode, geom);
-                temptr.(trname{1}).data = d;
+                % MHost2 saved the trial with what the task asked for and the
+                % clock data, every time on the trial's timeline (trialRecord);
+                % add what the display showed and when.
+                temptr.(trname{1}) = buildStimulusTiming(rec, temptr.(trname{1}), geom);
                 save(fname,'-struct','temptr');
                 disp(join(['saved ', trname{1}]))
                 return
@@ -546,15 +544,17 @@ end
     end
 %% stimulus timing: one entry per display flip (see buildStimulusTiming)
     function L = emptyFlipLog()
-        L = struct('frame_id', [], 'vbl', [], 'onset', [], 'missed', [], 'state', {{}}, ...
+        L = struct('frame_id', [], 'generated', [], 'vbl', [], 'onset', [], 'missed', [], 'state', {{}}, ...
             'diode', [], 'toggle', false(1,0), 'blank', false(1,0), 'tags', {{}});
     end
-    function logFlip(id, vbl, onset, missed, state, diode, toggle, blank, tags)
+    function logFlip(id, generated, vbl, onset, missed, state, diode, toggle, blank, tags)
+        % generated: GetSecs MHost2 published the frame (NaN for the blank);
         % diode: the square's colour (0/1, NaN once the trial's blank removes
         % it); toggle: it changed colour on this flip; blank: the flip that
         % cleared the display at the end of the trial.
         n = numel(gr.flipLog.frame_id) + 1;
         gr.flipLog.frame_id(n) = id;
+        gr.flipLog.generated(n) = generated;
         gr.flipLog.vbl(n)      = vbl;
         gr.flipLog.onset(n)    = onset;
         gr.flipLog.missed(n)   = missed;

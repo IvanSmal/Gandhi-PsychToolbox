@@ -1,13 +1,13 @@
 classdef data
     properties
         eyepos
-        cursor
+        cursor                % per enabled cursor: id, pos (deg), time_ms of each sample
         neural_data
         photodiode
-        stimulus_events;      % one row per item appearing/disappearing and per state change: requested and displayed times (see buildStimulusTiming)
-        stimulus_frames;      % per target / tag, and the photodiode: position and times on every flip it was shown
-        clock_sync;           % Psychtoolbox <-> NIP (Trellis) clock pairs and fit, photodiode delay, NIP ticks of the first eye/photodiode sample and of the trial start
-        timestamps;           % ms (getsecs clock) of each eye/photodiode sample; samples before clock_sync.trial_start_sample are from before the trial (ITI)
+        stimulus_events;      % one row per item appearing/disappearing and per state change: requested_ms, displayed_ms, photon_ms (see buildStimulusTiming)
+        stimulus_frames;      % per target / tag, and the photodiode: position and times on every frame it was shown
+        clock_sync;           % how the times were made: Psychtoolbox <-> NIP clock pairs and fit, photodiode delay, raw clock values
+        time_ms;              % ms since the trial start of each eye/photodiode sample; negative = before the trial (ITI)
         stateCodes;           % state-name <-> digout code table (event markers)
     end
 

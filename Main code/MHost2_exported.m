@@ -552,6 +552,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                         fprintf('(477) ran start trial procedure and paused for ITI at %f \n' , toc(app.post_trial_timer))
                     end                    
                     
+                    lastRewardCheck = -inf;   % the reward checks in the loop run every 5 ms
                     while mh.runtrial==1 %&& ~app.STOPButton.Value
                         tic
                         mh.graphicssent=1; % check if needed
@@ -620,13 +621,16 @@ classdef MHost2_exported < matlab.apps.AppBase
                             mh.stoptrial(0);
                         end
 
-                        mh.rewcheck(app);
-                        app.drainRewardPort;
-                        a=[a toc];
-                        app.updateMiscStats(a);
-                        if length(a)>5 && a(end)>10
-                            app.insToTxtbox(['Check time was slow: ' num2str(a(end))  'ms.'])
+                        % reward button, stop-reward button and reward-handler messages: every
+                        % 5 ms rather than every pass (GUI values and a UDP port cost ~70 us a
+                        % pass; a click is still acted on within 5 ms)
+                        if GetSecs - lastRewardCheck >= 0.005
+                            mh.rewcheck(app);
+                            app.drainRewardPort;
+                            lastRewardCheck = GetSecs;
                         end
+                        a=[a toc];   % this pass, in seconds (saved as data.loop_ms)
+                        app.updateMiscStats(a);
                         app.spikemonitor.mh = mh;
                     end
                     %% post trial
@@ -669,6 +673,14 @@ classdef MHost2_exported < matlab.apps.AppBase
                         end
                     end
                     d.neural_data='placeholder';
+                    % how long each pass of the trial loop took (ms). Slow passes are reported
+                    % once per trial, leaving out the first passes (the trial's setup) and the
+                    % last (its end), which are long by design.
+                    d.loop_ms = a * 1000;
+                    slowPass = a(6:end-1) > 0.010;
+                    if any(slowPass)
+                        app.insToTxtbox(sprintf('%d loop pass%s took over 10 ms (slowest %.1f ms).', nnz(slowPass), repmat('es', 1, nnz(slowPass) ~= 1), 1000 * max(a(6:end-1))));
+                    end
                     % event-code lookup table for this session (state name <-> parallel-port code
                     % that setstate sends). Saved so the recorded digout markers decode to state
                     % names offline.

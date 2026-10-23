@@ -1,7 +1,9 @@
 # Handoff — Ubuntu_dev VM on batistaserver
 
-Last updated: 2026-10-23: one timeline for every saved time (§11), with
-`documentation/timing.md`, committed and pushed. Before it (2026-10-22): all 7
+Last updated: 2026-10-23: the trial loop made faster (§12), on branch
+`steady-targets` (cut from `main` after PR #48 merged `ai-assisted-2`), pushed.
+Earlier that day: one timeline for every saved time (§11), with
+`documentation/timing.md`. Before it (2026-10-22): all 7
 note-list items done; items 2, 4–7 committed, the last one tagged `v0.1.0`
 (§8); stimulus timing and the `d.timestamps` fix (§9, `649fa08`); Trellis
 Scope rework (§10). All of it, and the tag, pushed to GitHub.
@@ -46,7 +48,7 @@ in the VM (started by the session; safe to close).
 | sudo in VM | private notes |
 | Viewer | SPICE (address and port: private notes; autoport — ask `virsh -c qemu:///system domdisplay Ubuntu_dev`). Windows launcher: `Desktop\Ubuntu_dev VM.bat` (looks the port up, starts the VM if off, `--auto-resize=never`) |
 | Other consoles | private notes |
-| Repo in VM | `~/Documents/MATLAB/Gandhi-PsychToolbox`, branch `ai-assisted-2` (§8-§11; tag `v0.1.0` is on `070ea05`), **= GitHub** (pushed from the Windows checkout, last on 2026-10-23). The VM has no GitHub credentials; to publish later VM commits, from the Windows checkout (which sits on `ai-debugged` with someone's uncommitted work: never check out or merge there): `git fetch ubuntu-dev:Documents/MATLAB/Gandhi-PsychToolbox +refs/heads/ai-assisted-2:refs/remotes/vm/ai-assisted-2` (add `refs/tags/<tag>:refs/tags/<tag>` for a new tag), check it fast-forwards GitHub's branch and holds no VM-only line, then `git push origin refs/remotes/vm/ai-assisted-2:refs/heads/ai-assisted-2` and delete the `vm/` ref. Push only when the user says so. The end-to-end test in §1 ran on `ai-debugged` @ `c3d7353` |
+| Repo in VM | `~/Documents/MATLAB/Gandhi-PsychToolbox`, branch `steady-targets` (§12; cut from `main` @ `c724798`, the merge of PR #48 = `ai-assisted-2` §8-§11; tag `v0.1.0` is on `070ea05`), **= GitHub** (pushed from the Windows checkout, last on 2026-10-23; for another branch, put its name in the commands below). The VM has no GitHub credentials; to publish later VM commits, from the Windows checkout (which sits on `ai-debugged` with someone's uncommitted work: never check out or merge there): `git fetch ubuntu-dev:Documents/MATLAB/Gandhi-PsychToolbox +refs/heads/ai-assisted-2:refs/remotes/vm/ai-assisted-2` (add `refs/tags/<tag>:refs/tags/<tag>` for a new tag), check it fast-forwards GitHub's branch and holds no VM-only line, then `git push origin refs/remotes/vm/ai-assisted-2:refs/heads/ai-assisted-2` and delete the `vm/` ref. Push only when the user says so. The end-to-end test in §1 ran on `ai-debugged` @ `c3d7353` |
 | MATLAB | R2025b Update 4, `/usr/local/MATLAB/R2025b` |
 | PTB | 3.0.21 manual install, `~/Documents/MATLAB/Psychtoolbox` |
 | Test material | `~/Documents/Experiment/{Parameters,Tasks/CirCularGonoGO,Custom Functions}` (copied from `for claude/`) |
@@ -257,8 +259,13 @@ host (the host user is in the `libvirt` group, no sudo needed).
 - GUI processes started over SSH must run in the user session:
   `systemd-run --user` with `XDG_RUNTIME_DIR=/run/user/1000` and
   `DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus`.
-- What the state machine is sending: memmap `scenePath()` read-only and call
-  `sceneRead` from a separate MATLAB — `seq` should climb while trials run.
+- What the state machine is sending: `sceneRead(sceneOpen(false))` from a
+  separate MATLAB — `seq` should climb while trials run.
+- Ubuntu may pop up an "Upgrade Available" prompt over the windows, so clicks
+  miss. Answer "Ask Me Later" (changes nothing); never upgrade.
+- A test-restart helper that kills every shell under the terminal server also
+  closes the reward handler's terminal: start it again (below) before testing
+  rewards.
 - GraphicsHandler console: start it with `-logfile` (e.g. `/tmp/gh.log`);
   MHost2 reconnects to a restarted GraphicsHandler without a restart of its own.
 - RewardHandler from source against the demo xippmex: `cd /tmp; matlab
@@ -506,3 +513,71 @@ Duplicates are fine if they are interpretable and comparable.
   from now on (timing.md has the old → new table).
   `e.LastParameters` is still the live object at Stop (GetSecs values, the
   trial in progress); that is a separate problem, left out of this change.
+
+---
+
+## 12. A faster trial loop (2026-10-23, branch `steady-targets`)
+
+The user's requirement: state checks (one pass of MHost2's trial loop) should
+take under 1 ms, and the added complexity must not have slowed them.
+Measured first:
+- **Rig** (2026-10-22 recordings, from the frame number on each flip): median
+  1.04 ms, 90% 2.1 ms, 99% 5.6 ms, 39% under 1 ms.
+- **VM**, with temporary timers between the loop's sections: median 2.0 ms,
+  73% of it in the task (eye reads, `checkeye`'s conversions) and 16% in
+  publishing the frame (`memmapfile`).
+
+Changed (all checked against the old code):
+1. `eyeinfo`: x and y in ONE xippmex read; the channels are worked out once
+   (no `xippmex('elec','analog')` per read); `readMouseSlot` keeps "mouse mode
+   off" for 0.25 s instead of decoding the slot on every eye read.
+   `geteye` 383 -> 45 us. 24/24 equal to the old two-read formula with a stub
+   xippmex. In demo mode x and y now get different simulated signals (the demo
+   xippmex gives a channel its signal by its position in the request).
+2. `deg2pix` / `pix2deg`: the usual calls are computed for all rows at once;
+   everything else still runs the original row-by-row code (kept as local
+   functions). `rigGeometry.m` caches the ini's `[for deg2pix]` values (calls
+   without screen parameters parsed the ini each time: 1.4 ms -> 9 us).
+   39,150 cases compared with the committed versions, 0 differ.
+3. Shared-memory slots: `sceneSlot.m` (new handle class) reads and writes the
+   `/dev/shm` file with `fread` / `fwrite` instead of `memmapfile` (write
+   240 -> 33 us, read 214 -> 35 us). Layout version 3: bytes, 4 MB file (an old
+   2 MB slot is rebuilt). Found and fixed while testing:
+   - a seek straight back to the start of the file is served from the C
+     library's read buffer (stale data): `sceneRead` seeks to the end first;
+   - the old check (seq at both ends) let frames mixed from two writes
+     through, in the old code too (2 and 1 corrupt frames in two-process
+     tests): now a sequence lock (head = -seq while writing);
+   - a saved and reloaded copy of a slot (MHost2 loads `e.mat`, whose
+     `LastParameters` holds its internal object) closed the live slot when
+     cleared: the open file is `Transient`, a loaded copy opens its own.
+   GraphicsHandler shows the last good frame again if a read keeps failing
+   (slot busy for over 2 ms; 0.02% of reads under heavy test load) instead of
+   leaving the trial.
+4. MHost2: the reward checks (two GUI values and the reward-handler port) run
+   every 5 ms instead of every pass.
+5. MHost2: the "Check time was slow" warning compared seconds with 10, so it
+   never fired. Now one info-box line per trial when passes took over 10 ms
+   (leaving out the setup passes and the last one).
+6. MHost2 saves each pass's duration as `data.loop_ms` (documented in
+   `documentation/timing.md`).
+
+Result in the VM (same tasks; stress = Trellis Scope with 4 plots, 9 spike
+channels and targets, 2 analog cursors, Graphics Info on):
+
+| Run | Median | Mean | 99% | Under 1 ms | Over 8.3 ms |
+|---|---|---|---|---|---|
+| Baseline, before | 1.99 ms | 2.73 ms | 10.0 ms | 0% | 1.4% |
+| Baseline, after | 0.78 ms | 1.08 ms | 3.7 ms | 81% | 0.3% |
+| Stress, before | 2.60 ms | 4.67 ms | 21.5 ms | 0% | 7.6% |
+| Stress, after | 1.21 ms | 2.55 ms | 12.0 ms | 38% | 2.1% |
+
+Also tested: 261 trials saved complete with `data.loop_ms`; Trellis Scope gets
+states, targets and trial names over the new slots; STOP then START; Reward at
+idle and in trials (reward handler from source). NOT tested on a rig yet:
+check `data.loop_ms` there. **Updating a rig:** close MHost2, GraphicsHandler
+and Trellis Scope and start them together; the slot files change format.
+
+Next on this branch (proposed, not started): steady targets, i.e. a steady
+60 fps (flip every other refresh at 120 Hz) and positions computed for the
+moment of display.

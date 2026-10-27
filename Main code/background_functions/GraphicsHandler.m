@@ -225,6 +225,7 @@ gr.flipLog = emptyFlipLog();
 tfMap = []; tfSession = GetSecs; tfCount = 0; tfLastPub = 0; tfLastTry = -inf;
 tfFlips = zeros(0, 2);                  % [counter onset]
 tfItemCnt = zeros(0, 1); tfItemXY = zeros(0, 2); tfItemName = {};
+grLastGood = [];                        % the last frame read whole from the scene slot
 while 1
     try %error handler
         getCommands(graphicsport)          % low-rate control only (dumpdata, exit, seteye)
@@ -251,7 +252,13 @@ while 1
         end
 
         [frame, ok] = sceneRead(sceneMap);
-        if ~ok
+        if ok
+            grLastGood = frame;
+        elseif ~isempty(grLastGood)
+            % the slot was being written throughout the read (sceneRead gives up
+            % after 2 ms): show the last frame again rather than leaving the trial
+            frame = grLastGood;
+        else
             frame = struct('seq',-1,'trialStarted',false,'stateName','null', ...
                 'setEye',false,'resources',{{}},'oneShots',{{}},'cmds',{{}});
         end

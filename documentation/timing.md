@@ -128,6 +128,11 @@ not `'monitoronly'`. Same-named commands in one frame are one item.
 | `data.time_ms` | one value per eye / photodiode sample (1 kHz). Sample *k* was taken at NIP tick `trace_start_tick + 30*(k-1)`, so `time_ms(k) = (trace_start_tick + 30*(k-1) - start_tick) / 30`. The trace starts with the first NIP read, before the inter-trial interval, so the first samples are negative. `data.clock_sync.trial_start_sample` is the sample nearest 0. |
 | `data.cursor(k).time_ms` | one value per cursor sample. Analog cursors: the NIP tick of the sample read, converted directly. udp cursors: the Psychtoolbox time when MHost2 read the shared slot, put on the NIP clock. |
 
+`data.loop_ms` is not a time on the timeline but a list of durations: how
+long each pass of MHost2's trial loop took, in ms, in order. The first passes
+include the trial's setup and the last its end, so those are long by design.
+MHost2 reports in its info box when other passes take over 10 ms.
+
 ### `data.stimulus_events`
 
 One row per item appearing or disappearing, and per state change, in the

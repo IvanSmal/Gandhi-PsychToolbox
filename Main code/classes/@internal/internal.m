@@ -87,6 +87,12 @@ classdef internal < matlab.mixin.Copyable
         %matches those to the flips that showed them. Changes are rare, so
         %the log grows on demand.
         stimFirstSeq  = 0;       % first frame ID of this trial
+
+        %repeating a failed trial exactly: the trial's parameters as they were
+        %when its setup block ended (setstate takes it at the first state after
+        %starttrial, on a first attempt only). MHost2 restores it for a repeat.
+        trialSnapshot   = [];    % ttype, trialnum, firstState, targets, intervals, userdefined
+        snapshotPending = false; % starttrial sets it; the next setstate takes the snapshot
         stimReqN      = 0;       % change log: entries used
         stimReqTag    = {};
         stimReqKind   = {};

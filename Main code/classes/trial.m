@@ -18,6 +18,8 @@ classdef trial < handle
         intervals
 
         trellis_trial_number;
+        repeat = 0        % 0 = first attempt; 1, 2, ... = repeats of a failed trial
+        repeat_of = []    % trialnum of the first attempt (its own trialnum for a first attempt)
 
         userdefined =[]
 

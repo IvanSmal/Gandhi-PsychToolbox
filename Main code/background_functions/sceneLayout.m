@@ -1,10 +1,11 @@
 function L = sceneLayout()
 %SCENELAYOUT Shape of the shared scene slot.
 %
-%   The slot holds ONE serialised frame:
+%   The slot holds ONE serialised frame, as bytes:
 %
 %       [ seq | nBytes | payload bytes ... | seq ]
 %
+%   seq and nBytes are doubles (8 bytes each); the tail repeats seq.
 %   payload is getByteStreamFromArray of a struct:
 %       .trialStarted  logical
 %       .stateName     char
@@ -16,15 +17,16 @@ function L = sceneLayout()
 %   Nothing is eval'd: getArrayFromByteStream rebuilds the actual values.
 %
 %   The sequence number is duplicated at BOTH ENDS of the record and the
-%   record is written with ONE assignment sized to the payload, so a reader
+%   record is written with ONE write sized to the payload, so a reader
 %   catching a partial forward write sees a stale tail and retries.
 %
-%   Measured: encode 5 us, write 48 us (typical frame) to 91 us (1000-dot
-%   field), read+decode 30-70 us. The UDP command stream it replaced cost
-%   3220 us per iteration.
-L.VERSION  = 2;
-L.SEQ      = 1;      % sequence number, head
-L.NBYTES   = 2;      % payload length in bytes
-L.DATA0    = 3;      % first payload element
-L.CAP      = 262144; % slot capacity in doubles (2 MB file, ~256 KB payload)
+%   Version 3 reads and writes the file directly (sceneSlot: fread/fwrite)
+%   instead of through memmapfile, which in MATLAB costs far more than the
+%   copy itself. Measured in the VM for a typical 2.8 KB frame: write 240 ->
+%   33 us, read 214 -> 35 us. Version 2 stored each byte as a double in a
+%   2 MB file; the new file size makes sceneOpen rebuild an old slot.
+L.VERSION  = 3;
+L.HEAD     = 16;       % bytes before the payload: seq, nBytes (doubles)
+L.TAIL     = 8;        % bytes after it: seq again
+L.CAP      = 4194304;  % slot file size in bytes (4 MB)
 end

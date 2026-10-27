@@ -17,6 +17,14 @@ classdef eyeinfo < handle
         mousemap = []        % reader handle for the mouse-mode shared slot (lazy)
     end
 
+    properties (Access = private)
+        % The eye is read on every pass of the trial loop, so the channels to
+        % read are worked out once (see readxy), not with an xippmex call each time.
+        chanKey = {}         % {xchan, ychan} the cache below was made from
+        chanRead = []        % channels to read, ascending
+        chanRows = [1 2]     % rows of that read holding x and y
+    end
+
     methods
         function obj=eyeinfo
             % eye calibration is machine-written state, not hand config.
@@ -97,21 +105,16 @@ classdef eyeinfo < handle
                 if nargin == 1, out = mp; else, out = [mp(1); mp(2)]; end
                 return
             end
-            chidx=xippmex('elec','analog');
-            xc=obj.xchan; if isempty(xc), xc=chidx(1); end   % selectable eye channels
-            yc=obj.ychan; if isempty(yc), yc=chidx(2); end   % ([] -> legacy first two analog)
             if nargin == 1
-                xeye=xippmex('cont', xc,1,'1ksps')*...
-                    obj.xgain+obj.xoffset;
-                yeye=xippmex('cont', yc,1,'1ksps')*...
-                    obj.ygain+obj.yoffset;
+                v = readxy(obj, 1);
+                xeye=v(1,:)*obj.xgain+obj.xoffset;
+                yeye=v(2,:)*obj.ygain+obj.yoffset;
                 seteyepos(obj,xeye,yeye);
                 out=[xeye,yeye];
             else
-                xeye=xippmex('cont', xc,t,'1ksps')*...
-                    obj.xgain+obj.xoffset;
-                yeye=xippmex('cont', yc,t,'1ksps')*...
-                    obj.ygain+obj.yoffset;
+                v = readxy(obj, t);
+                xeye=v(1,:)*obj.xgain+obj.xoffset;
+                yeye=v(2,:)*obj.ygain+obj.yoffset;
                 seteyepos(obj,xeye(end),yeye(end));
                 out=[xeye;yeye];
             end
@@ -125,12 +128,30 @@ classdef eyeinfo < handle
                 out = [mp(1), mp(2)];   % mouse mode: raw == mapped (no calibration)
                 return
             end
-            chidx=xippmex('elec','analog');
-            xc=obj.xchan; if isempty(xc), xc=chidx(1); end
-            yc=obj.ychan; if isempty(yc), yc=chidx(2); end
-            xeye=xippmex('cont', xc,1,'1ksps');
-            yeye=xippmex('cont', yc,1,'1ksps');
-            out=[xeye,yeye];
+            v = readxy(obj, 1);
+            out=[v(1,:),v(2,:)];
+        end
+    end
+
+    methods (Access = private)
+        function v = readxy(obj, n)
+            % The newest N samples of the eye's x and y channels, rows [x; y],
+            % in ONE xippmex read (both from the same samples). Channels: the
+            % chosen ones (xchan / ychan), else the first two analog inputs.
+            key = {obj.xchan, obj.ychan};
+            if ~isequal(key, obj.chanKey) || isempty(obj.chanRead)
+                xc=obj.xchan; yc=obj.ychan;
+                if isempty(xc) || isempty(yc)
+                    chidx=xippmex('elec','analog');
+                    if isempty(xc), xc=chidx(1); end   % ([] -> legacy first two analog)
+                    if isempty(yc), yc=chidx(2); end
+                end
+                [obj.chanRead, ~, obj.chanRows] = unique([xc yc]);   % ascending; rows come back in that order
+                obj.chanKey = key;
+            end
+            r = xippmex('cont', obj.chanRead, n, '1ksps');
+            if size(r, 1) < numel(obj.chanRead), v = zeros(2, 0); return, end   % failed read: empty, as before
+            v = r(obj.chanRows, :);
         end
     end
 end

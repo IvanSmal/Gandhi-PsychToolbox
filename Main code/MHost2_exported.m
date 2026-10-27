@@ -397,10 +397,15 @@ classdef MHost2_exported < matlab.apps.AppBase
                             tlist{count}=mh.ttypeslogic(i,1);
                         end
                     end
-                    randTrial=randi(size(tlist,1));
                     mh.trial=trial;%clear any old BS from trial
-                    trialtypestring=char(tlist{randTrial});
-                    mh.trial.ttype=trialtypestring(1:end-2);
+                    if app.trials_failed && ~isempty(mh.trialSnapshot)
+                        % repeating a failed trial (below, in the loop): the same task, no new draw
+                        mh.trial.ttype=mh.trialSnapshot.ttype;
+                    else
+                        randTrial=randi(size(tlist,1));
+                        trialtypestring=char(tlist{randTrial});
+                        mh.trial.ttype=trialtypestring(1:end-2);
+                    end
                     mh.trial_function=str2func(mh.trial.ttype);
                     app.publishScopeMeta(mh.trial.ttype);
 
@@ -450,9 +455,11 @@ classdef MHost2_exported < matlab.apps.AppBase
 
                     mh.trialnumpersistent = mh.trialnumpersistent+1;
                     mh.trial.trialnum=mh.trialnumpersistent;
+                    mh.trial.repeat=0; mh.trial.repeat_of=mh.trial.trialnum;   % a repeat sets its own (in the loop)
 
-                    % display success trial number
-                    app.insToTxtbox([app.TrialnameEditField.Value, '. Trial number: ', num2str(mh.trial.trialnum),'    success: ', num2str(app.success_counter)]);
+                    % display success trial number (this trial's task: the Trial name field is
+                    % only filled in later, during the trial)
+                    app.insToTxtbox([mh.trial.ttype, '. Trial number: ', num2str(mh.trial.trialnum),'    success: ', num2str(app.success_counter)]);
 
                     %check trellis
                     setupDAQ(app);
@@ -552,24 +559,29 @@ classdef MHost2_exported < matlab.apps.AppBase
                         fprintf('(477) ran start trial procedure and paused for ITI at %f \n' , toc(app.post_trial_timer))
                     end                    
                     
+                    lastRewardCheck = -inf;   % the reward checks in the loop run every 5 ms
                     while mh.runtrial==1 %&& ~app.STOPButton.Value
                         tic
                         mh.graphicssent=1; % check if needed
 
                         if app.trials_failed
-                            mh=copy(app.mhbackup); %revert to last parameters/targets
-                            mh.trialnumpersistent = mh.trialnumpersistent+1;
-                            mh.trial.trialnum=mh.trialnumpersistent; %fix trial numbers
-                            toRemove={'start_tick','start_clock','stop_ms','state','data','tags','System_Properties'}; % set structures to remove
-                            for remove=toRemove
-                                mh.trial.(remove{1})=[]; %actually clear
+                            % Repeat the failed trial exactly as it began: its parameters as they
+                            % were when its setup block ended (mh.trialSnapshot, taken by setstate),
+                            % so targets start with no history and in their starting state. The
+                            % task's setup block is skipped (starttrial marks the trial started),
+                            % so nothing is drawn again. Randomness used while the trial runs
+                            % cannot be replayed: how much is drawn depends on the subject.
+                            if ~isempty(mh.trialSnapshot) && strcmp(mh.trialSnapshot.ttype, mh.trial.ttype)
+                                snap = mh.trialSnapshot;
+                                mh.trial.targets = snap.targets;
+                                mh.trial.intervals = snap.intervals;
+                                mh.trial.userdefined = snap.userdefined;
+                                mh.trial.repeat = app.trials_failed_count;
+                                mh.trial.repeat_of = snap.trialnum;
+                                mh.starttrial
+                                mh.setstate(snap.firstState) %perform trial start procedure
+                                app.insToTxtbox(sprintf('Repeating failed trial %d: repeat %d of %d', snap.trialnum, app.trials_failed_count, app.repeatLimit(mh)))
                             end
-                            if app.RECORDNEURALDATACheckBox.Value
-                                mh.trial.trellis_trial_number=trinfo.incr_num; %fix correct trellis number
-                            end
-                            mh.starttrial
-                            mh.setstate(app.first_setstate) %perform trial start procedure
-                            app.insToTxtbox(['Repeating failed trial ' num2str(app.trials_failed_count) ' time(s)'])
                             app.trials_failed = 0;
                         end
 
@@ -620,13 +632,16 @@ classdef MHost2_exported < matlab.apps.AppBase
                             mh.stoptrial(0);
                         end
 
-                        mh.rewcheck(app);
-                        app.drainRewardPort;
-                        a=[a toc];
-                        app.updateMiscStats(a);
-                        if length(a)>5 && a(end)>10
-                            app.insToTxtbox(['Check time was slow: ' num2str(a(end))  'ms.'])
+                        % reward button, stop-reward button and reward-handler messages: every
+                        % 5 ms rather than every pass (GUI values and a UDP port cost ~70 us a
+                        % pass; a click is still acted on within 5 ms)
+                        if GetSecs - lastRewardCheck >= 0.005
+                            mh.rewcheck(app);
+                            app.drainRewardPort;
+                            lastRewardCheck = GetSecs;
                         end
+                        a=[a toc];   % this pass, in seconds (saved as data.loop_ms)
+                        app.updateMiscStats(a);
                         app.spikemonitor.mh = mh;
                     end
                     %% post trial
@@ -646,7 +661,7 @@ classdef MHost2_exported < matlab.apps.AppBase
 
                         app.trials_failed = 1;
                         app.trials_failed_count = app.trials_failed_count+1;
-                        if app.trials_failed_count > app.RepeatfailedtrialsEditField.Value
+                        if app.trials_failed_count > app.repeatLimit(mh)   % this task's repeat count
                             app.trials_failed_count = 0;
                             app.trials_failed = 0;
                         end
@@ -669,6 +684,14 @@ classdef MHost2_exported < matlab.apps.AppBase
                         end
                     end
                     d.neural_data='placeholder';
+                    % how long each pass of the trial loop took (ms). Slow passes are reported
+                    % once per trial, leaving out the first passes (the trial's setup) and the
+                    % last (its end), which are long by design.
+                    d.loop_ms = a * 1000;
+                    slowPass = a(6:end-1) > 0.010;
+                    if any(slowPass)
+                        app.insToTxtbox(sprintf('%d loop pass%s took over 10 ms (slowest %.1f ms).', nnz(slowPass), repmat('es', 1, nnz(slowPass) ~= 1), 1000 * max(a(6:end-1))));
+                    end
                     % event-code lookup table for this session (state name <-> parallel-port code
                     % that setstate sends). Saved so the recorded digout markers decode to state
                     % names offline.
@@ -760,6 +783,9 @@ classdef MHost2_exported < matlab.apps.AppBase
                     fprintf('(531-551) formatted parameters to fit into data structure %f \n' , toc(app.post_trial_timer))
                     app.mhpass=mh;
                     app.savestate(e,0);
+                    if isequal(mh.trial.repeat, 0) && ~isempty(mh.trialSnapshot)
+                        mh.trialSnapshot.trialnum = mh.trial.trialnum;   % as saved: savestate can renumber the trial
+                    end
                     fprintf('(551-553) ran app.savestate(e,0) %f \n' , toc(app.post_trial_timer))                    
                     
                     app.drainRewardPort;   %check of the reward handler is talking
@@ -1297,6 +1323,22 @@ classdef MHost2_exported < matlab.apps.AppBase
             eb.Position = [17 20 220 45];
             eb.Tooltip = {'Kill the current trial immediately; does not wait for it to finish'};
             eb.ButtonPushedFcn = createCallbackFcn(app, @emergencyStopPushed, true);
+        end
+
+        function n = repeatLimit(app, mh)
+            % How many times a failed trial of this task is repeated: its
+            % "Repeats if failed" in the trial-types table (column 3), or the
+            % misc tab's "Repeat failed trials" when that cell is blank.
+            n = app.RepeatfailedtrialsEditField.Value;
+            try
+                tt = mh.ttypeslogic;
+                if size(tt, 2) < 3, return, end
+                names = regexprep(cellfun(@char, tt(:, 1), 'UniformOutput', false), '\.m$', '');
+                k = find(strcmp(names, mh.trial.ttype), 1);
+                v = tt{k, 3};
+                if isnumeric(v) && isscalar(v) && isfinite(v) && v >= 0, n = v; end
+            catch
+            end
         end
 
         function updateMiscStats(app, loopSec)

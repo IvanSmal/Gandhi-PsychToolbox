@@ -42,6 +42,9 @@ for f = {'start_tick', 'start_clock', 'stop_ms', 'tags'}
     if ~isfield(s, f{1}), s.(f{1}) = []; end
 end
 if ~isstruct(s.state), s.state = struct(); end
+% a first attempt is its own repeat_of, under the number it is saved with
+% (savestate can renumber a trial after it ran)
+if isfield(s, 'repeat') && isequal(s.repeat, 0), s.repeat_of = s.trialnum; end
 
 D = s.data;
 if isobject(D), D = struct(D); end

@@ -9,6 +9,7 @@ classdef data
         clock_sync;           % how the times were made: Psychtoolbox <-> NIP clock pairs and fit, photodiode delay, raw clock values
         time_ms;              % ms since the trial start of each eye/photodiode sample; negative = before the trial (ITI)
         stateCodes;           % state-name <-> digout code table (event markers)
+        loop_ms;              % how long each pass of MHost2's trial loop took (ms), in order
     end
 
     methods

@@ -1,8 +1,11 @@
 # Handoff — Ubuntu_dev VM on batistaserver
 
-Last updated: 2026-10-23: exact repeats of failed trials with a per-task
+Last updated: 2026-10-27: movie timing, which movie frame was on screen at
+every flip (§14), on branch `movie-timing` (cut from `main` after PR #49 merged
+`steady-targets`), pushed, no PR yet: it is to be checked on a rig first.
+2026-10-23: exact repeats of failed trials with a per-task
 repeat count (§13), and before it the trial loop made faster (§12), on branch
-`steady-targets` (cut from `main` after PR #48 merged `ai-assisted-2`), pushed.
+`steady-targets` (cut from `main` after PR #48 merged `ai-assisted-2`), merged.
 Earlier that day: one timeline for every saved time (§11), with
 `documentation/timing.md`. Before it (2026-10-22): all 7
 note-list items done; items 2, 4–7 committed, the last one tagged `v0.1.0`
@@ -495,7 +498,7 @@ Duplicates are fine if they are interpretable and comparable.
     the end-of-trial block, `savestate` (3 places), the failed-trial reset
     list
 - **Tested:**
-  - A synthetic trial with known answers, 52/52: the start within 6 ticks,
+  - A synthetic trial with known answers, 50/50: the start within 6 ticks,
     eye / cursor / getpos times within 1 ms, state entries and repeats,
     objects equal to the flat tables, off-screen NaN, demo sine rejected,
     no clock pairs, empty flip log, a raw trial object. The test is
@@ -630,3 +633,51 @@ only difference: a repeat that succeeded also holds `reward`, fetched by the
 task with `getint` in its reward state; draws made while a trial runs cannot
 be replayed. Not changed: whether a trial ended by STOP is repeated after the
 next START.
+
+## 14. Movie timing (2026-10-27, branch `movie-timing`)
+
+The user's goal: know exactly which movie frame was on the screen at what
+time. Part 1 (recording, tables, a test movie and a checker) is done; checking
+it on a rig is next. `documentation/timing.md` has the fields, how they are
+calculated, and the rig procedure (*Checking movie frames on a rig*).
+
+- GraphicsHandler: `OpenMovie`'s fps, frame count, duration and size are kept
+  (`mvInfo`, saved as `geom.movies` by `dumpdata`). On each display flip,
+  `movieFrame` takes the frame's presentation time from `GetMovieImage`'s
+  second output (display copy only) and `resolveArgs` logs it per movie id
+  (`flipLog.movies`). Seeks / PlayMovie are logged by one-shot token
+  (`flipLog.oneshots`).
+- MHost2 side: `declareResource` refs carry `kind` and `name`; `mh.Screen`
+  names a `DrawTexture` of a movie after it (kind `movie`, the resource id
+  through `frameItems`), and logs `SetMovieTimeIndex` / `PlayMovie` as `seek`
+  / `play` rows (`stimReqToken`, `stimReqValue`).
+- `buildStimulusTiming` / `objectTiming`: `trial.movies.<name>` with the
+  settings, `events` (on, off, seek, play) and `frames` (`movie_time_s`,
+  `movie_frame = round(pts*fps)+1`, `new_frame`); the flat tables get the same
+  columns. A flip counts as showing the movie only if GraphicsHandler drew a
+  frame of it (found in VM testing: before the first frame is decoded the draw
+  draws nothing, and "on" came out 510 ms early).
+- `Utilities/makeMovieTimingTest.m` writes the test movie (corner square white
+  on odd frames, black on even; digits; 12-bit code). `Utilities/
+  movieTimingCheck.m` compares a trial's movie frames with the photodiode
+  trace.
+
+Tested: `test_movieTiming.m` (session scratchpad), synthetic, 22/22, and
+`test_trialTiming.m` 50/50. In the VM, a MovieTiming task (VM-only files:
+`~/Documents/Experiment/Movies/movie_timing_test.avi`,
+`Parameters/MovieTimingParameters.m`, `Tasks/MovieTiming/`; point the ini's
+`[last filepaths]` at them) seeks to a random time and shows the movie 2 s,
+full screen or at its own size. Every trial that drew it: frame numbers,
+order, `new_frame`, rects and the flat tables right; each seek shown within
+one movie frame of its target.
+
+VM limit: GraphicsHandler flips only ~3 times per second while a movie plays
+(two vCPUs at 100 %, software GL), and `main`'s GraphicsHandler is the same
+(2.6 vs 2.9 flips/s). So frame cadence and the photodiode check can only be
+done on a rig; in the VM `movieTimingCheck` runs but its numbers are noise
+(the demo photodiode is a sine).
+
+Found, not fixed: a parameter file with no targets crashes `makeparams`
+(`fieldnames(mh.targets)` on `[]`), and cancelling the parameter-file chooser
+at startup crashes `startupFcn` (`copyfile` with the 0 that `uigetfile`
+returns).

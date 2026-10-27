@@ -12,13 +12,18 @@ function tr = buildStimulusTiming(flips, tr, geom)
 %            colour 0/1), toggle (the square changed colour on this flip: a
 %            state change), blank (the flip that cleared the display when the
 %            trial ended) and tags (the items the frame drew: tag, kind, rect
-%            in display pixels).
+%            in display pixels; res: a movie's resource id), movies (the
+%            movie frames it drew: id, pts = presentation time in s) and
+%            oneshots (the seeks / PlayMovie run before it: token, cmd, id,
+%            value).
 %     TR     the trial. Uses data.stimulus_events (MHost2's change log: one
 %            row per item appearing or disappearing and per state change,
 %            with the frame that first asked for it), data.clock_sync (clock
 %            fit, trace_start_tick, first_frame_id), data.photodiode (1 kHz
 %            from trace_start_tick) and start_tick.
-%     GEOM   display: width, height, diode_rect, screenparams.
+%     GEOM   display: width, height, diode_rect, screenparams, movies (per
+%            resource id: name, file, fps, frame_count, duration_s, width,
+%            height, from OpenMovie).
 %
 %   Fills (structs of column arrays, readable outside MATLAB too)
 %     data.stimulus_events  per row displayed_ms, photon_ms, delay_ms,
@@ -32,8 +37,17 @@ function tr = buildStimulusTiming(flips, tr, geom)
 %            y_deg, rect_px, missed, state. The photodiode entry has one row
 %            per colour change, i.e. per state change, and its colour.
 %     data.clock_sync  photodiode (the measured display delay), frame_ms.
-%     The same numbers, through objectTiming, in trial.targets, trial.tags
-%     and trial.state.
+%     Movies (kind 'movie'): per flip also movie_time_s (the shown frame's
+%            presentation time within the movie), movie_frame (its number,
+%            1 = first; from fps) and new_frame (a different frame from the
+%            flip before); events add seek and play rows (seek_to_s, rate),
+%            displayed when the first new frame after the renderer ran them
+%            reached the screen. A movie drawn without a destination rect is
+%            centred at its own size, as Psychtoolbox draws it. A flip counts
+%            as showing a movie only if the renderer drew a frame of it: until
+%            the first frame is decoded the task's DrawTexture draws nothing.
+%     The same numbers, through objectTiming, in trial.targets, trial.tags,
+%     trial.movies and trial.state.
 %
 %   Times: *_ms are ms since the trial start (trial.start_tick), *_tick NIP
 %   30 kHz ticks. displayed is the flip's StimulusOnsetTime put on the NIP
@@ -56,6 +70,9 @@ if ~isstruct(ev) || ~isfield(ev, 'request_frame'), ev = emptyEvents(); end   % n
 flips = trialFlips(flips, sync);
 nF = numel(flips.frame_id);
 if ~isfield(flips, 'generated') || numel(flips.generated) ~= nF, flips.generated = nan(1, nF); end
+mvLogged = isfield(flips, 'movies') && numel(flips.movies) == nF;   % this renderer logs the movie frames it drew
+if ~mvLogged, flips.movies = cell(1, nF); end
+if ~isfield(flips, 'oneshots') || numel(flips.oneshots) ~= nF, flips.oneshots = cell(1, nF); end
 
 % ---- clocks
 start = tr.start_tick;
@@ -95,6 +112,7 @@ nK = numel(names);
 present = false(nF, nK);
 rects = nan(nF, 4, nK);
 kinds = repmat({'tag'}, 1, nK);
+resOf = zeros(1, nK);                               % a movie item's resource id
 for i = 1:nF
     t = flips.tags{i};
     for j = 1:numel(t)
@@ -102,6 +120,40 @@ for i = 1:nF
         present(i, k) = true;
         kinds{k} = t(j).kind;
         if numel(t(j).rect) == 4, rects(i, :, k) = t(j).rect(:)'; end
+        if isfield(t(j), 'res') && ~isempty(t(j).res) && t(j).res > 0, resOf(k) = t(j).res; end
+    end
+end
+
+% ---- movies: which movie frame each flip showed
+movies = getf(geom, 'movies', {});
+mvPts = nan(nF, nK);                                % presentation time (s) of the shown frame
+mvNew = false(nF, nK);                              % a different frame from the flip before
+fpsOf = nan(1, nK);
+for k = find(strcmp(kinds, 'movie') & resOf > 0)
+    info = movieInfo(movies, resOf(k));
+    fpsOf(k) = getf(info, 'fps', NaN);
+    r = find(present(:, k))';
+    for i = r
+        m = flips.movies{i};
+        j = [];
+        if ~isempty(m), j = find([m.id] == resOf(k), 1, 'last'); end
+        if ~isempty(j)
+            mvPts(i, k) = m(j).pts;
+        elseif mvLogged
+            % the task drew it, but the renderer had no frame decoded yet and
+            % drew nothing: not on screen at this flip
+            present(i, k) = false;
+        end
+    end
+    r = find(present(:, k))';
+    p = mvPts(r, k);
+    mvNew(r, k) = isfinite(p) & [true; p(2:end) ~= p(1:end-1)];
+    % no destination rect: Psychtoolbox centres the movie at its own size
+    w = getf(info, 'width', NaN); h = getf(info, 'height', NaN);
+    for i = r
+        if all(isnan(rects(i, :, k))) && isfinite(w) && isfinite(h)
+            rects(i, :, k) = [(geom.width - w) / 2, (geom.height - h) / 2, (geom.width + w) / 2, (geom.height + h) / 2];
+        end
     end
 end
 
@@ -123,6 +175,11 @@ for k = 1:nK
         'displayed_tick', onsetTick(r), 'photon_tick', ph, ...
         'x_deg', x, 'y_deg', y, 'rect_px', R, 'missed', col(flips.missed(r)) > 0, ...
         'state', {col(flips.state(r))});                % {}: one struct, not one per row
+    if strcmp(kinds{k}, 'movie')
+        fr.(keys{k}).movie_time_s = mvPts(r, k);
+        fr.(keys{k}).movie_frame = frameNo(mvPts(r, k), fpsOf(k));
+        fr.(keys{k}).new_frame = mvNew(r, k);
+    end
 end
 Dr = repmat(geom.diode_rect(:)', numel(toggles), 1);
 [x, y] = centreDeg(Dr, geom);
@@ -135,23 +192,24 @@ fr.(pdKey) = struct('name', 'photodiode', 'kind', 'photodiode', 'flip', toggles,
     'state', {col(flips.state(toggles))}, 'color', col(flips.diode(toggles)));
 
 % ---- what reached the screen: appear / disappear per item, colour changes
-shown = struct('tag', {}, 'event', {}, 'state', {}, 'flip', {}, 'rect', {}, 'light', {});
+shown = struct('tag', {}, 'event', {}, 'state', {}, 'flip', {}, 'rect', {}, 'light', {}, 'pts', {}, 'fps', {});
 for k = 1:nK
     p = present(:, k);
     for i = 1:nF
         before = i > 1 && p(i-1);
         if p(i) && ~before
             shown(end+1) = struct('tag', names{k}, 'event', 'on', 'state', '', 'flip', i, ...
-                'rect', rects(i, :, k), 'light', NaN); %#ok<AGROW>
+                'rect', rects(i, :, k), 'light', NaN, 'pts', mvPts(i, k), 'fps', fpsOf(k)); %#ok<AGROW>
         elseif ~p(i) && before
+            % off: the movie frame on screen until then
             shown(end+1) = struct('tag', names{k}, 'event', 'off', 'state', '', 'flip', i, ...
-                'rect', rects(i-1, :, k), 'light', NaN); %#ok<AGROW>
+                'rect', rects(i-1, :, k), 'light', NaN, 'pts', mvPts(i-1, k), 'fps', fpsOf(k)); %#ok<AGROW>
         end
     end
 end
 for j = 1:numel(toggles)
     shown(end+1) = struct('tag', 'photodiode', 'event', 'state', 'state', flips.state{toggles(j)}, ...
-        'flip', toggles(j), 'rect', geom.diode_rect(:)', 'light', edgeTick(j)); %#ok<AGROW>
+        'flip', toggles(j), 'rect', geom.diode_rect(:)', 'light', edgeTick(j), 'pts', NaN, 'fps', NaN); %#ok<AGROW>
 end
 
 % ---- match each displayed change to the latest request for it
@@ -184,18 +242,55 @@ for s = extra                                        % keep them, requested_ms =
     ev.state{e, 1} = flips.state{shown(s).flip};
     ev.entry(e, 1) = NaN;
     ev.requested_ms(e, 1) = NaN;
+    if isfield(ev, 'seek_to_s'), ev.seek_to_s(e, 1) = NaN; ev.rate(e, 1) = NaN; end
+    if isfield(ev, 'request_token'), ev.request_token(e, 1) = NaN; end
     ev = fillRow(ev, e, shown(s), flips, T, geom);
 end
-D.stimulus_events = rmfield(ev, intersect(fieldnames(ev), {'request_frame', 'request_secs'}));
+% ---- movie seeks and PlayMovie: the renderer ran each before a flip (logged
+% by token); displayed = the first new frame of that movie from then on
+if isfield(ev, 'request_token')
+    for e = find(ismember(ev.event, {'seek', 'play'}))'
+        ia = []; mid = [];
+        for i = 1:nF
+            o = flips.oneshots{i};
+            if ~isempty(o) && any([o.token] == ev.request_token(e))
+                ia = i; mid = o(find([o.token] == ev.request_token(e), 1)).id; break
+            end
+        end
+        if isempty(ia), continue, end                % not run during this trial's flips
+        k = find(resOf == mid, 1);
+        if isempty(k), continue, end                 % the movie was not drawn this trial
+        i = find(present(ia:end, k) & mvNew(ia:end, k), 1) + ia - 1;
+        if isempty(i), continue, end
+        ev = fillRow(ev, e, struct('tag', ev.tag{e}, 'event', ev.event{e}, 'state', '', 'flip', i, ...
+            'rect', rects(i, :, k), 'light', NaN, 'pts', mvPts(i, k), 'fps', fpsOf(k)), flips, T, geom);
+    end
+end
+D.stimulus_events = rmfield(ev, intersect(fieldnames(ev), {'request_frame', 'request_secs', 'request_token'}));
 D.stimulus_frames = fr;
 D.clock_sync = sync;
 tr.data = D;
+% the settings of each movie this trial drew or controlled, for trial.movies
+% (objectTiming adds its events and frames)
+mvNames = unique([names(strcmp(kinds, 'movie')), ev.tag(strcmp(ev.kind, 'movie'))'], 'stable');
+if ~isfield(tr, 'movies') || ~isstruct(tr.movies), tr.movies = struct(); end
+for n = mvNames
+    info = struct();
+    for i = 1:numel(movies)
+        if isstruct(movies{i}) && strcmp(getf(movies{i}, 'name', ''), n{1}), info = movies{i}; end
+    end
+    tr.movies.(matlab.lang.makeValidName(n{1})) = movieSettings(info, n{1});
+end
 tr = objectTiming(tr);
 end
 
 % =========================================================================
 function ev = fillRow(ev, e, s, flips, T, geom)
 i = s.flip;
+if isfield(ev, 'movie_time_s')
+    ev.movie_time_s(e, 1) = s.pts;
+    ev.movie_frame(e, 1) = frameNo(s.pts, s.fps);
+end
 ev.displayed_ms(e, 1) = T.dispMs(i);
 ev.delay_ms(e, 1) = T.dispMs(i) - ev.requested_ms(e);
 ev.displayed_tick(e, 1) = T.onsetTick(i);
@@ -299,7 +394,27 @@ c = cell(0, 1); z = zeros(0, 1);
 ev = struct('tag', {c}, 'kind', {c}, 'event', {c}, 'state', {c}, 'entry', z, ...
     'requested_ms', z, 'displayed_ms', z, 'photon_ms', z, 'delay_ms', z, ...
     'displayed_tick', z, 'photon_tick', z, 'flip', z, 'frame_id', z, ...
-    'x_deg', z, 'y_deg', z, 'rect_px', zeros(0, 4), 'missed', false(0, 1), 'request_frame', z);
+    'x_deg', z, 'y_deg', z, 'rect_px', zeros(0, 4), 'missed', false(0, 1), ...
+    'movie_time_s', z, 'movie_frame', z, 'seek_to_s', z, 'rate', z, ...
+    'request_frame', z, 'request_token', z);
+end
+
+function n = frameNo(pts, fps)
+% movie frame number, 1 = the first: presentation time x frame rate
+if isfinite(fps) && fps > 0, n = round(pts .* fps) + 1; else, n = nan(size(pts)); end
+end
+
+function info = movieInfo(movies, id)
+% the renderer's settings for movie resource ID, [] if unknown
+info = [];
+if id >= 1 && id <= numel(movies) && isstruct(movies{id}), info = movies{id}; end
+end
+
+function m = movieSettings(info, name)
+% trial.movies.<name>: the movie's file and settings from OpenMovie
+m = struct('name', name, 'file', getf(info, 'file', ''), 'fps', getf(info, 'fps', NaN), ...
+    'frame_count', getf(info, 'frame_count', NaN), 'duration_s', getf(info, 'duration_s', NaN), ...
+    'width', getf(info, 'width', NaN), 'height', getf(info, 'height', NaN));
 end
 
 function v = col(v)

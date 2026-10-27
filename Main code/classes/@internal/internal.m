@@ -100,6 +100,8 @@ classdef internal < matlab.mixin.Copyable
         stimReqState  = {};
         stimReqSeq    = [];
         stimReqTime   = [];      % GetSecs of the frame (trialRecord: requested_ms)
+        stimReqToken  = [];      % movie seek / play: the one-shot's token (matched to the renderer's log)
+        stimReqValue  = [];      % movie seek: target time (s); play: rate
 
         %texture and movie resources. Declared by name in the parameter file
         %(addtexture/addmovie), grabbed once per trial in the task's setup

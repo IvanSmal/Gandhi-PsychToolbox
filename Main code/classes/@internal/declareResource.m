@@ -8,7 +8,9 @@ key = [kind '_' name];
 if ~isfield(mh.resourceIds, key)
     mh.nextResId = mh.nextResId + 1;
     mh.resourceIds.(key) = mh.nextResId;
-    mh.resourceDecl{end+1} = struct('id', mh.nextResId, 'kind', kind, 'path', char(path));
+    mh.resourceDecl{end+1} = struct('id', mh.nextResId, 'kind', kind, 'path', char(path), 'name', char(name));
 end
-ref = struct('resref', mh.resourceIds.(key));
+% kind and name let mh.Screen tag a drawn movie with its name (stimulus timing);
+% the renderer only needs resref
+ref = struct('resref', mh.resourceIds.(key), 'kind', kind, 'name', char(name));
 end

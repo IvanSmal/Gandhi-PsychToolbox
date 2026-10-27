@@ -38,7 +38,7 @@ restore = onCleanup(@() warning(warnState));
 
 if isobject(tr), s = struct(tr); else, s = tr; end
 if isRecord(s), return, end
-for f = {'start_tick', 'start_clock', 'stop_ms', 'tags'}
+for f = {'start_tick', 'start_clock', 'stop_ms', 'tags', 'movies'}
     if ~isfield(s, f{1}), s.(f{1}) = []; end
 end
 if ~isstruct(s.state), s.state = struct(); end
@@ -151,6 +151,7 @@ if isstruct(s.targets)
     end
 end
 if ~isstruct(s.tags), s.tags = struct(); end
+if ~isstruct(s.movies), s.movies = struct(); end
 
 if hasData
     D.clock_sync = C;

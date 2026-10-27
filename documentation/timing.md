@@ -15,8 +15,9 @@ compare them.
   `tick = trial.start_tick + 30 * ms`. Columns ending in `_tick` are already
   NIP ticks.
 - **Each object carries its own timing.** `trial.targets.<name>`,
-  `trial.tags.<name>` and `trial.state.<name>` each hold when they were asked
-  for, when they reached the screen and when their light appeared. The same
+  `trial.tags.<name>`, `trial.movies.<name>` and `trial.state.<name>` each
+  hold when they were asked for, when they reached the screen and when their
+  light appeared. The same
   numbers are also in two flat tables, `data.stimulus_events` and
   `data.stimulus_frames`, for looking at everything at once. The copies are
   made from the same values, so they always agree.
@@ -30,12 +31,15 @@ compare them.
 | Where a target was on every frame it was shown, and when | `trial.targets.<name>.frames` |
 | Every position the task calculated for a moving target | `trial.targets.<name>.computed` |
 | The same for an item drawn with `mh.Screen(..., 'Tag', name)` | `trial.tags.<name>` |
+| Which movie frame was on screen at every flip, and when | `trial.movies.<name>.frames` |
+| When a movie appeared, disappeared, was seeked or restarted | `trial.movies.<name>.events` |
 | Time of each eye / photodiode sample | `data.time_ms` |
 | Time of each cursor sample | `data.cursor(k).time_ms` |
 | Everything that changed on screen, in one table | `data.stimulus_events` |
 | Every item on every frame, in one place | `data.stimulus_frames` |
 | How the times were made (clock fit, photodiode delay, raw values) | `data.clock_sync` |
 | How to check the photon times on a rig | *Checking photon times on a rig*, below |
+| How to check the movie frames on a rig | *Checking movie frames on a rig*, below |
 
 ### Examples
 
@@ -50,6 +54,10 @@ T.events.photon_ms(1) - S.photon_ms(1)               % target's light vs its sta
 interp1(d.time_ms, d.eyepos', T.events.photon_ms(1)) % eye position when the target appeared
 plot(T.frames.displayed_ms, T.frames.x_deg)          % where the target was shown, over time
 t.start_tick + 30 * T.events.photon_ms(1)            % the same moment as a Trellis tick
+
+M  = t.movies.intro;                                 % a movie declared as 'intro'
+k  = find(M.frames.displayed_ms <= 1500, 1, 'last'); % the last flip at or before 1500 ms
+M.frames.movie_frame(k)                              % the movie frame on screen at 1500 ms
 ```
 
 ## Field by field
@@ -121,6 +129,59 @@ Items drawn with `mh.Screen(..., 'Tag', name)`, for example
 name is made a valid MATLAB name). Only what is drawn on the display counts,
 not `'monitoronly'`. Same-named commands in one frame are one item.
 
+### `trial.movies.<name>`
+
+Movies drawn with `mh.Screen('DrawTexture', mh, mov, ...)`, where `mov` is
+`mh.getmovie(name)`. They are recognised automatically and named as declared
+in the parameter file (`mh.addmovie(name, file)`); a `'Tag'` on the draw names
+it instead. Settings, as the display's copy of the movie reported them when it
+was opened: `name`, `file`, `fps`, `frame_count`, `duration_s`, `width`,
+`height` (pixels).
+
+**`frames`**: one row per flip the movie was on screen, with a target's
+columns plus:
+
+| Column | What |
+|---|---|
+| `movie_time_s` | the shown frame's time within the movie, in seconds (its presentation time, as the decoder gave it) |
+| `movie_frame` | the shown frame's number, 1 = the first: `round(movie_time_s * fps) + 1` |
+| `new_frame` | true if this flip showed a different movie frame from the flip before |
+
+A movie frame stays on screen until the next flip, so the frame on screen at
+time *T* is the last row with `displayed_ms <= T` (example above). A 30 fps
+movie on a 60 Hz display shows each frame for two flips; `new_frame` marks
+the first. When decoding or drawing falls behind, `movie_frame` jumps by more
+than one between new frames: the frames in between were never shown.
+
+**`events`**: a target's columns plus `movie_time_s`, `movie_frame` (the frame
+shown at that event), `seek_to_s` and `rate`. Rows:
+
+| `event` | When | `displayed_ms` |
+|---|---|---|
+| `on`, `off` | the movie appears / disappears, as for a target | the flip that showed (removed) it; `off` gives the last frame shown |
+| `seek` | the task called `mh.Screen('SetMovieTimeIndex', mh, mov, secs)`; `seek_to_s` = `secs` | the first new movie frame after GraphicsHandler ran the seek. `movie_time_s` there is that frame: normally the first frame at or after `secs`, later if the display fell behind the movie. |
+| `play` | the task called `mh.Screen('PlayMovie', mh, mov, rate)`; `rate` = `rate` (1 if not given) | the first new movie frame after GraphicsHandler ran it |
+
+`requested_ms` is when the task made the call (for `on` / `off`, when the
+frame was published, as for targets). An event whose `displayed_ms` is NaN
+never reached the screen: for example a trial that ended before the first
+frame after a seek was decoded.
+
+Things to know when reading them:
+- **Movies play all the time.** GraphicsHandler starts each movie when it
+  opens it (looping, muted) and never pauses it; the task decides what is seen
+  by drawing it or not. So the frame a trial starts on is wherever the movie
+  happens to be. To start at a known frame, seek in the state before you draw
+  it, and read where it landed in the `seek` row.
+- **Until a movie's first frame is decoded, drawing it draws nothing.** Those
+  flips are not rows, and `on` is the first flip that really showed a frame.
+- **Variable frame rate.** `movie_frame` assumes a constant frame rate (`fps`
+  from the file). For a file with a variable frame rate (some phone and screen
+  recordings) it is approximate; `movie_time_s` is still exact. Re-encode such
+  files at a constant rate if frame numbers matter.
+- Only the display is recorded, not the experimenter's monitor (which decodes
+  its own copy).
+
 ### Eye, photodiode and cursors
 
 | Field | How |
@@ -141,8 +202,8 @@ this table.
 
 | Column | What |
 |---|---|
-| `tag`, `kind` | the item (`target`, `tag`, or `photodiode` for a state change) |
-| `event` | `on`, `off`, or `state` |
+| `tag`, `kind` | the item (`target`, `tag`, `movie`, or `photodiode` for a state change) |
+| `event` | `on`, `off`, `state`, or for movies `seek` and `play` |
 | `state` | the state it was asked for in (for state rows: the new state) |
 | `entry` | state rows: which entry into the state (row *k* of `trial.state.<name>`) |
 | `requested_ms` | items: when the first frame with the change was published. State rows: when `setstate` ran (the same value as in `trial.state`). |
@@ -152,6 +213,7 @@ this table.
 | `flip`, `frame_id` | the flip (count within the trial) and the frame it showed |
 | `x_deg`, `y_deg`, `rect_px` | where (see *Positions*) |
 | `missed` | Psychtoolbox reported that flip as late |
+| `movie_time_s`, `movie_frame`, `seek_to_s`, `rate` | movies only, as in `trial.movies` (NaN on other rows) |
 
 A change that never reached the screen (gone again before the next flip)
 keeps `displayed_ms` NaN. A change seen on screen with no request on record
@@ -164,7 +226,8 @@ One entry per item, with one row per flip it was on screen: `name`, `kind`,
 `displayed_tick`, `photon_tick`, `x_deg`, `y_deg`, `rect_px`, `missed`,
 `state`. Here `requested_ms` is always when that frame was published. The
 `photodiode` entry has one row per colour change (one per state change) and a
-`color` column.
+`color` column. Movie entries also have `movie_time_s`, `movie_frame` and
+`new_frame`.
 
 ### `data.clock_sync`
 
@@ -292,6 +355,32 @@ display pixels, covering every drawing command of the item in that frame. For
 `computed` they are the position `getpos` calculated, converted from the
 target's units (cartesian degrees as is; polar to cartesian; mm through
 pixels).
+
+A movie drawn without a destination rectangle is centred at its own size, as
+Psychtoolbox draws it, and `rect_px` says so.
+
+### Movie frames
+
+- **Settings.** When GraphicsHandler opens a movie (`Screen('OpenMovie')`) it
+  keeps the frame rate, frame count, duration and size Psychtoolbox reports.
+  They are saved with the flip log and become `trial.movies.<name>`'s
+  settings.
+- **Which frame each flip showed.** On every flip, for each movie it draws on
+  the display, GraphicsHandler asks the decoder for a new frame
+  (`Screen('GetMovieImage', window, movie, 0)`, which does not wait). If there
+  is one, Psychtoolbox also returns its presentation time, and that frame is
+  drawn; if not, the previous frame is drawn again. Either way the
+  presentation time of the frame drawn is logged with the flip (`logFlip`),
+  joined to the task's draw by the movie's id (the reference `getmovie`
+  returns). `movie_time_s` is that time, `movie_frame` comes from it and the
+  frame rate, and `new_frame` is true when it differs from the movie's
+  previous flip.
+- **Seek and PlayMovie.** MHost2 logs the task's call with its time and a
+  number (a token). GraphicsHandler runs each call once (`runOneShots`) and
+  logs its token with the next flip. `displayed` is the first flip from that
+  one on that showed a new frame of that movie.
+- **Photon** times are an item's (see *Photon*), from the middle of the
+  movie's box.
 
 ### Trellis markers
 
@@ -427,6 +516,81 @@ If it does not match, item photon times can be off by up to a frame. Some
 displays update in a different order, or light the whole panel at once (a
 strobed backlight). States are measured directly and are not affected.
 
+## Checking movie frames on a rig
+
+This checks `trial.movies.<name>.frames` against the screen itself: that the
+movie frame the data says each flip showed is the one the display showed.
+It needs a rig. In the VM, GraphicsHandler draws only a few frames per second
+while a movie plays (two CPUs, software graphics), so only the bookkeeping
+can be checked there.
+
+The test movie says which frame it is in three ways: a square in its top-left
+corner that is **white on odd frames and black on even ones** (frame 1 is
+white), the frame number in large digits, and the frame number as a row of 12
+bits along the bottom (white = 1). With the photodiode over the square, the
+trace steps every time the movie frame's number changes between odd and
+even.
+
+1. **Make the movie**, on any machine with MATLAB:
+
+   ```matlab
+   makeMovieTimingTest('movie_timing_test.avi', 'fps', 30, 'seconds', 20);   % 640 x 360, Motion JPEG
+   ```
+
+   Use the frame rate of the movies you will show (`'fps'`), and `'size'` to
+   match their size if you like.
+
+2. **Declare it** in a parameter file, and **draw it full screen** in a task,
+   so its square covers the display's top-left corner (0.3 of the display's
+   height on each side, 324 px on a 1080-pixel display), well away from the
+   state square at the bottom left:
+
+   ```matlab
+   mh.addmovie('timingtest', '/path/to/movie_timing_test.avi');           % parameter file
+   mh.Screen('DrawTexture', mh, mh.getmovie('timingtest'), [], [0 0 1920 1080]);   % task: the display's size
+   ```
+
+   Show it for a few seconds per trial; seeking to a different time in each
+   trial (`SetMovieTimeIndex`) also tests the `seek` rows.
+
+3. **Move the photodiode to the top-left corner**, over the movie's square,
+   and record 20 or more trials. (The states' photon times are NaN in this
+   session, since the sensor is not on their square.)
+
+4. **Check each trial:**
+
+   ```matlab
+   R = {};
+   for k = 1:numel(e.trial)
+       t = e.trial(k);
+       if isstruct(t.movies) && isfield(t.movies, 'timingtest')
+           R{end+1} = movieTimingCheck(t, 'timingtest');   % prints one line per trial
+       end
+   end
+   ```
+
+   For every flip that, according to the data, showed a new frame of the
+   other parity, `movieTimingCheck` looks for a step in the trace up to 80 ms
+   later. The movie's appearance and disappearance are left out: whether
+   those make a step depends on what is behind the square. Expect, in every
+   trial:
+   - `missing` 0: no new frame on record without a step on screen;
+   - `extra` 0: no step on screen without a new frame on record;
+   - `delay_ms` the same in every trial, with a spread well under 1 ms. It is
+     the display's delay at the sensor's height (see *3. The correction for an
+     item's height*);
+   - `parity_ok` 100 %: on every flip, the trace's level (light or dark)
+     matches whether the data says the frame shown was odd or even.
+
+   A missing or extra step, or a delay that varies, means the data names the
+   wrong flip for a frame. Parity below 100 % means `movie_frame` is off by
+   one or more (a variable-frame-rate file would do this; the test movie has
+   a constant rate).
+
+The digits and the bit row are for a camera: filming the display (a phone's
+slow-motion video is enough at 60 Hz) reads the frame number off the screen,
+as a check that does not depend on the photodiode at all.
+
 ## What is not on the timeline
 
 - `e.Date`, `trial.start_clock`, and the date/time folder and log names:
@@ -458,6 +622,9 @@ is empty or missing).
 `getsecs` (lower case) read the wall clock. It jumps when the system clock is
 corrected and restarts at midnight, which is why nothing uses it any more.
 
+Sessions recorded before movie timing was added have no `trial.movies`, and
+movies drawn in them are not in `stimulus_events` or `stimulus_frames`.
+
 ## Code
 
 Paths are under `Main code/`.
@@ -466,10 +633,12 @@ Paths are under `Main code/`.
 |---|---|
 | `background_functions/trialRecord.m` | the saved form of a trial: every time on the timeline (MHost2, at the end of each trial) |
 | `background_functions/buildStimulusTiming.m` | displayed and photon times from the renderer's flip log and the photodiode (GraphicsHandler, when it saves its flip log) |
-| `background_functions/objectTiming.m` | copies each item's and state's rows into `trial.targets`, `trial.tags`, `trial.state` |
+| `background_functions/objectTiming.m` | copies each item's and state's rows into `trial.targets`, `trial.tags`, `trial.movies`, `trial.state` |
 | `background_functions/nipClock.m` | `GetSecs` -> NIP tick, the fit |
 | `background_functions/nipTick.m` | the cached NIP clock and the read pairs |
 | `background_functions/frameItems.m` | the items each frame draws; what changed |
-| `classes/@internal/Screen.m` | publishes frames; the change log; `'Tag'` |
+| `classes/@internal/Screen.m` | publishes frames; the change log; `'Tag'`; names movie draws; logs seeks and `PlayMovie` |
 | `classes/@internal/setstate.m` | state times, the Trellis marker |
-| `background_functions/GraphicsHandler.m` | logs every flip (`logFlip`), saves it into the trial file (`dumpdata`) |
+| `background_functions/GraphicsHandler.m` | logs every flip (`logFlip`), with the movie frame each flip drew; saves it into the trial file (`dumpdata`) |
+| `Utilities/makeMovieTimingTest.m` | writes the test movie (*Checking movie frames on a rig*) |
+| `Utilities/movieTimingCheck.m` | compares a trial's movie frames with the photodiode trace |

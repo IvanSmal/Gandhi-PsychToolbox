@@ -218,8 +218,15 @@ end
 monTargetW = []; monTargetH = []; lastSnapT = 0;
 % Stimulus timing: every display flip of a trial is logged with the frame it
 % showed and the items that frame drew (see buildStimulusTiming, dumpdata).
-noTags = struct('tag', {}, 'kind', {}, 'rect', {});
+noTags = struct('tag', {}, 'kind', {}, 'rect', {}, 'res', {});
 gr.flipLog = emptyFlipLog();
+% Movie timing: each movie's settings from OpenMovie (by resource id), the
+% presentation time (s, the frame's time within the movie) of the frame last
+% taken for the display, the movie frames this flip draws, and the seeks /
+% PlayMovie run since the last logged flip. logFlip stores and clears them.
+mvInfo = {}; mvPts = [];
+mvDrawn = struct('id', {}, 'pts', {});
+mvOneShots = struct('token', {}, 'cmd', {}, 'id', {}, 'value', {});
 % Live target positions for TrellisScope: the last second of display flips,
 % published about every 100 ms (see targetFlipsPath, publishTargetFlips).
 tfMap = []; tfSession = GetSecs; tfCount = 0; tfLastPub = 0; tfLastTry = -inf;
@@ -322,6 +329,7 @@ while 1
         runOneShots(gr, frame);
 
         if gr.trialstarted
+            mvDrawn = mvDrawn([]);             % filled by resolveArgs as movies are drawn
             drawFrame(gr, frame);
             drawDisplayCursors(gr);   % over the targets, under the diode; trials only
             Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
@@ -335,8 +343,11 @@ while 1
             % the frame, the join key to its change log (buildStimulusTiming)
             % (frame.stateName, not nm: drawFrame, a nested function, reuses nm)
             if isfield(frame, 'tagNames') && ~isempty(frame.tagNames)
+                shownRes = zeros(1, numel(frame.tagNames));
+                if isfield(frame, 'tagRes'), shownRes = reshape(frame.tagRes, 1, []); end
                 shownTags = struct('tag', reshape(frame.tagNames, 1, []), ...
-                    'kind', reshape(frame.tagKinds, 1, []), 'rect', num2cell(frame.tagRects, 2)');
+                    'kind', reshape(frame.tagKinds, 1, []), 'rect', num2cell(frame.tagRects, 2)', ...
+                    'res', num2cell(shownRes));
             else
                 shownTags = noTags;
             end
@@ -518,7 +529,7 @@ end
         gr.state_history = gr.state_history(end);
         % screenparams []: pix2deg reads this rig's config, as for the eye
         geom = struct('width', gr.screenXpixels, 'height', gr.screenYpixels, ...
-            'diode_rect', gr.diode_pos, 'screenparams', []);
+            'diode_rect', gr.diode_pos, 'screenparams', [], 'movies', {mvInfo});
 
         for attempt = 1:3
             try
@@ -552,7 +563,8 @@ end
 %% stimulus timing: one entry per display flip (see buildStimulusTiming)
     function L = emptyFlipLog()
         L = struct('frame_id', [], 'generated', [], 'vbl', [], 'onset', [], 'missed', [], 'state', {{}}, ...
-            'diode', [], 'toggle', false(1,0), 'blank', false(1,0), 'tags', {{}});
+            'diode', [], 'toggle', false(1,0), 'blank', false(1,0), 'tags', {{}}, ...
+            'movies', {{}}, 'oneshots', {{}});
     end
     function logFlip(id, generated, vbl, onset, missed, state, diode, toggle, blank, tags)
         % generated: GetSecs MHost2 published the frame (NaN for the blank);
@@ -570,6 +582,9 @@ end
         gr.flipLog.toggle(n)   = toggle;
         gr.flipLog.blank(n)    = blank;
         gr.flipLog.tags{n}     = tags;
+        gr.flipLog.movies{n}   = mvDrawn;      % movie frames this flip drew (id, presentation time)
+        gr.flipLog.oneshots{n} = mvOneShots;   % seeks / PlayMovie run before this flip
+        mvDrawn = mvDrawn([]); mvOneShots = mvOneShots([]);
         publishTargetFlips(onset, tags, blank);
     end
     function publishTargetFlips(onset, tags, blank)
@@ -702,6 +717,10 @@ end
                 grlog('%s skipped: id=%d is not a loaded movie', char(nm), id);
                 continue
             end
+            % logged with the next flip, by token: the task logged when it asked
+            mvVal = NaN;
+            if numel(a) >= 4 && isnumeric(a{4}) && isscalar(a{4}), mvVal = double(a{4}); end
+            mvOneShots(end+1) = struct('token', s.token, 'cmd', char(string(nm)), 'id', id, 'value', mvVal); %#ok<AGROW>
             % Movies play CONTINUOUSLY (opened, looping and muted, in
             % ensureResources) and are never paused. Pausing then resuming is
             % where GStreamer stalls on this rig -- bare PlayMovie sometimes
@@ -791,8 +810,13 @@ end
                         % earlier check only saw that the call did not
                         % throw). So the monitor decodes its own copy. That
                         % costs 0.08 ms/frame against a 16.67 ms budget.
-                        [gr.resourceMap(d.id), durS] = Screen('OpenMovie', gr.window_main, d.path);
+                        [gr.resourceMap(d.id), durS, mvFps, mvW, mvH, mvCount] = Screen('OpenMovie', gr.window_main, d.path);
                         gr.resourceKind{d.id}   = 'movie';
+                        % for movie timing: which movie frame each flip shows
+                        mvName = ''; if isfield(d, 'name'), mvName = d.name; end
+                        mvInfo{d.id} = struct('name', mvName, 'file', d.path, 'fps', mvFps, ...
+                            'frame_count', mvCount, 'duration_s', durS, 'width', mvW, 'height', mvH);
+                        mvPts(d.id) = NaN;
                         grlog('opened movie id=%d: %s', d.id, d.path);
                         gr.movieLastTex(d.id)    = 0;
                         gr.movieLastTexMon(d.id) = 0;
@@ -928,6 +952,9 @@ end
                 if ~have
                     ok = false; return                  % nothing decoded yet
                 end
+                if ~wantMonitor                         % the display: log which movie frame
+                    mvDrawn(end+1) = struct('id', id, 'pts', mvPts(id)); %#ok<AGROW>
+                end
                 rest{j} = tex;
             elseif wantMonitor
                 rest{j} = gr.resourceMapMon(id);
@@ -951,7 +978,13 @@ end
         end
         if isnan(mov), return; end              % this window has no copy
         try
-            t = Screen('GetMovieImage', win, mov, 0);
+            if wantMonitor
+                t = Screen('GetMovieImage', win, mov, 0);
+            else
+                % the display's copy also gives the frame's presentation time
+                [t, mvT] = Screen('GetMovieImage', win, mov, 0);
+                if t > 0, mvPts(id) = mvT; end
+            end
         catch gmErr
             % A stale handle used to throw out of here and abort the whole
             % frame, so one bad movie blanked everything.

@@ -2,7 +2,8 @@
 
 Last updated: 2026-10-27: movie timing, which movie frame was on screen at
 every flip (§14), on branch `movie-timing` (cut from `main` after PR #49 merged
-`steady-targets`), pushed, no PR yet: it is to be checked on a rig first.
+`steady-targets`), pushed, no PR yet. Tested on rig2 the same day, and rig2
+was left on this branch at the user's request (§14).
 2026-10-23: exact repeats of failed trials with a per-task
 repeat count (§13), and before it the trial loop made faster (§12), on branch
 `steady-targets` (cut from `main` after PR #48 merged `ai-assisted-2`), merged.
@@ -653,7 +654,7 @@ calculated, and the rig procedure (*Checking movie frames on a rig*).
   / `play` rows (`stimReqToken`, `stimReqValue`).
 - `buildStimulusTiming` / `objectTiming`: `trial.movies.<name>` with the
   settings, `events` (on, off, seek, play) and `frames` (`movie_time_s`,
-  `movie_frame = round(pts*fps)+1`, `new_frame`); the flat tables get the same
+  `movie_frame = floor(pts*fps + 1e-4)+1`, `new_frame`); the flat tables get the same
   columns. A flip counts as showing the movie only if GraphicsHandler drew a
   frame of it (found in VM testing: before the first frame is decoded the draw
   draws nothing, and "on" came out 510 ms early).
@@ -662,7 +663,7 @@ calculated, and the rig procedure (*Checking movie frames on a rig*).
   movieTimingCheck.m` compares a trial's movie frames with the photodiode
   trace.
 
-Tested: `test_movieTiming.m` (session scratchpad), synthetic, 22/22, and
+Tested: `test_movieTiming.m` (session scratchpad), synthetic, 25/25, and
 `test_trialTiming.m` 50/50. In the VM, a MovieTiming task (VM-only files:
 `~/Documents/Experiment/Movies/movie_timing_test.avi`,
 `Parameters/MovieTimingParameters.m`, `Tasks/MovieTiming/`; point the ini's
@@ -681,3 +682,31 @@ Found, not fixed: a parameter file with no targets crashes `makeparams`
 (`fieldnames(mh.targets)` on `[]`), and cancelling the parameter-file chooser
 at startup crashes `startupFcn` (`copyfile` with the 0 that `uigetfile`
 returns).
+
+**On rig2 (2026-10-27).** The user sent Claude there for this test. Rig2's
+checkout was on `ai-assisted-2` plus two rig2-only commits (RewardHandler finds
+ScreenParams.ini on either rig; `.gitignore` covers RigConfig.ini); it is now on
+a local `movie-timing` = `8c681d6` + those two commits (not pushed), and stays
+there. Test files live outside the repo in `~/Documents/movie-timing-test`
+(movie, parameter file, task, data). For the test the ini pointed there,
+GraphicsHandler's state square was moved off the photodiode (top-right) and
+the movie drawn x3 so its corner square covered the sensor (bottom-left);
+all of that was put back afterwards.
+- 25 trials at 120 Hz on the real GPU: about 230 flips per 2 s of movie, each
+  movie frame on screen 3.8 flips (4 expected), frame numbers, order and rects
+  right. 226 of 5741 flips took over 12 ms (a refresh missed); not compared
+  with a run without a movie.
+- Seeks: GStreamer 1.20 reports the seek target itself as the first frame's
+  time (4.53 s, not the frame start 4.50 s). `round` then numbered that frame
+  one too high whenever the target was in the second half of a frame (14 of
+  1515 new frames repeated a number). Fixed with `floor` + tolerance; checked
+  by seeking the test movie with GStreamer on rig2 and reading the frame
+  number written in the picture: `floor` matched all 10 targets, `round` was
+  one high on 6.
+- Not done: the photodiode check. Trellis was connected, but the NIP's analog
+  inputs streamed only at 30 kS/s (1 kS/s off), so the eye and photodiode
+  traces MHost2 saves were empty. Also, demo mode does not work on rig2: the
+  gitignored compile output `Main code/RewardHandler/RewardHandler/
+  for_redistribution_files_only/xippmex` (a real xippmex, also on rig2's saved
+  MATLAB path) is re-added after `enableDemoXippmex` and shadows the mock, so
+  START crashes on `app.chidx`.

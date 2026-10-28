@@ -1972,6 +1972,11 @@ classdef MHost2_exported < matlab.apps.AppBase
 
         % Button pushed function: FinalizeButton
         function FinalizeButtonPushed(app, event)
+            % Never while trials run: it moves the trial files the run is writing.
+            if app.running
+                app.insToTxtbox('Finalize ignored: trials are running. Press STOP first.');
+                return
+            end
 
             app.insToTxtbox('combining data')
             pause(1)% let it display the thing
@@ -2036,15 +2041,26 @@ classdef MHost2_exported < matlab.apps.AppBase
 
         % Button pushed function: STARTButton
         function STARTButtonPushed(app, event)
-            if ~app.validateLoadedTasks
-                app.insToTxtbox('start cancelled by validation');
+            % Ignored while trials run. A click processed during a run (a double-click,
+            % or one queued before START was disabled) used to start a second run
+            % inside the first: it ended at once and set the buttons to "stopped"
+            % while the first kept running, so STOP was disabled and Finalize could
+            % move the trial files being written.
+            if app.running
+                app.insToTxtbox('START ignored: trials are already running');
                 return
             end
             app.running=1;
+            app.STARTButton.Enable='off';
+            if ~app.validateLoadedTasks
+                app.insToTxtbox('start cancelled by validation');
+                app.running=0;
+                app.STARTButton.Enable='on';
+                return
+            end
             pause(0.1)% pause to let mh to be assigned in
 
             app.insToTxtbox('Starting trials')
-            app.STARTButton.Enable='off';
             app.SubjectNameEditField.Editable = 'off';
 
             mh=app.mhpass;

@@ -39,7 +39,8 @@ function tr = buildStimulusTiming(flips, tr, geom)
 %     data.clock_sync  photodiode (the measured display delay), frame_ms.
 %     Movies (kind 'movie'): per flip also movie_time_s (the shown frame's
 %            presentation time within the movie), movie_frame (its number,
-%            1 = first; from fps) and new_frame (a different frame from the
+%            1 = first: the frame whose interval holds that time, from fps)
+%            and new_frame (a different frame from the
 %            flip before); events add seek and play rows (seek_to_s, rate),
 %            displayed when the first new frame after the renderer ran them
 %            reached the screen. A movie drawn without a destination rect is
@@ -400,8 +401,13 @@ ev = struct('tag', {c}, 'kind', {c}, 'event', {c}, 'state', {c}, 'entry', z, ...
 end
 
 function n = frameNo(pts, fps)
-% movie frame number, 1 = the first: presentation time x frame rate
-if isfinite(fps) && fps > 0, n = round(pts .* fps) + 1; else, n = nan(size(pts)); end
+% movie frame number, 1 = the first: the frame whose interval holds the
+% presentation time. Usually that time is the frame's start, (n-1)/fps; right
+% after a seek the decoder may report the seek target instead, somewhere inside
+% the frame (rig2: 2.45 s for frame 74, which starts at 2.433 s), so round()
+% would give the next frame. The tolerance (1e-4 of a frame) keeps a start
+% time that came out a few ns early from falling into the frame before.
+if isfinite(fps) && fps > 0, n = floor(pts .* fps + 1e-4) + 1; else, n = nan(size(pts)); end
 end
 
 function info = movieInfo(movies, id)

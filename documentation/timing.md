@@ -144,7 +144,7 @@ columns plus:
 | Column | What |
 |---|---|
 | `movie_time_s` | the shown frame's time within the movie, in seconds (its presentation time, as the decoder gave it) |
-| `movie_frame` | the shown frame's number, 1 = the first: `round(movie_time_s * fps) + 1` |
+| `movie_frame` | the shown frame's number, 1 = the first: the frame whose interval holds `movie_time_s`, `floor(movie_time_s * fps) + 1` |
 | `new_frame` | true if this flip showed a different movie frame from the flip before |
 
 A movie frame stays on screen until the next flip, so the frame on screen at
@@ -159,7 +159,7 @@ shown at that event), `seek_to_s` and `rate`. Rows:
 | `event` | When | `displayed_ms` |
 |---|---|---|
 | `on`, `off` | the movie appears / disappears, as for a target | the flip that showed (removed) it; `off` gives the last frame shown |
-| `seek` | the task called `mh.Screen('SetMovieTimeIndex', mh, mov, secs)`; `seek_to_s` = `secs` | the first new movie frame after GraphicsHandler ran the seek. `movie_time_s` there is that frame: normally the first frame at or after `secs`, later if the display fell behind the movie. |
+| `seek` | the task called `mh.Screen('SetMovieTimeIndex', mh, mov, secs)`; `seek_to_s` = `secs` | the first new movie frame after GraphicsHandler ran the seek. `movie_time_s` there is that frame's time: normally the frame that holds `secs` (GStreamer may report `secs` itself as its time), later if the display fell behind the movie. |
 | `play` | the task called `mh.Screen('PlayMovie', mh, mov, rate)`; `rate` = `rate` (1 if not given) | the first new movie frame after GraphicsHandler ran it |
 
 `requested_ms` is when the task made the call (for `on` / `off`, when the

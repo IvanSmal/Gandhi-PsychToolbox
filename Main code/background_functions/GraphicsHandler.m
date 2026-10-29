@@ -194,6 +194,7 @@ if ~(dispHz > 0), dispHz = 1 / Screen('GetFlipInterval', gr.window_main); end
 monN = max(1, floor(dispHz / 30));
 gridTex = 0; gridKey = {};              % the grid, drawn once into a texture (drawGrid)
 guiLastT = 0;                           % Graphics Info refresh, about 4 times a second
+lastTrialEnd = GetSecs;                 % idle since: xippmex refresh while idle (xippmexRefresh)
 % Profiling, while the file /dev/shm/gandhi_gh_profile exists: per trial flip,
 % when each part of the loop finished (GetSecs), written to
 % ~/.cache/gh-profile/ at the end of each trial (see writeProfile).
@@ -212,6 +213,11 @@ statsMap   = sceneOpen(true, renderStatsPath());
 statsSeq   = 0;
 statsLastT = 0;
 vblRing    = nan(1,120);            % last ~2 s of display flips at 60 Hz
+% Ready for the next trial (graphicsReady): rewritten on every loop out of a
+% trial, and marked busy while xippmex reconnects. The state machine waits on
+% it after each ITI, so a trial never starts while this loop cannot draw it.
+readyMap = sceneOpen(true, graphicsReadyPath());
+readySeq = 0;
 % Mouse mode: publish the cursor (in the monitor window) as a simulated eye
 % position. The slot is created lazily on first use, so normal sessions never
 % touch it. heldX/heldY latch the last position so the eye only moves while the
@@ -310,6 +316,12 @@ while 1
                 logFlip(frame.seq, NaN, vblB, onsetB, missedB, frame.stateName, NaN, false, true, noTags);
             catch
             end
+            % The eye reads' xippmex connection: reopened here, at the start of
+            % the ITI, once it is 30 min old (~0.1 s; see xippmexRefresh).
+            lastTrialEnd = GetSecs;
+            if xippmexRefresh('due'), publishReady(true); end   % MHost2 holds the next trial
+            xippmexRefresh([], 0);
+            publishReady(false);
         end
 
         % state name travels with the frame; diode flips on transition
@@ -452,6 +464,13 @@ while 1
             if ~isempty(gr.flipLog.blank) && ~gr.flipLog.blank(end)
                 logFlip(frame.seq, NaN, vblIdle, onsetIdle, 0, frame.stateName, NaN, false, true, noTags);
             end
+            % idle for a while (not a short ITI, where a trial may start at any
+            % moment): keep the 30-minute xippmex refresh going there too
+            if GetSecs - lastTrialEnd > 5
+                if xippmexRefresh('due'), publishReady(true); end
+                xippmexRefresh([], 0);
+            end
+            publishReady(false);            % alive and out of the trial: ready
             updategui(gr);
             drawnow limitrate;   % out of trial: keep the info window painted & interactive (timing not critical here)
         end
@@ -731,6 +750,16 @@ end
                 't',            vbl));
         catch stErr
             grlogThrottled('flip-rate publish failed: %s', stErr.message);
+        end
+    end
+
+%% tell the state machine whether this loop can take the next trial
+    function publishReady(busy)
+        readySeq = readySeq + 1;
+        try
+            sceneWrite(readyMap, readySeq, struct('busy', logical(busy), 't', GetSecs));
+        catch rdErr
+            grlogThrottled('ready publish failed: %s', rdErr.message);
         end
     end
 

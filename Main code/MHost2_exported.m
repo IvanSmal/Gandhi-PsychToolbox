@@ -559,6 +559,29 @@ classdef MHost2_exported < matlab.apps.AppBase
                         fprintf('(477) ran start trial procedure and paused for ITI at %f \n' , toc(app.post_trial_timer))
                     end                    
                     
+                    % GraphicsHandler must be able to draw the trial before it starts: it may still be
+                    % reconnecting xippmex (xippmexRefresh, at the start of the ITI) or not have left the
+                    % last trial. Nearly always it is ready long before the ITI ends and this costs one
+                    % shared-memory read; otherwise the trial starts within ~1 ms of it being ready, so
+                    % the first frame (and the photodiode) are not late. Not ready 2 s after the ITI:
+                    % stop the trials, as the STOP button does.
+                    ghWait = tic;
+                    [ghOk, ghWhy] = graphicsReady();
+                    while ~ghOk && ~app.STOPButton.Value
+                        if toc(ghWait) > 2
+                            app.insToTxtbox(['GraphicsHandler not ready for 2 s (' ghWhy '): stopping trials'])
+                            app.STOPButton.Value = 1;
+                            break
+                        end
+                        pause(0.001)
+                        mh.rewcheck(app);
+                        app.drainRewardPort;
+                        [ghOk, ghWhy] = graphicsReady();
+                    end
+                    if ghOk && toc(ghWait) > 0.005
+                        app.insToTxtbox(sprintf('waited %.0f ms for GraphicsHandler', 1000*toc(ghWait)))
+                    end
+
                     lastRewardCheck = -inf;   % the reward checks in the loop run every 5 ms
                     while mh.runtrial==1 %&& ~app.STOPButton.Value
                         tic
@@ -819,10 +842,16 @@ classdef MHost2_exported < matlab.apps.AppBase
 
                     flush(mh.graphicsport);% flush the graphics
 
-                    % Keep xippmex connected across trials (no close here): each close tore down
-                    % xippmex's data cache and each reopen re-requested the NIP's full config,
-                    % the pattern behind most xippmex crashes in the 2024-26 crash dumps.
-                    % setupDAQ at trial start reconnects only if the link actually dropped.
+                    % Keep xippmex connected across trials, but not for the whole session: a
+                    % session-long connection crashed MHost2 2 h 39 m after start (2026-10-26..28),
+                    % and closing after every trial had crashes of its own on reopen. So reconnect
+                    % here, between trials, once the connection is 30 min old (~0.1 s, inside the
+                    % ITI). setupDAQ at trial start still reconnects if the link dropped.
+                    [xRefreshed, xOk] = xippmexRefresh();
+                    if xRefreshed
+                        if xOk, app.insToTxtbox('xippmex reconnected (30-minute refresh)');
+                        else,   app.insToTxtbox('xippmex refresh failed to reconnect; setupDAQ retries at the next trial'); end
+                    end
                     
                     app.last_trial_ITI=mh.intervals.iti.duration;
                     app.last_trial_timestamp=trialStopSecs;
@@ -1512,6 +1541,7 @@ classdef MHost2_exported < matlab.apps.AppBase
                             setupDAQ(app);      % reconnect (with its retry/dialog) only when actually lost
                         end
                         app.CheckGraphics(10);
+                        xippmexRefresh();   % the 30-minute reconnect, also while idle (see the trial loop)
                         onceinawhile=0;
                     end
                     app.mhpass=mh;

@@ -1,13 +1,17 @@
-function [a, b, c, d] = frameItems(op, x, y)
+function [a, b, c, d, e] = frameItems(op, x, y, z, w)
 %FRAMEITEMS The items the frame being built draws on the display (stimulus timing).
 %   frameItems('target', name, rect)  getpos returned RECT for target NAME; a
 %                                     drawing command at that rectangle shows it
-%   frameItems('draw', args, tag)     a display drawing command (mh.Screen
+%   frameItems('draw', args, tag, kind, res)
+%                                     a display drawing command (mh.Screen
 %                                     arguments, window already resolved). TAG
-%                                     from its 'Tag' pair; '' to match a target
-%   [names, kinds, rects, changes] = frameItems('take', state)
+%                                     from its 'Tag' pair; '' to match a target.
+%                                     KIND 'movie' and RES (its resource id) for
+%                                     a movie; omitted: 'tag', 0
+%   [names, kinds, rects, changes, res] = frameItems('take', state)
 %                                     this frame's items (rects: bounding box
-%                                     per item, display pixels, NaN if unknown)
+%                                     per item, display pixels, NaN if unknown;
+%                                     res: resource id, 0 = none)
 %                                     and what changed since the last frame:
 %                                     n x 3 {tag, kind, event}, event 'on',
 %                                     'off' or 'state' (photodiode). Clears the
@@ -23,7 +27,7 @@ persistent F T P
 % F: this frame's items   T: getpos rectangles since the last frame
 % P: previous frame's item names, kinds and state
 if isempty(F)
-    F = struct('n', 0, 'names', {cell(1, 16)}, 'kinds', {cell(1, 16)}, 'rects', zeros(16, 4));
+    F = struct('n', 0, 'names', {cell(1, 16)}, 'kinds', {cell(1, 16)}, 'rects', zeros(16, 4), 'res', zeros(1, 16));
     T = struct('n', 0, 'names', {cell(1, 16)}, 'rects', zeros(16, 4));
     P = {{}, {}, ''};
 end
@@ -33,7 +37,9 @@ switch op
         if n > 16, return, end                          % more than 16 per frame: ignore the rest
         T.names{n} = x; T.rects(n, :) = y; T.n = n;
     case 'draw'
-        kind = 'tag';
+        kind = 'tag'; res = 0;
+        if nargin >= 4 && ~isempty(z), kind = z; end
+        if nargin >= 5 && ~isempty(w), res = w; end
         if isempty(y)
             if T.n == 0, return, end                    % no target positions to match
             [p, rect] = drawnAt(x);
@@ -54,13 +60,13 @@ switch op
         if isempty(j)
             n = F.n + 1;
             if n > 16, return, end
-            F.names{n} = y; F.kinds{n} = kind; F.rects(n, :) = rect; F.n = n;
+            F.names{n} = y; F.kinds{n} = kind; F.rects(n, :) = rect; F.res(n) = res; F.n = n;
         else                                            % min/max skip NaN (an unknown box)
             F.rects(j, :) = [min(F.rects(j, 1:2), rect(1:2)), max(F.rects(j, 3:4), rect(3:4))];
         end
     case 'take'
         n = F.n;
-        a = F.names(1:n); b = F.kinds(1:n); c = F.rects(1:n, :);
+        a = F.names(1:n); b = F.kinds(1:n); c = F.rects(1:n, :); e = F.res(1:n);
         d = cell(0, 3);
         if ~(isequal(a, P{1}) && strcmp(x, P{3}))      % usually nothing changed
             if ~strcmp(x, P{3}), d(end+1, :) = {'photodiode', 'photodiode', 'state'}; end

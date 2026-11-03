@@ -14,6 +14,7 @@ classdef trial < handle
         data
         targets           % per target: its settings, events, frames (what was shown) and computed (getpos)
         tags              % per mh.Screen 'Tag' name: events and frames
+        movies            % per movie drawn: file, fps, ...; events (on/off, seek, play) and frames (which movie frame each flip showed)
         success
         intervals
 

@@ -26,8 +26,10 @@ function varargout = Screen(mh, varargin)
 %   data.stimulus_frames (see buildStimulusTiming):
 %       mh.Screen('FillRect', 'windowPtr', [1 1 1], cueRect, 'Tag', 'cue')
 %   The pair is removed before drawing. Targets drawn at the rectangle getpos
-%   returned are tagged with their own name automatically. Only what is drawn
-%   on the display counts, not 'monitoronly'.
+%   returned are tagged with their own name automatically, and so are movies
+%   (a DrawTexture of mh.getmovie(name)), which also record which movie frame
+%   each flip showed; seeks and PlayMovie are logged as movie events. Only
+%   what is drawn on the display counts, not 'monitoronly'.
 
 if isempty(mh.sceneMap)
     mh.sceneMap = sceneOpen(true);
@@ -73,6 +75,26 @@ if numel(args) >= 4 && (ischar(args{end-1}) || isstring(args{end-1})) && strcmpi
 end
 if any(strcmpi(string(cmd), ["PlayMovie","CloseMovie","SetMovieTimeIndex"]))
     mh.oneShotSeq = mh.oneShotSeq + 1;
+    % A seek or PlayMovie is a movie event: logged with when the task asked
+    % and its token; the renderer logs the flip it ran before, by token, and
+    % buildStimulusTiming finds the first flip that showed its effect.
+    ev = '';
+    if strcmpi(string(cmd), "SetMovieTimeIndex"), ev = 'seek'; elseif strcmpi(string(cmd), "PlayMovie"), ev = 'play'; end
+    if ~isempty(ev) && numel(args) >= 3 && isstruct(args{3}) && isfield(args{3}, 'name')
+        v = NaN;
+        if numel(args) >= 4 && isnumeric(args{4}) && isscalar(args{4}), v = double(args{4}); end
+        if strcmp(ev, 'play') && isnan(v), v = 1; end       % the renderer's default rate
+        n = mh.stimReqN + 1;
+        mh.stimReqTag{n}   = args{3}.name;
+        mh.stimReqKind{n}  = 'movie';
+        mh.stimReqEvent{n} = ev;
+        mh.stimReqState{n} = char(mh.activestatename);
+        mh.stimReqSeq(n)   = mh.sceneSeq + 1;            % the next frame carries it
+        mh.stimReqTime(n)  = GetSecs;
+        mh.stimReqToken(n) = mh.oneShotSeq;
+        mh.stimReqValue(n) = v;
+        mh.stimReqN        = n;
+    end
     s = struct('token', mh.oneShotSeq);
     s.cmd = args;
     mh.oneShots{end+1} = s;
@@ -85,7 +107,14 @@ if any(strcmpi(string(cmd), ["PlayMovie","CloseMovie","SetMovieTimeIndex"]))
     return
 end
 if ischar(args{min(2, end)}) && any(strcmp(args{min(2, end)}, {'both', 'display'}))
-    frameItems('draw', args, tag);  % what the animal sees, for stimulus timing
+    % what the animal sees, for stimulus timing; a movie is an item of its own
+    % kind, named after the movie unless tagged
+    kind = ''; res = 0;
+    if numel(args) >= 3 && isstruct(args{3}) && isfield(args{3}, 'kind') && strcmp(args{3}.kind, 'movie')
+        kind = 'movie'; res = args{3}.resref;
+        if isempty(tag), tag = args{3}.name; end
+    end
+    frameItems('draw', args, tag, kind, res);
 end
 mh.cmdList{end+1} = args;
 end
@@ -104,7 +133,7 @@ tGen = GetSecs;
 mh.sceneSeq = mh.sceneSeq + 1;
 seq = mh.sceneSeq;
 state = char(mh.activestatename);
-[tagNames, tagKinds, tagRects, changes] = frameItems('take', state);
+[tagNames, tagKinds, tagRects, changes, tagRes] = frameItems('take', state);
 
 frame = struct( ...
     'seq',          seq, ...
@@ -119,6 +148,7 @@ if ~isempty(tagNames)                   % items drawn on the display (none: fiel
     frame.tagNames = tagNames;
     frame.tagKinds = tagKinds;
     frame.tagRects = tagRects;
+    frame.tagRes   = tagRes;            % movie items: the movie's resource id (0 = none)
 end
 
 sceneWrite(mh.sceneMap, seq, frame);
@@ -134,6 +164,8 @@ for j = 1:size(changes, 1)
     mh.stimReqState{n} = state;
     mh.stimReqSeq(n)   = seq;
     mh.stimReqTime(n)  = tGen;
+    mh.stimReqToken(n) = NaN;
+    mh.stimReqValue(n) = NaN;
     mh.stimReqN        = n;
 end
 

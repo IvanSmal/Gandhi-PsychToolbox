@@ -3,10 +3,12 @@
 # Every rig has its own geometry, calibration and paths. These files must
 # NEVER be committed: a rig checking out another rig's values would get a
 # silently wrong degree-to-pixel mapping, not a crash.
-# See ScreenParams.example.ini / FilePaths.example.ini for the documented keys.
+# See ScreenParams.example.ini / FilePaths.example.ini / RigConfig.example.ini
+# for the documented keys.
 # ---------------------------------------------------------------------------
 Main code/inis/ScreenParams.ini
 Main code/inis/FilePaths.ini
+Main code/inis/RigConfig.ini
 *.bak_*
 
 # ---------------------------------------------------------------------------

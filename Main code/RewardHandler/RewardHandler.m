@@ -29,13 +29,19 @@ function RewardHandler
     warning('off')
     rewardcount = 0;
     disp('-----Reward Handler-----');
+    iniPath = screenParamsPath();
+    if isempty(iniPath)
+        disp('ScreenParams.ini not found: the reward button will give no reward');
+    else
+        disp(['reward duration from ' iniPath]);
+    end
     
     % Add cleanup handler for proper resource management
     cleanupObj = onCleanup(@() cleanupAndExit(rewardport, stopport));
     
     while 1 % keep it alive
         try % error catcher
-            ini.ReadFile('/home/gandhi/Documents/MATLAB/Gandhi-PsychToolboxMERGER/Gandhi-PsychToolbox/Main code/inis/ScreenParams.ini');
+            ini.ReadFile(iniPath);
             manreward = ini.GetValues('reward', 'reward');
             [~, ~, events] = xippmex('digin');
             if ~isempty(events) && any([events.reason] == 16) && any([events.sma4] > 0)
@@ -225,4 +231,23 @@ function RewardHandler
             % Ignore errors during cleanup
         end
     end
+end
+
+function p = screenParamsPath()
+% ScreenParams.ini holds [reward]. MHost2 starts this from "Main code", so
+% look there first, then at each rig's checkout. The checkout path differs
+% per rig, and a single hard-coded one left the other rig's reward button
+% reading an empty duration.
+candidates = {
+    fullfile(pwd, 'inis', 'ScreenParams.ini')
+    '/home/gandhilab/Documents/MATLAB/GandhiToolboxMERGER/Gandhi-PsychToolbox/Main code/inis/ScreenParams.ini' % rig2
+    '/home/gandhi/Documents/MATLAB/Gandhi-PsychToolboxMERGER/Gandhi-PsychToolbox/Main code/inis/ScreenParams.ini' % rig1
+    };
+p = '';
+for i = 1:numel(candidates)
+    if isfile(candidates{i})
+        p = candidates{i};
+        return
+    end
+end
 end

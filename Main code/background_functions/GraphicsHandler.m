@@ -181,7 +181,24 @@ seteye
 % were never displayable, so skipping them is correct and nothing backs up.
 sceneMap = sceneOpen(false);
 L        = sceneLayout();
+% The monitor window (the experimenter's copy of the scene, with the grid, the
+% eye and the photodiode square) is updated every monN-th display flip: as
+% often as the display allows while staying at 30 updates/s or more (120 Hz:
+% every 4th flip, 60 Hz: every 2nd); slower looks jerky. The scene is drawn
+% into it only on those flips. Drawing it on every flip and showing a third of
+% them, plus redrawing the grid's labels, made the display miss refreshes at
+% 120 Hz.
 flipcount = 0;
+dispHz = Screen('NominalFrameRate', gr.window_main);
+if ~(dispHz > 0), dispHz = 1 / Screen('GetFlipInterval', gr.window_main); end
+monN = max(1, floor(dispHz / 30));
+gridTex = 0; gridKey = {};              % the grid, drawn once into a texture (drawGrid)
+guiLastT = 0;                           % Graphics Info refresh, about 4 times a second
+lastTrialEnd = GetSecs;                 % idle since: xippmex refresh while idle (xippmexRefresh)
+% Profiling, while the file /dev/shm/gandhi_gh_profile exists: per trial flip,
+% when each part of the loop finished (GetSecs), written to
+% ~/.cache/gh-profile/ at the end of each trial (see writeProfile).
+profOn = false; prof = zeros(0, 8); profN = 0; mvNewCount = 0;
 % Whatever the slot holds now predates this renderer. Take its state as the
 % baseline rather than recording it as the first trial's first transition.
 [frame0, ok0] = sceneRead(sceneMap);
@@ -196,6 +213,11 @@ statsMap   = sceneOpen(true, renderStatsPath());
 statsSeq   = 0;
 statsLastT = 0;
 vblRing    = nan(1,120);            % last ~2 s of display flips at 60 Hz
+% Ready for the next trial (graphicsReady): rewritten on every loop out of a
+% trial, and marked busy while xippmex reconnects. The state machine waits on
+% it after each ITI, so a trial never starts while this loop cannot draw it.
+readyMap = sceneOpen(true, graphicsReadyPath());
+readySeq = 0;
 % Mouse mode: publish the cursor (in the monitor window) as a simulated eye
 % position. The slot is created lazily on first use, so normal sessions never
 % touch it. heldX/heldY latch the last position so the eye only moves while the
@@ -218,8 +240,15 @@ end
 monTargetW = []; monTargetH = []; lastSnapT = 0;
 % Stimulus timing: every display flip of a trial is logged with the frame it
 % showed and the items that frame drew (see buildStimulusTiming, dumpdata).
-noTags = struct('tag', {}, 'kind', {}, 'rect', {});
+noTags = struct('tag', {}, 'kind', {}, 'rect', {}, 'res', {});
 gr.flipLog = emptyFlipLog();
+% Movie timing: each movie's settings from OpenMovie (by resource id), the
+% presentation time (s, the frame's time within the movie) of the frame last
+% taken for the display, the movie frames this flip draws, and the seeks /
+% PlayMovie run since the last logged flip. logFlip stores and clears them.
+mvInfo = {}; mvPts = [];
+mvDrawn = struct('id', {}, 'pts', {});
+mvOneShots = struct('token', {}, 'cmd', {}, 'id', {}, 'value', {});
 % Live target positions for TrellisScope: the last second of display flips,
 % published about every 100 ms (see targetFlipsPath, publishTargetFlips).
 tfMap = []; tfSession = GetSecs; tfCount = 0; tfLastPub = 0; tfLastTry = -inf;
@@ -228,6 +257,7 @@ tfItemCnt = zeros(0, 1); tfItemXY = zeros(0, 2); tfItemName = {};
 grLastGood = [];                        % the last frame read whole from the scene slot
 while 1
     try %error handler
+        tLoop = GetSecs; mvNewCount = 0;
         getCommands(graphicsport)          % low-rate control only (dumpdata, exit, seteye)
 
         % Mouse mode (toggled via evalgraphics gr.mousemode): map the cursor in
@@ -271,6 +301,11 @@ while 1
         wasInTrial = gr.trialstarted;
         stale = isfield(frame,'tGenerated') && frame.tGenerated > 0 && (GetSecs - frame.tGenerated) > 1.0;
         gr.trialstarted = logical(frame.trialStarted) && ~stale;
+        if ~wasInTrial && gr.trialstarted
+            profOn = isfile('/dev/shm/gandhi_gh_profile'); profN = 0;
+        elseif wasInTrial && ~gr.trialstarted && profOn
+            writeProfile();
+        end
         if wasInTrial && ~gr.trialstarted
             % Leaving the trial: blank the stimulus window once, so the last
             % task frame never lingers into the idle state.
@@ -281,6 +316,12 @@ while 1
                 logFlip(frame.seq, NaN, vblB, onsetB, missedB, frame.stateName, NaN, false, true, noTags);
             catch
             end
+            % The eye reads' xippmex connection: reopened here, at the start of
+            % the ITI, once it is 30 min old (~0.1 s; see xippmexRefresh).
+            lastTrialEnd = GetSecs;
+            if xippmexRefresh('due'), publishReady(true); end   % MHost2 holds the next trial
+            xippmexRefresh([], 0);
+            publishReady(false);
         end
 
         % state name travels with the frame; diode flips on transition
@@ -322,44 +363,62 @@ while 1
         runOneShots(gr, frame);
 
         if gr.trialstarted
-            drawFrame(gr, frame);
+            doMonitor = flipcount + 1 >= monN; % this flip also updates the monitor window
+            mvDrawn = mvDrawn([]);             % filled by resolveArgs as movies are drawn
+            drawFrame(gr, frame, doMonitor);
             drawDisplayCursors(gr);   % over the targets, under the diode; trials only
             Screen('FillRect', gr.window_main, gr.diode_color, gr.diode_pos);
             Screen('DrawingFinished', gr.window_main);
             % Take the timestamps Psychtoolbox actually reports rather than
             % calling a clock afterwards: vbl/onset are when photons appeared,
             % and missed>0 means this flip overran its deadline.
+            tDrawn = GetSecs;
             [vbl, onset, ~, missed] = Screen('Flip', gr.window_main);
+            tFlip = GetSecs;
             noteDisplayFlip(vbl);
             % what this flip showed: frame.seq is the ID the state machine gave
             % the frame, the join key to its change log (buildStimulusTiming)
             % (frame.stateName, not nm: drawFrame, a nested function, reuses nm)
             if isfield(frame, 'tagNames') && ~isempty(frame.tagNames)
+                shownRes = zeros(1, numel(frame.tagNames));
+                if isfield(frame, 'tagRes'), shownRes = reshape(frame.tagRes, 1, []); end
                 shownTags = struct('tag', reshape(frame.tagNames, 1, []), ...
-                    'kind', reshape(frame.tagKinds, 1, []), 'rect', num2cell(frame.tagRects, 2)');
+                    'kind', reshape(frame.tagKinds, 1, []), 'rect', num2cell(frame.tagRects, 2)', ...
+                    'res', num2cell(shownRes));
             else
                 shownTags = noTags;
             end
             flipGen = NaN; if isfield(frame, 'tGenerated'), flipGen = frame.tGenerated; end   % when MHost2 published it
             logFlip(frame.seq, flipGen, vbl, onset, missed, frame.stateName, mean(gr.diode_color(:)), toggled, false, shownTags);
+            tLogged = GetSecs;
 
             flipcount = flipcount + 1;
-            if flipcount >= 3
+            if doMonitor
                 drawMonitorExtras(gr);
                 Screen('Flip', gr.window_monitor, [], [], 1);   % dontsync: never block the display flip
-                updategui(gr);
-                % Service the Graphics Info uifigure's event queue so it renders
-                % and stays interactive; throttled, and only when the info window
-                % is enabled, so it never disturbs display-flip timing otherwise.
-                if strcmp(gr.TurnthisoffifthiswindowslowsdowngraphicsSwitch.Value,'On'), drawnow limitrate; end
                 flipcount = 0;
+            end
+            tMonitor = GetSecs;
+            % Graphics Info: about 4 times a second, never on a monitor flip.
+            % drawnow services its uifigure's event queue so it renders and stays
+            % interactive; only when the info window is enabled.
+            if ~doMonitor && tMonitor - guiLastT > 0.25
+                guiLastT = tMonitor;
+                updategui(gr);
+                if strcmp(gr.TurnthisoffifthiswindowslowsdowngraphicsSwitch.Value,'On'), drawnow limitrate; end
+            end
+            if profOn
+                profN = profN + 1;
+                if profN > size(prof, 1), prof(end + 2000, 8) = 0; end   %#ok<AGROW> grows in chunks
+                prof(profN, :) = [tLoop, tDrawn, tFlip, vbl, tLogged, tMonitor, GetSecs, doMonitor + 2 * mvNewCount];
             end
         else
             % out of trial: show the eye and the grid on the monitor window
             writeline(graphicsport,'isGraphicsReady=1;','0.0.0.0',2020);
             gr = makegridlines(gr);
             try, seteye; catch, end
-            setgrid(gr);
+            setgrid(gr, gr.window_monitor);
+            drawEyeText(gr);
             try, Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]); catch, end
             drawcursors(gr);
 
@@ -405,6 +464,13 @@ while 1
             if ~isempty(gr.flipLog.blank) && ~gr.flipLog.blank(end)
                 logFlip(frame.seq, NaN, vblIdle, onsetIdle, 0, frame.stateName, NaN, false, true, noTags);
             end
+            % idle for a while (not a short ITI, where a trial may start at any
+            % moment): keep the 30-minute xippmex refresh going there too
+            if GetSecs - lastTrialEnd > 5
+                if xippmexRefresh('due'), publishReady(true); end
+                xippmexRefresh([], 0);
+            end
+            publishReady(false);            % alive and out of the trial: ready
             updategui(gr);
             drawnow limitrate;   % out of trial: keep the info window painted & interactive (timing not critical here)
         end
@@ -518,7 +584,7 @@ end
         gr.state_history = gr.state_history(end);
         % screenparams []: pix2deg reads this rig's config, as for the eye
         geom = struct('width', gr.screenXpixels, 'height', gr.screenYpixels, ...
-            'diode_rect', gr.diode_pos, 'screenparams', []);
+            'diode_rect', gr.diode_pos, 'screenparams', [], 'movies', {mvInfo});
 
         for attempt = 1:3
             try
@@ -552,7 +618,8 @@ end
 %% stimulus timing: one entry per display flip (see buildStimulusTiming)
     function L = emptyFlipLog()
         L = struct('frame_id', [], 'generated', [], 'vbl', [], 'onset', [], 'missed', [], 'state', {{}}, ...
-            'diode', [], 'toggle', false(1,0), 'blank', false(1,0), 'tags', {{}});
+            'diode', [], 'toggle', false(1,0), 'blank', false(1,0), 'tags', {{}}, ...
+            'movies', {{}}, 'oneshots', {{}});
     end
     function logFlip(id, generated, vbl, onset, missed, state, diode, toggle, blank, tags)
         % generated: GetSecs MHost2 published the frame (NaN for the blank);
@@ -570,6 +637,9 @@ end
         gr.flipLog.toggle(n)   = toggle;
         gr.flipLog.blank(n)    = blank;
         gr.flipLog.tags{n}     = tags;
+        gr.flipLog.movies{n}   = mvDrawn;      % movie frames this flip drew (id, presentation time)
+        gr.flipLog.oneshots{n} = mvOneShots;   % seeks / PlayMovie run before this flip
+        mvDrawn = mvDrawn([]); mvOneShots = mvOneShots([]);
         publishTargetFlips(onset, tags, blank);
     end
     function publishTargetFlips(onset, tags, blank)
@@ -611,7 +681,10 @@ end
 %%parse the commands without drawing'
 %% draw the scene onto both windows
 %% dispatch one frame's Screen calls onto the real windows
-    function drawFrame(gr, frame)
+    function drawFrame(gr, frame, doMonitor)
+        % doMonitor: also draw into the monitor window (only on the flips that
+        % show it)
+        if nargin < 3, doMonitor = true; end
         for i = 1:numel(frame.cmds)
             a = frame.cmds{i};
             if numel(a) < 2, continue; end
@@ -644,7 +717,7 @@ end
                     try, Screen(nm, gr.window_main, rest{:}); catch e1, grlogThrottled('display %s failed: %s', char(string(nm)), e1.message); end
                 end
             end
-            if wantMonitor
+            if wantMonitor && doMonitor
                 [restM, okM] = resolveArgs(gr, a(3:end), true);
                 if okM
                     try, Screen(nm, gr.window_monitor, restM{:}); catch e2, grlogThrottled('monitor %s failed: %s', char(string(nm)), e2.message); end
@@ -680,6 +753,16 @@ end
         end
     end
 
+%% tell the state machine whether this loop can take the next trial
+    function publishReady(busy)
+        readySeq = readySeq + 1;
+        try
+            sceneWrite(readyMap, readySeq, struct('busy', logical(busy), 't', GetSecs));
+        catch rdErr
+            grlogThrottled('ready publish failed: %s', rdErr.message);
+        end
+    end
+
 %% run each one-shot exactly once, no matter how many frames carried it
     function runOneShots(gr, frame)
         % Playback control changes renderer state rather than describing the
@@ -702,6 +785,10 @@ end
                 grlog('%s skipped: id=%d is not a loaded movie', char(nm), id);
                 continue
             end
+            % logged with the next flip, by token: the task logged when it asked
+            mvVal = NaN;
+            if numel(a) >= 4 && isnumeric(a{4}) && isscalar(a{4}), mvVal = double(a{4}); end
+            mvOneShots(end+1) = struct('token', s.token, 'cmd', char(string(nm)), 'id', id, 'value', mvVal); %#ok<AGROW>
             % Movies play CONTINUOUSLY (opened, looping and muted, in
             % ensureResources) and are never paused. Pausing then resuming is
             % where GStreamer stalls on this rig -- bare PlayMovie sometimes
@@ -791,8 +878,13 @@ end
                         % earlier check only saw that the call did not
                         % throw). So the monitor decodes its own copy. That
                         % costs 0.08 ms/frame against a 16.67 ms budget.
-                        [gr.resourceMap(d.id), durS] = Screen('OpenMovie', gr.window_main, d.path);
+                        [gr.resourceMap(d.id), durS, mvFps, mvW, mvH, mvCount] = Screen('OpenMovie', gr.window_main, d.path);
                         gr.resourceKind{d.id}   = 'movie';
+                        % for movie timing: which movie frame each flip shows
+                        mvName = ''; if isfield(d, 'name'), mvName = d.name; end
+                        mvInfo{d.id} = struct('name', mvName, 'file', d.path, 'fps', mvFps, ...
+                            'frame_count', mvCount, 'duration_s', durS, 'width', mvW, 'height', mvH);
+                        mvPts(d.id) = NaN;
                         grlog('opened movie id=%d: %s', d.id, d.path);
                         gr.movieLastTex(d.id)    = 0;
                         gr.movieLastTexMon(d.id) = 0;
@@ -928,6 +1020,9 @@ end
                 if ~have
                     ok = false; return                  % nothing decoded yet
                 end
+                if ~wantMonitor                         % the display: log which movie frame
+                    mvDrawn(end+1) = struct('id', id, 'pts', mvPts(id)); %#ok<AGROW>
+                end
                 rest{j} = tex;
             elseif wantMonitor
                 rest{j} = gr.resourceMapMon(id);
@@ -951,7 +1046,13 @@ end
         end
         if isnan(mov), return; end              % this window has no copy
         try
-            t = Screen('GetMovieImage', win, mov, 0);
+            if wantMonitor
+                t = Screen('GetMovieImage', win, mov, 0);
+            else
+                % the display's copy also gives the frame's presentation time
+                [t, mvT] = Screen('GetMovieImage', win, mov, 0);
+                if t > 0, mvPts(id) = mvT; end
+            end
         catch gmErr
             % A stale handle used to throw out of here and abort the whole
             % frame, so one bad movie blanked everything.
@@ -959,6 +1060,7 @@ end
             return
         end
         if t > 0
+            mvNewCount = mvNewCount + 1;        % profiling: textures made this flip
             if numel(last) >= id && last(id) > 0
                 try, Screen('Close', last(id)); catch, end
             end
@@ -972,7 +1074,8 @@ end
 
 %% monitor-only furniture: grid and eye position
     function drawMonitorExtras(gr)
-        setgrid(gr);
+        drawGrid(gr);
+        drawEyeText(gr);
         try, Screen('DrawDots', gr.window_monitor, gr.eye.geteye, 10 , [255,255,255]); catch, end
         drawcursors(gr);
         Screen('FillRect', gr.window_monitor, gr.diode_color, gr.diode_pos);
@@ -1088,38 +1191,80 @@ end
         gr.gridlinesmatrix_mm = [mmx mmfullx; mmfully mmy];
     end
 %%set grid
-    function gr=setgrid(gr)
-        Screen('TextSize', gr.window_monitor,gr.fontsize);
+    function gr=setgrid(gr, win)
+        % the grid and its labels, onto win (the monitor window, or the grid's
+        % texture: drawGrid)
+        Screen('TextSize', win, gr.fontsize);
         gm = gr.gridmode; if isempty(gm), gm='degrees'; end
-        try
-            Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 960, 5 , [255,255,255]);
-        catch
-        end
         if any(strcmpi(gm,{'degrees','both'}))
             try
                 for i=1:length(gr.toconvert(:,1))
-                    Screen('DrawText', gr.window_monitor, num2str(gr.toconvert(i,1)), gr.pixelsforlines(i,1),...
+                    Screen('DrawText', win, num2str(gr.toconvert(i,1)), gr.pixelsforlines(i,1),...
                         gr.pixelsforlines(ceil(length(gr.toconvert(:,1))/2),2), [.5,.5,.5]);
-                    Screen('DrawText', gr.window_monitor, num2str(gr.toconvert(i,2)),...
+                    Screen('DrawText', win, num2str(gr.toconvert(i,2)),...
                         gr.pixelsforlines(ceil(length(gr.toconvert(:,1))/2),1), gr.pixelsforlines(i,2),  [.5,.5,.5]);
                 end
             catch
             end
-            Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix,1,[.3 .3 .3]);
-            Screen('FrameOval',gr.window_monitor,[0.2 0.2 0.2]',gr.center_circle,3);
+            Screen('DrawLines',win,gr.gridlinesmatrix,1,[.3 .3 .3]);
+            Screen('FrameOval',win,[0.2 0.2 0.2]',gr.center_circle,3);
         end
         if any(strcmpi(gm,{'mm','both'}))
             try
                 for i=1:length(gr.mmvals)
-                    Screen('DrawText', gr.window_monitor, num2str(gr.mmvals(i)), gr.mmpixels(i,1),...
+                    Screen('DrawText', win, num2str(gr.mmvals(i)), gr.mmpixels(i,1),...
                         gr.mmpixels(ceil(length(gr.mmvals)/2),2), [.4,.4,.7]);
-                    Screen('DrawText', gr.window_monitor, num2str(gr.mmvals(i)),...
+                    Screen('DrawText', win, num2str(gr.mmvals(i)),...
                         gr.mmpixels(ceil(length(gr.mmvals)/2),1), gr.mmpixels(i,2), [.4,.4,.7]);
                 end
             catch
             end
-            Screen('DrawLines',gr.window_monitor,gr.gridlinesmatrix_mm,1,[.25 .25 .5]);
+            Screen('DrawLines',win,gr.gridlinesmatrix_mm,1,[.25 .25 .5]);
         end
+    end
+
+%% the monitor's grid: drawn once into a transparent texture and stamped on
+%% each monitor update. ~40 DrawText calls every update were the costliest part
+%% of the monitor work. Redrawn when the grid mode, font or lines change.
+    function drawGrid(gr)
+        mmKey = [];
+        if isprop(gr, 'gridlinesmatrix_mm') || isfield(gr, 'gridlinesmatrix_mm'), mmKey = gr.gridlinesmatrix_mm; end
+        key = {gr.gridmode, gr.fontsize, gr.gridlinesmatrix, gr.pixelsforlines, mmKey};
+        if gridTex == 0 || ~isequal(key, gridKey)
+            if gridTex > 0, try, Screen('Close', gridTex); catch, end, end
+            gridTex = Screen('OpenOffscreenWindow', gr.window_monitor, [0 0 0 0]);
+            setgrid(gr, gridTex);
+            gridKey = key;
+        end
+        [oldSrc, oldDst] = Screen('BlendFunction', gr.window_monitor, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
+        Screen('DrawTexture', gr.window_monitor, gridTex);
+        Screen('BlendFunction', gr.window_monitor, oldSrc, oldDst);
+    end
+
+%% the eye position, as text, at the top of the monitor window
+    function drawEyeText(gr)
+        try
+            Screen('TextSize', gr.window_monitor, gr.fontsize);
+            Screen('DrawText', gr.window_monitor, num2str(round(pix2deg(gr.eye.geteye,'cart'),1)), 960, 5 , [255,255,255]);
+        catch
+        end
+    end
+
+%% profiling: one row per trial flip, columns: loop start, drawn, flip
+%% returned, vbl, logged, monitor done, GUI done (GetSecs), monitor flag + 2 x
+%% movie textures made. Doubles, column-major, after an int32 [rows cols].
+    function writeProfile()
+        try
+            d = fullfile(getenv('HOME'), '.cache', 'gh-profile');
+            if ~isfolder(d), mkdir(d); end
+            fid = fopen(fullfile(d, sprintf('prof_%s.bin', datestr(now, 'yyyymmdd_HHMMSS_FFF'))), 'w'); %#ok<TNOW1,DATST>
+            fwrite(fid, int32([profN, 8]), 'int32');
+            fwrite(fid, prof(1:profN, :), 'double');
+            fclose(fid);
+        catch pErr
+            grlog('profile write failed: %s', pErr.message);
+        end
+        profN = 0;
     end
 
     function createInfoWindow(gr)
